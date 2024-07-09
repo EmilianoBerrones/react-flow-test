@@ -1,6 +1,6 @@
 import type {OnConnect} from "reactflow";
 
-import {useCallback} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {
     Background,
     Controls,
@@ -12,17 +12,40 @@ import {
 } from "reactflow";
 
 import "reactflow/dist/style.css";
+import "./updatenode.css";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {initialEdges, edgeTypes} from "./edges";
 
 export default function App() {
-    const [nodes, , onNodesChange] = useNodesState(initialNodes);
+    const [nodes, setNodes ,onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const onConnect: OnConnect = useCallback(
         (connection) => setEdges((edges) => addEdge(connection, edges)),
         [setEdges]
     );
+
+    const [nodeName, setNodeName] = useState('Node 1');
+
+    useEffect(() => {
+        setNodes((nds) =>
+            nds.map((node) => {
+                if (node.id === 'a') {
+                    // it's important that you create a new node object
+                    // in order to notify react flow about the change
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: nodeName,
+                        },
+                    };
+                }
+
+                return node;
+            }),
+        );
+    }, [nodeName, setNodes]);
 
     return (
         <ReactFlow
@@ -38,6 +61,13 @@ export default function App() {
             <Background/>
             <MiniMap/>
             <Controls/>
+            <div className="updatenode__controls">
+                <label> label </label>
+                <input
+                    value={nodeName}
+                    onChange={(evt) => setNodeName(evt.target.value)}
+                />
+            </div>
         </ReactFlow>
     );
 }
