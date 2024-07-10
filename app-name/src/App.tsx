@@ -27,6 +27,7 @@ export default function App() {
 
     const [nodeName, setNodeName] = useState('Node 1');
 
+    // Function for modifying the nodes' label.
     useEffect(() => {
         setNodes((nds) =>
             nds.map((node) => {
@@ -47,6 +48,20 @@ export default function App() {
         );
     }, [nodeName, setNodes]);
 
+    // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
+    const handleTab = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const textarea = event.target as HTMLTextAreaElement;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            textarea.value = textarea.value.substring(0, start) + "\t" + textarea.value.substring(end);
+
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }
+    }
+
     return (
         <div className="app-container">
             <div className="left-pane">
@@ -60,7 +75,7 @@ export default function App() {
                     A1: All hazards have been identified <br/>
                     G3: Hazard H1 has been eliminated <br/>
                     Sn1: Safety rules execution <br/>
-                    <input type='text' id='test' name='test1'/>
+                    <textarea id='test' name='test1' onKeyDown={handleTab}></textarea>
                 </pre>
             </div>
             <div className="right-pane">
