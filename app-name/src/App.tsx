@@ -48,26 +48,43 @@ export default function App() {
     }, [nodeName, setNodes]);
 
     return (
-        <ReactFlow
-            nodes={nodes}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            edges={edges}
-            edgeTypes={edgeTypes}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            fitView
-        >
-            <Background/>
-            <MiniMap/>
-            <Controls/>
-            <div className="updatenode__controls">
-                <label> label </label>
-                <input
-                    value={nodeName}
-                    onChange={(evt) => setNodeName(evt.target.value)}
-                />
+        <div className="app-container">
+            <div className="left-pane">
+                <pre>
+                    G1: Map system is acceptably safe to operate <br/>
+                    C1: Map systems is defined <br/>
+                    C2: Map role and context <br/>
+                    G2: All identified hazards have been eliminated or sufficiently mitigated <br/>
+                    C3: Hazards identified from DAO <br/>
+                    S1: Argumentation over each identified hazard <br/>
+                    A1: All hazards have been identified <br/>
+                    G3: Hazard H1 has been eliminated <br/>
+                    Sn1: Safety rules execution <br/>
+                </pre>
             </div>
-        </ReactFlow>
+            <div className="right-pane">
+                <ReactFlow
+                    nodes={nodes}
+                    nodeTypes={nodeTypes}
+                    onNodesChange={onNodesChange}
+                    edges={edges}
+                    edgeTypes={edgeTypes}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    fitView
+                >
+                    <Background/>
+                    <MiniMap/>
+                    <Controls/>
+                    <div className="updatenode__controls">
+                        <label> label </label>
+                        <input
+                            value={nodeName}
+                            onChange={(evt) => setNodeName(evt.target.value)}
+                        />
+                    </div>
+                </ReactFlow>
+            </div>
+        </div>
     );
 }

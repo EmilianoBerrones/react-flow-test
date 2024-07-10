@@ -26,3 +26,21 @@
     width: 50vh;
     background-color: beige;
 }
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+.left-pane {
+    width: 30%; /* Ajusta este valor para cambiar el tamaño de la sección izquierda */
+    background-color: lightgrey; /* Puedes cambiar este color si quieres */
+    align-content: center;
+    padding: 3vh;
+}
+
+.right-pane {
+    width: 70%; /* Ajusta este valor para cambiar el tamaño de la sección derecha */
+    display: flex;
+    flex-direction: column;
+}
