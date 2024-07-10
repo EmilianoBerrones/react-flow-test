@@ -60,6 +60,7 @@ export default function App() {
                     A1: All hazards have been identified <br/>
                     G3: Hazard H1 has been eliminated <br/>
                     Sn1: Safety rules execution <br/>
+                    <input type='text' id='test' name='test1'/>
                 </pre>
             </div>
             <div className="right-pane">
