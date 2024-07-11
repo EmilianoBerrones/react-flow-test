@@ -18,7 +18,7 @@ import {initialNodes, nodeTypes} from "./nodes";
 import {initialEdges, edgeTypes} from "./edges";
 
 export default function App() {
-    const [nodes, setNodes ,onNodesChange] = useNodesState(initialNodes);
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const onConnect: OnConnect = useCallback(
         (connection) => setEdges((edges) => addEdge(connection, edges)),
@@ -62,20 +62,36 @@ export default function App() {
         }
     }
 
+    // Function for obtaining the Nodes and Edges, so they can be modified.
+    const processNodesAndEdges = () => {
+        // process
+        console.log("Nodes: ", nodes, "Edges: ", edges);
+        let result = "";
+        for (let node of nodes) {
+            let nodeID = node.id;
+            let nodeData = node.data.label;
+            result += JSON.stringify(nodeID) + ' ' + JSON.stringify(nodeData) + "\r\n";
+        }
+        return (
+            <>
+                <div>
+                    Prueba: {JSON.stringify(nodes[0])}
+                    {result}
+                </div>
+            </>
+        );
+    };
+
+    useEffect(() => {
+        processNodesAndEdges();
+    }, [nodes, edges]);
+
     return (
         <div className="app-container">
             <div className="left-pane">
                 <pre>
-                    G1: Map system is acceptably safe to operate <br/>
-                    C1: Map systems is defined <br/>
-                    C2: Map role and context <br/>
-                    G2: All identified hazards have been eliminated or sufficiently mitigated <br/>
-                    C3: Hazards identified from DAO <br/>
-                    S1: Argumentation over each identified hazard <br/>
-                    A1: All hazards have been identified <br/>
-                    G3: Hazard H1 has been eliminated <br/>
-                    Sn1: Safety rules execution <br/>
                     <textarea id='test' name='test1' onKeyDown={handleTab}></textarea>
+                    {processNodesAndEdges()}
                 </pre>
             </div>
             <div className="right-pane">
