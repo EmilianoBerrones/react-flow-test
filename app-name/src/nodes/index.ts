@@ -4,7 +4,6 @@ import {PositionLoggerNode} from "./PositionLoggerNode";
 export const initialNodes = [
     {
         id: 'G1',
-        type: 'input',
         data: {label: 'Map system is acceptably safe to operate'},
         position: {x: 0, y: 0},
     },

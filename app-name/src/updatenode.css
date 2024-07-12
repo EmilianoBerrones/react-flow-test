@@ -34,7 +34,7 @@
 
 .left-pane {
     width: 35%; /* Ajusta este valor para cambiar el tamaño de la sección izquierda */
-    background-color: lightgrey;
+    background-color: #F7FCFF;
     align-content: center;
     padding: 3vh;
 }
