@@ -31,6 +31,7 @@ interface Edge {
     source: string;
     target: string;
     animated: boolean;
+    solves?: boolean;
 }
 // Definir la estructura para el árbol
 interface TreeNode {
@@ -61,15 +62,39 @@ function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     );
 }
 
+function treeToText(tree: TreeNode[], level: number = 0, isRoot: boolean = true): string {
+    const baseIndent = '  ';
+    const indent = baseIndent.repeat(level);
+    let result = '';
+
+    for (const treeNode of tree) {
+        const idFirstChar = treeNode.node.id.charAt(0);
+        const needsSpecialIndent = (idFirstChar === 'C' || idFirstChar === 'A' || idFirstChar === 'J');
+
+        // Eliminar la primera indentación solo si es necesario
+        const actualIndent = (isRoot && needsSpecialIndent) ? '' : indent;
+
+        result += `${actualIndent}- ${treeNode.node.id}: ${treeNode.node.data.label}\n`;
+
+        if (treeNode.children.length > 0) {
+            result += treeToText(treeNode.children, level + 1, false);
+        }
+    }
+
+    return result;
+}
+
 const tree = buildTree(initialNodes, initialEdges);
-console.log(JSON.stringify(tree, null, 2));
+console.log("Hola mundo");
+// console.log(JSON.stringify(tree, null, 2));
+console.log(treeToText(tree))
 
 
 export default function App() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-    const [initialAssuranceText, setInitialAssuranceText] = useState("Texto");
+    const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(tree));
 
     const onConnect: OnConnect = useCallback(
         (connection) => setEdges((edges) => addEdge(connection, edges)),
@@ -113,24 +138,6 @@ export default function App() {
         }
     }
 
-    // Function for obtaining the Nodes and Edges, so they can be modified.
-    const processNodesAndEdges = () => {
-        let result = "";
-        for (let node of nodes) {
-            let nodeID = node.id;
-            let nodeData = node.data.label;
-            result += nodeID + ' ' + nodeData + "\r\n";
-        }
-        console.log(result);
-        return (
-            <>
-                <div>
-                    {result}
-                </div>
-            </>
-        );
-    };
-
     return (
         <div className="app-container">
             <meta name="viewport" content="initial-scale=1, width=device-width"/>
@@ -144,7 +151,6 @@ export default function App() {
                            value={initialAssuranceText}
                            onChange={(e) => setInitialAssuranceText(e.target.value)}
                            onKeyDown={handleTab}/>
-                {processNodesAndEdges()}
             </div>
             <div className="right-pane">
                 <ReactFlow
