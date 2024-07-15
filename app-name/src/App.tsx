@@ -1,6 +1,7 @@
 import type {OnConnect} from "reactflow";
+import Dagre from '@dagrejs/dagre'
 
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
 import {
     Background,
     Controls,
@@ -18,6 +19,37 @@ import {initialNodes, nodeTypes} from "./nodes";
 import {initialEdges, edgeTypes} from "./edges";
 import {TextField} from "@mui/material";
 
+// Layouting elements with the Dagre library
+const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any; }) => {
+    const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+    g.setGraph({ rankdir: options.direction });
+
+    edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+    nodes.forEach((node) =>
+        g.setNode(node.id, {
+            ...node,
+            width: node.measured?.width ?? 0,
+            height: node.measured?.height ?? 0,
+        }),
+    );
+
+    Dagre.layout(g);
+
+    return {
+        nodes: nodes.map((node) => {
+            const position = g.node(node.id);
+            // We are shifting the dagre node position (anchor=center center) to the top left
+            // so it matches the React Flow node anchor point (top left).
+            const x = position.x - (node.measured?.width ?? 0) / 2;
+            const y = position.y - (node.measured?.height ?? 0) / 2;
+
+            return { ...node, position: { x, y } };
+        }),
+        edges,
+    };
+};
+
+// Node interface to work with the nodes from nodes\index.ts
 interface Node {
     id: string;
     position: {x: number, y: number};
@@ -25,7 +57,7 @@ interface Node {
     type?: string;
 }
 
-// Definir la interfaz para los enlaces
+// Edge interface to work with the nodes from edges\index.ts
 interface Edge {
     id: string;
     source: string;
@@ -33,20 +65,20 @@ interface Edge {
     animated: boolean;
     solves?: boolean;
 }
-// Definir la estructura para el árbol
+// Definition of the stree structure
 interface TreeNode {
     node: Node;
     children: TreeNode[];
 }
 
-// Función para construir el árbol
+// Function to build the tree
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
-    // Crear un mapa de nodos con el campo children inicializado como array vacío
+    // Creating a map of nodes with the field children initialized as an empty array
     const nodeMap = new Map<string, TreeNode>(
         nodes.map(node => [node.id, { node, children: [] }])
     );
 
-    // Añadir los hijos a cada nodo según los enlaces
+    // Add the children to each node depending on edges
     edges.forEach(edge => {
         const parentNode = nodeMap.get(edge.source);
         const childNode = nodeMap.get(edge.target);
@@ -56,7 +88,7 @@ function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
         }
     });
 
-    // Devolver los nodos que no tienen un padre en los enlaces
+    // Return the nodes that do not have a father node in the links
     return Array.from(nodeMap.values()).filter(treeNode =>
         !edges.some(edge => edge.target === treeNode.node.id)
     );
@@ -69,9 +101,10 @@ function treeToText(tree: TreeNode[], level: number = 0, isRoot: boolean = true)
 
     for (const treeNode of tree) {
         const idFirstChar = treeNode.node.id.charAt(0);
+        // definition of specific Context, Assumption or Justification nodes.
         const needsSpecialIndent = (idFirstChar === 'C' || idFirstChar === 'A' || idFirstChar === 'J');
 
-        // Eliminar la primera indentación solo si es necesario
+        // Eliminate the first indent depending on the type of node
         const actualIndent = (isRoot && needsSpecialIndent) ? '' : indent;
 
         result += `${actualIndent}- ${treeNode.node.id}: ${treeNode.node.data.label}\n`;
@@ -91,7 +124,7 @@ console.log(treeToText(tree))
 
 
 export default function App() {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [nodes, setNodes , onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(tree));
@@ -100,29 +133,6 @@ export default function App() {
         (connection) => setEdges((edges) => addEdge(connection, edges)),
         [setEdges]
     );
-
-    const [nodeName, setNodeName] = useState('Node 1');
-
-    // Function for modifying the nodes' label.
-    useEffect(() => {
-        setNodes((nds) =>
-            nds.map((node) => {
-                if (node.id === 'a') {
-                    // it's important that you create a new node object
-                    // in order to notify react flow about the change
-                    return {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            label: nodeName,
-                        },
-                    };
-                }
-
-                return node;
-            }),
-        );
-    }, [nodeName, setNodes]);
 
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
     const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -166,13 +176,6 @@ export default function App() {
                     <Background/>
                     <MiniMap/>
                     <Controls/>
-                    <div className="updatenode__controls">
-                        <label> label </label>
-                        <input
-                            value={nodeName}
-                            onChange={(evt) => setNodeName(evt.target.value)}
-                        />
-                    </div>
                 </ReactFlow>
             </div>
         </div>
