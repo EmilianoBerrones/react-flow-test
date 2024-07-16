@@ -180,13 +180,55 @@ function treeToText(tree: TreeNode[], level: number = 0): string {
     return result;
 }
 
+// Function to convert text to tree
+function textToTree(text: string): TreeNode[] {
+    const lines = text.trim().split('\n');
+    const rootNodes: TreeNode[] = [];
+    const nodeStack: TreeNode[] = [];
+
+    for (const line of lines) {
+        const indentMatch = line.match(/^\s*/);
+        const indentLevel = indentMatch ? indentMatch[0].length / 2 : 0; // assuming each level of indent is 2 spaces
+
+        // Extract node ID and label
+        const nodeMatch = line.match(/- (\w+): (.+)/);
+        if (nodeMatch) {
+            const id = nodeMatch[1];
+            const label = nodeMatch[2];
+            const newNode: TreeNode = {
+                node: { id, data: { label } },
+                children: []
+            };
+
+            // Find the parent node based on indentLevel
+            while (nodeStack.length > indentLevel) {
+                nodeStack.pop(); // Pop until the correct level is found
+            }
+
+            if (nodeStack.length > 0) {
+                // The current top of the stack is the parent node
+                nodeStack[nodeStack.length - 1].children.push(newNode);
+            } else {
+                // This is a root node
+                rootNodes.push(newNode);
+            }
+
+            // Push the new node onto the stack
+            nodeStack[indentLevel] = newNode;
+        }
+    }
+    return rootNodes;
+}
+
 // Debugging
 const tree = buildTree(initialNodes, initialEdges);
-const outputTree = tree.map(convertTreeNodeToDesiredNode);
+const richTree = tree.map(convertTreeNodeToDesiredNode);
+// const textTree = treeToText(tree);
+// const testingvariable = textToTree(textTree);
+// console.log(JSON.stringify(testingvariable, null, 2));
 console.log("Hola mundo");
-// console.log(JSON.stringify(MUI_X_PRODUCTS, null, 2));
 // console.log(JSON.stringify(tree, null, 2));
-// console.log(JSON.stringify(outputTree, null, 2));
+// console.log(JSON.stringify(richTree, null, 2));
 // console.log(treeToText(tree))
 
 
@@ -257,7 +299,7 @@ export default function App() {
                         onKeyDown={handleTab}
                     />
                 )}
-                {view === 'richTreeView' && <RichTreeView items={outputTree}/>}
+                {view === 'richTreeView' && <RichTreeView items={richTree}/>}
                 <h5></h5>
                 <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
             </div>
