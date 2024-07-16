@@ -1,7 +1,7 @@
 import type {OnConnect} from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import {useCallback, useState} from "react";
+import {SetStateAction, useCallback, useState} from "react";
 import {
     Background,
     Controls,
@@ -17,45 +17,51 @@ import "./updatenode.css";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {initialEdges, edgeTypes} from "./edges";
-import {Button, TextField} from "@mui/material";
-import { TreeViewBaseItem } from '@mui/x-tree-view/models';
-import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
+import {Button, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
+// import { TreeViewBaseItem } from '@mui/x-tree-view/models';
+import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 
-
-const MUI_X_PRODUCTS: TreeViewBaseItem[] = [
-    {
-        id: 'grid',
-        label: 'Data Grid',
-        children: [
-            { id: 'grid-community', label: '@mui/x-data-grid' },
-            { id: 'grid-pro', label: '@mui/x-data-grid-pro' },
-            { id: 'grid-premium', label: '@mui/x-data-grid-premium' },
-        ],
-    },
-    {
-        id: 'pickers',
-        label: 'Date and Time Pickers',
-        children: [
-            { id: 'pickers-community', label: '@mui/x-date-pickers' },
-            { id: 'pickers-pro', label: '@mui/x-date-pickers-pro' },
-        ],
-    },
-    {
-        id: 'charts',
-        label: 'Charts',
-        children: [{ id: 'charts-community', label: '@mui/x-charts' }],
-    },
-    {
-        id: 'tree-view',
-        label: 'Tree View',
-        children: [{ id: 'tree-view-community', label: '@mui/x-tree-view' }],
-    },
-];
+// Debugging
+// const MUI_X_PRODUCTS: TreeViewBaseItem[] = [
+//     {
+//         id: 'grid',
+//         label: 'G1',
+//         children: [
+//             {
+//                 id: 'grid-community',
+//                 label: '@mui/x-data-grid',
+//                 children: [
+//                     {id: 'test1', label: 'Testing children'},
+//                 ],
+//             },
+//             { id: 'grid-pro', label: '@mui/x-data-grid-pro' },
+//             { id: 'grid-premium', label: '@mui/x-data-grid-premium' },
+//         ],
+//     },
+//     {
+//         id: 'pickers',
+//         label: 'Date and Time Pickers',
+//         children: [
+//             { id: 'pickers-community', label: '@mui/x-date-pickers' },
+//             { id: 'pickers-pro', label: '@mui/x-date-pickers-pro' },
+//         ],
+//     },
+//     {
+//         id: 'charts',
+//         label: 'Charts',
+//         children: [{ id: 'charts-community', label: '@mui/x-charts' }],
+//     },
+//     {
+//         id: 'tree-view',
+//         label: 'Tree View',
+//         children: [{ id: 'tree-view-community', label: '@mui/x-tree-view' }],
+//     },
+// ];
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any; }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-    g.setGraph({ rankdir: options.direction });
+    g.setGraph({rankdir: options.direction});
 
     edges.forEach((edge) => g.setEdge(edge.source, edge.target));
     nodes.forEach((node) =>
@@ -76,7 +82,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
             const x = position.x - (node.measured?.width ?? 0) / 2;
             const y = position.y - (node.measured?.height ?? 0) / 2;
 
-            return { ...node, position: { x, y } };
+            return {...node, position: {x, y}};
         }),
         edges,
     };
@@ -85,7 +91,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
 // Node interface to work with the nodes from nodes\index.ts
 interface Node {
     id: string;
-    position: {x: number, y: number};
+    position: { x: number, y: number };
     data: { label: string };
     type?: string;
 }
@@ -96,7 +102,6 @@ interface Edge {
     source: string;
     target: string;
     animated: boolean;
-    solves?: boolean;
 }
 
 // Definition of the stree structure
@@ -105,11 +110,35 @@ interface TreeNode {
     children: TreeNode[];
 }
 
+// Definition of another tree structure to work with RichTrees in MUI
+interface DesiredNode {
+    id: string;
+    label: string;
+    children?: DesiredNode[];
+}
+
+// Function that converts the previous tree structure into the MUI structure, to show them in RichTreeView
+function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
+    const {node, children} = treeNode;
+    const desiredNode: DesiredNode = {
+        id: node.id,
+        label: node.data.label,
+        children: children.length > 0 ? children.map(convertTreeNodeToDesiredNode) : undefined
+    };
+
+    // Eliminate the children property if it's empty or undefined
+    if (!desiredNode.children || desiredNode.children.length === 0) {
+        delete desiredNode.children;
+    }
+
+    return desiredNode;
+}
+
 // Function to build the tree
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     // Creating a map of nodes with the field children initialized as an empty array
     const nodeMap = new Map<string, TreeNode>(
-        nodes.map(node => [node.id, { node, children: [] }])
+        nodes.map(node => [node.id, {node, children: []}])
     );
 
     // Add the children to each node depending on edges
@@ -128,37 +157,42 @@ function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     );
 }
 
-function treeToText(tree: TreeNode[], level: number = 0, isRoot: boolean = true): string {
+// Function to transform the tree to text, and show it in the text box on the left pane.
+function treeToText(tree: TreeNode[], level: number = 0): string {
     const baseIndent = '  ';
-    const indent = baseIndent.repeat(level);
     let result = '';
 
     for (const treeNode of tree) {
         const idFirstChar = treeNode.node.id.charAt(0);
-        // definition of specific Context, Assumption or Justification nodes.
         const needsSpecialIndent = (idFirstChar === 'C' || idFirstChar === 'A' || idFirstChar === 'J');
 
-        // Eliminate the first indent depending on the type of node
-        const actualIndent = (isRoot && needsSpecialIndent) ? '' : indent;
+        // Determinar la indentación actual
+        const indentLevel = (needsSpecialIndent && level > 0) ? level - 1 : level;
+        const actualIndent = (indentLevel === 0 && needsSpecialIndent) ? '' : baseIndent.repeat(indentLevel);
 
         result += `${actualIndent}- ${treeNode.node.id}: ${treeNode.node.data.label}\n`;
 
         if (treeNode.children.length > 0) {
-            result += treeToText(treeNode.children, level + 1, false);
+            result += treeToText(treeNode.children, level + 1);
         }
     }
 
     return result;
 }
 
+// Debugging
 const tree = buildTree(initialNodes, initialEdges);
+const outputTree = tree.map(convertTreeNodeToDesiredNode);
 console.log("Hola mundo");
-//console.log(JSON.stringify(tree, null, 2));
-console.log(treeToText(tree))
+// console.log(JSON.stringify(MUI_X_PRODUCTS, null, 2));
+// console.log(JSON.stringify(tree, null, 2));
+// console.log(JSON.stringify(outputTree, null, 2));
+// console.log(treeToText(tree))
 
 
 export default function App() {
-    const [nodes, setNodes , onNodesChange] = useNodesState(initialNodes);
+    const [view, setView] = useState('textField'); // Estado para manejar la vista actual
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(tree));
@@ -167,6 +201,16 @@ export default function App() {
         (connection) => setEdges((edges) => addEdge(connection, edges)),
         [setEdges]
     );
+
+    const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
+        if (newView !== null) {
+            setView(newView);
+        }
+    };
+
+    const handleReloadButton = (_event: any) => {
+        console.log(initialAssuranceText);
+    }
 
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
     const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -187,18 +231,35 @@ export default function App() {
             <meta name="viewport" content="initial-scale=1, width=device-width"/>
             <div className="left-pane">
                 <h1>ProjectName</h1>
-                <TextField id="AssuranceText"
-                           multiline={true}
-                           fullWidth
-                           minRows={15}
-                           maxRows={45}
-                           variant="outlined"
-                           value={initialAssuranceText}
-                           onChange={(e) => setInitialAssuranceText(e.target.value)}
-                           onKeyDown={handleTab}/>
-                <RichTreeView items={MUI_X_PRODUCTS}></RichTreeView>
+                <ToggleButtonGroup
+                    value={view}
+                    exclusive
+                    onChange={handleViewChange}
+                    aria-label="view selection"
+                >
+                    <ToggleButton value="textField" aria-label="TextField">
+                        Text view
+                    </ToggleButton>
+                    <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                        Tree view
+                    </ToggleButton>
+                </ToggleButtonGroup>
+                {view === 'textField' && (
+                    <TextField
+                        id="AssuranceText"
+                        multiline={true}
+                        fullWidth
+                        minRows={15}
+                        maxRows={45}
+                        variant="outlined"
+                        value={initialAssuranceText}
+                        onChange={(e) => setInitialAssuranceText(e.target.value)}
+                        onKeyDown={handleTab}
+                    />
+                )}
+                {view === 'richTreeView' && <RichTreeView items={outputTree}/>}
                 <h5></h5>
-                <Button variant="outlined">Reload changes</Button>
+                <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
             </div>
             <div className="right-pane">
                 <ReactFlow
