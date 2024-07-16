@@ -17,7 +17,40 @@ import "./updatenode.css";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {initialEdges, edgeTypes} from "./edges";
-import {TextField} from "@mui/material";
+import {Button, TextField} from "@mui/material";
+import { TreeViewBaseItem } from '@mui/x-tree-view/models';
+import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
+
+
+const MUI_X_PRODUCTS: TreeViewBaseItem[] = [
+    {
+        id: 'grid',
+        label: 'Data Grid',
+        children: [
+            { id: 'grid-community', label: '@mui/x-data-grid' },
+            { id: 'grid-pro', label: '@mui/x-data-grid-pro' },
+            { id: 'grid-premium', label: '@mui/x-data-grid-premium' },
+        ],
+    },
+    {
+        id: 'pickers',
+        label: 'Date and Time Pickers',
+        children: [
+            { id: 'pickers-community', label: '@mui/x-date-pickers' },
+            { id: 'pickers-pro', label: '@mui/x-date-pickers-pro' },
+        ],
+    },
+    {
+        id: 'charts',
+        label: 'Charts',
+        children: [{ id: 'charts-community', label: '@mui/x-charts' }],
+    },
+    {
+        id: 'tree-view',
+        label: 'Tree View',
+        children: [{ id: 'tree-view-community', label: '@mui/x-tree-view' }],
+    },
+];
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any; }) => {
@@ -65,6 +98,7 @@ interface Edge {
     animated: boolean;
     solves?: boolean;
 }
+
 // Definition of the stree structure
 interface TreeNode {
     node: Node;
@@ -119,7 +153,7 @@ function treeToText(tree: TreeNode[], level: number = 0, isRoot: boolean = true)
 
 const tree = buildTree(initialNodes, initialEdges);
 console.log("Hola mundo");
-// console.log(JSON.stringify(tree, null, 2));
+//console.log(JSON.stringify(tree, null, 2));
 console.log(treeToText(tree))
 
 
@@ -154,13 +188,17 @@ export default function App() {
             <div className="left-pane">
                 <h1>ProjectName</h1>
                 <TextField id="AssuranceText"
+                           multiline={true}
                            fullWidth
-                           multiline
-                           rows={15}
+                           minRows={15}
+                           maxRows={45}
                            variant="outlined"
                            value={initialAssuranceText}
                            onChange={(e) => setInitialAssuranceText(e.target.value)}
                            onKeyDown={handleTab}/>
+                <RichTreeView items={MUI_X_PRODUCTS}></RichTreeView>
+                <h5></h5>
+                <Button variant="outlined">Reload changes</Button>
             </div>
             <div className="right-pane">
                 <ReactFlow
