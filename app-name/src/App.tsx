@@ -13,44 +13,7 @@ import {Button, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material"
 // import { TreeViewBaseItem } from '@mui/x-initialTree-view/models';
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 
-// Debugging
-// const MUI_X_PRODUCTS: TreeViewBaseItem[] = [
-//     {
-//         id: 'grid',
-//         label: 'G1',
-//         children: [
-//             {
-//                 id: 'grid-community',
-//                 label: '@mui/x-data-grid',
-//                 children: [
-//                     {id: 'test1', label: 'Testing children'},
-//                 ],
-//             },
-//             { id: 'grid-pro', label: '@mui/x-data-grid-pro' },
-//             { id: 'grid-premium', label: '@mui/x-data-grid-premium' },
-//         ],
-//     },
-//     {
-//         id: 'pickers',
-//         label: 'Date and Time Pickers',
-//         children: [
-//             { id: 'pickers-community', label: '@mui/x-date-pickers' },
-//             { id: 'pickers-pro', label: '@mui/x-date-pickers-pro' },
-//         ],
-//     },
-//     {
-//         id: 'charts',
-//         label: 'Charts',
-//         children: [{ id: 'charts-community', label: '@mui/x-charts' }],
-//     },
-//     {
-//         id: 'initialTree-view',
-//         label: 'Tree View',
-//         children: [{ id: 'initialTree-view-community', label: '@mui/x-initialTree-view' }],
-//     },
-// ];
-
-// Layouting elements with the Dagre library
+// Layouting elements with the Dagre library TODO implement dagre
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any; }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({rankdir: options.direction});
@@ -80,6 +43,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
     };
 };
 
+// INTERFACES
 // Node interface to work with the nodes from nodes\index.ts
 interface Node {
     id: string;
@@ -109,7 +73,7 @@ interface DesiredNode {
     children?: DesiredNode[];
 }
 
-// Function that converts the previous initialTree structure into the MUI structure, to show them in RichTreeView
+// Function that converts the previous initialTree structure into the MUI RichTree structure, to show them in RichTreeView
 function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
     const {node, children} = treeNode;
     const desiredNode: DesiredNode = {
@@ -172,7 +136,7 @@ function treeToText(tree: TreeNode[], level: number = 0): string {
     return result;
 }
 
-// Function to convert text to initialTree TODO fix the function
+// Function to convert text to initialTree
 function textToTree(text: string): TreeNode[] {
     const lines = text.split('\n');
     const tree: TreeNode[] = [];
@@ -191,19 +155,20 @@ function textToTree(text: string): TreeNode[] {
         const newNode: TreeNode = {
             node: {
                 id,
-                position: { x: 0, y: 0 },  // Asignar la posición según sea necesario
+                position: { x: 0, y: 0 },  // Positions start at zero. Dagre changes the positions.
                 data: { label }
             },
             children: []
         };
-
         nodesById[id] = newNode;
 
-        // Encontrar el nodo padre adecuado
+        // Find the correct parent node
         let parent: TreeNode | undefined;
 
+        // Checks if the node is an Assumption, Justification or Context, so that the indentation rules can be
+        // reflected in the tree.
         if (['C', 'A', 'J'].includes(id.charAt(0))) {
-            // Buscar el nodo padre en el mismo nivel de indentación que no empiece por 'C', 'A' o 'J'
+            // Search for the correct parent node that does not start with 'C', 'A' or 'J' in its id.
             for (let i = stack.length - 1; i >= 0; i--) {
                 if (stack[i].level === level && !['C', 'A', 'J'].includes(stack[i].node.node.id.charAt(0))) {
                     parent = stack[i].node;
@@ -211,7 +176,8 @@ function textToTree(text: string): TreeNode[] {
                 }
             }
         } else {
-            // Buscar el nodo padre en un nivel de indentación menor que tampoco empiece por 'C', 'A', o 'J'
+            // Search for the parent node in an indentation level lower. The parent node must not include  'C', 'A', or
+            // 'J' in its id.
             for (let i = stack.length - 1; i >= 0; i--) {
                 if (stack[i].level < level && !['C', 'A', 'J'].includes(stack[i].node.node.id.charAt(0))) {
                     parent = stack[i].node;
@@ -219,7 +185,6 @@ function textToTree(text: string): TreeNode[] {
                 }
             }
         }
-
         if (parent) {
             parent.children.push(newNode);
         } else if (level === 0) {
@@ -228,22 +193,18 @@ function textToTree(text: string): TreeNode[] {
 
         stack.push({ level, node: newNode });
     }
-
     return tree;
 }
 
-// Debugging
+// Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
-
-
-
 
 export default function App() {
     const [view, setView] = useState('textField'); // Estado para manejar la vista actual
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
+    // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
 
     const onConnect: OnConnect = useCallback(
@@ -257,10 +218,10 @@ export default function App() {
         }
     };
 
+    // Functions to clear the nodes and edges so they can be redrawn.
     const clearNodes = () => {
         setNodes([]);
     };
-
     const clearEdges = () => {
         setEdges([])
     };
@@ -285,13 +246,14 @@ export default function App() {
         }
     };
 
-    // Main function to get edges from an array of tree nodes
+    // Main function to get edges from an array of tree nodes given as parameter.
     const addEdgesFromTree = (nodes: TreeNode[]): Edge[] => {
         const edges: Edge[] = [];
         generateEdgesFromNodes(nodes, edges);
         return edges;
     };
 
+    // Main function to add the nodes from a tree structure given as parameter
     function addNodesFromTree(tree: TreeNode[]) {
         const createNodesFromTree = (nodes: TreeNode[]): Node[] => {
             return nodes.flatMap(node => [
@@ -309,6 +271,7 @@ export default function App() {
         setNodes(newNodes);
     }
 
+    // Function to replace the previous tree with the new one given as parameter.
     function replaceTree(tree: TreeNode[]) {
         clearNodes(); // Deletes al nodes
         addNodesFromTree(tree); // Adds new nodes based on the new Tree
@@ -317,12 +280,14 @@ export default function App() {
         setEdges(newEdges);
     }
 
+    // Function to reflect the new nodes and edges after the assurance text is modified.
     const handleReloadButton = (_event: any) => {
         const newTree = textToTree(initialAssuranceText);
         replaceTree(newTree);
         richTree = newTree.map(convertTreeNodeToDesiredNode);
     };
 
+    // Debugging function
     const printNodes = () => {
         //console.log(JSON.stringify(nodes, null, 2));
         //console.log(JSON.stringify(edges, null, 2));
@@ -342,6 +307,7 @@ export default function App() {
         }
     }
 
+    // HTML section of the code. 
     return (
         <div className="app-container">
             <meta name="viewport" content="initial-scale=1, width=device-width"/>
