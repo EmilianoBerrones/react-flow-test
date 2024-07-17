@@ -236,13 +236,7 @@ function textToTree(text: string): TreeNode[] {
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 
-// let richTree = initialTree.map(convertTreeNodeToDesiredNode);
-// const textTree = treeToText(initialTree);
-// const testingvariable = textToTree(textTree);
-// console.log(JSON.stringify(testingvariable, null, 2));
-// console.log(JSON.stringify(initialTree, null, 2));
-// console.log(JSON.stringify(richTree, null, 2));
-// console.log(treeToText(initialTree))
+
 
 
 export default function App() {
@@ -263,27 +257,70 @@ export default function App() {
         }
     };
 
-    function replaceTree(tree: TreeNode[]) {
-        for (const newNode of tree) {
-            // Actualizar el estado de los nodos
-            setNodes((nodes) =>
-                nodes.map((node) =>
-                    node.id === newNode.node.id
-                        ? {...node, data: {...node.data, label: newNode.node.data.label}}
-                        : node
-                )
-            );
-            // Si el nodo tiene hijos, llamamos recursivamente a replaceTree
-            if (newNode.children && newNode.children.length > 0) {
-                replaceTree(newNode.children);
+    const clearNodes = () => {
+        setNodes([]);
+    };
+
+    const clearEdges = () => {
+        setEdges([])
+    };
+
+    // Helper function to recursively generate edges from a tree
+    const generateEdgesFromNodes = (nodes: TreeNode[], edges: Edge[] = [], parentId?: string): void => {
+        for (const node of nodes) {
+            if (parentId) {
+                // Create an edge from the parent node to the current node
+                edges.push({
+                    id: `edge-${parentId}-${node.node.id}`,
+                    source: parentId,
+                    target: node.node.id,
+                    animated: true, // Or false depending on your preference
+                });
+            }
+
+            // Recursively generate edges for child nodes
+            if (node.children.length > 0) {
+                generateEdgesFromNodes(node.children, edges, node.node.id);
             }
         }
+    };
+
+    // Main function to get edges from an array of tree nodes
+    const addEdgesFromTree = (nodes: TreeNode[]): Edge[] => {
+        const edges: Edge[] = [];
+        generateEdgesFromNodes(nodes, edges);
+        return edges;
+    };
+
+    function addNodesFromTree(tree: TreeNode[]) {
+        const createNodesFromTree = (nodes: TreeNode[]): Node[] => {
+            return nodes.flatMap(node => [
+                {
+                    id: node.node.id,
+                    data: node.node.data,
+                    position: node.node.position,
+                    type: node.node.type
+                },
+                ...createNodesFromTree(node.children)
+            ]);
+        };
+
+        const newNodes = createNodesFromTree(tree);
+        setNodes(newNodes);
+    }
+
+    function replaceTree(tree: TreeNode[]) {
+        clearNodes(); // Deletes al nodes
+        addNodesFromTree(tree); // Adds new nodes based on the new Tree
+        clearEdges(); // Deletes all edges
+        const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
+        setEdges(newEdges);
     }
 
     const handleReloadButton = (_event: any) => {
         const newTree = textToTree(initialAssuranceText);
-        replaceTree(newTree); // TODO check correct assignation
-        richTree = newTree.map(convertTreeNodeToDesiredNode); // TODO check correct tree structure
+        replaceTree(newTree);
+        richTree = newTree.map(convertTreeNodeToDesiredNode);
     };
 
     const printNodes = () => {
