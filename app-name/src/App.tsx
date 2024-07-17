@@ -1,24 +1,16 @@
 import type {OnConnect} from "reactflow";
+import {addEdge, Background, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState,} from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
 import {SetStateAction, useCallback, useState} from "react";
-import {
-    Background,
-    Controls,
-    MiniMap,
-    ReactFlow,
-    addEdge,
-    useNodesState,
-    useEdgesState,
-} from "reactflow";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
 
 import {initialNodes, nodeTypes} from "./nodes";
-import {initialEdges, edgeTypes} from "./edges";
+import {edgeTypes, initialEdges} from "./edges";
 import {Button, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
-// import { TreeViewBaseItem } from '@mui/x-tree-view/models';
+// import { TreeViewBaseItem } from '@mui/x-initialTree-view/models';
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 
 // Debugging
@@ -52,9 +44,9 @@ import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 //         children: [{ id: 'charts-community', label: '@mui/x-charts' }],
 //     },
 //     {
-//         id: 'tree-view',
+//         id: 'initialTree-view',
 //         label: 'Tree View',
-//         children: [{ id: 'tree-view-community', label: '@mui/x-tree-view' }],
+//         children: [{ id: 'initialTree-view-community', label: '@mui/x-initialTree-view' }],
 //     },
 // ];
 
@@ -110,14 +102,14 @@ interface TreeNode {
     children: TreeNode[];
 }
 
-// Definition of another tree structure to work with RichTrees in MUI
+// Definition of another initialTree structure to work with RichTrees in MUI
 interface DesiredNode {
     id: string;
     label: string;
     children?: DesiredNode[];
 }
 
-// Function that converts the previous tree structure into the MUI structure, to show them in RichTreeView
+// Function that converts the previous initialTree structure into the MUI structure, to show them in RichTreeView
 function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
     const {node, children} = treeNode;
     const desiredNode: DesiredNode = {
@@ -134,7 +126,7 @@ function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
     return desiredNode;
 }
 
-// Function to build the tree
+// Function to build the initialTree
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     // Creating a map of nodes with the field children initialized as an empty array
     const nodeMap = new Map<string, TreeNode>(
@@ -157,7 +149,7 @@ function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     );
 }
 
-// Function to transform the tree to text, and show it in the text box on the left pane.
+// Function to transform the initialTree to text, and show it in the text box on the left pane.
 function treeToText(tree: TreeNode[], level: number = 0): string {
     const baseIndent = '  ';
     let result = '';
@@ -180,7 +172,7 @@ function treeToText(tree: TreeNode[], level: number = 0): string {
     return result;
 }
 
-// Function to convert text to tree
+// Function to convert text to initialTree TODO fix the function
 function textToTree(text: string): TreeNode[] {
     const lines = text.trim().split('\n');
     const rootNodes: TreeNode[] = [];
@@ -220,16 +212,18 @@ function textToTree(text: string): TreeNode[] {
     return rootNodes;
 }
 
+
 // Debugging
-const tree = buildTree(initialNodes, initialEdges);
-const richTree = tree.map(convertTreeNodeToDesiredNode);
-// const textTree = treeToText(tree);
+let initialTree = buildTree(initialNodes, initialEdges);
+let richTree = initialTree.map(convertTreeNodeToDesiredNode);
+// let richTree = initialTree.map(convertTreeNodeToDesiredNode);
+// const textTree = treeToText(initialTree);
 // const testingvariable = textToTree(textTree);
 // console.log(JSON.stringify(testingvariable, null, 2));
 console.log("Hola mundo");
-// console.log(JSON.stringify(tree, null, 2));
+// console.log(JSON.stringify(initialTree, null, 2));
 // console.log(JSON.stringify(richTree, null, 2));
-// console.log(treeToText(tree))
+// console.log(treeToText(initialTree))
 
 
 export default function App() {
@@ -237,7 +231,7 @@ export default function App() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-    const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(tree));
+    const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
 
     const onConnect: OnConnect = useCallback(
         (connection) => setEdges((edges) => addEdge(connection, edges)),
@@ -250,8 +244,33 @@ export default function App() {
         }
     };
 
+    function replaceTree(tree: TreeNode[]) {
+        for (const newNode of tree) {
+            // Actualizar el estado de los nodos
+            setNodes((nodes) =>
+                nodes.map((node) =>
+                    node.id === newNode.node.id
+                        ? { ...node, data: { ...node.data, label: newNode.node.data.label } }
+                        : node
+                )
+            );
+            // Si el nodo tiene hijos, llamamos recursivamente a replaceTree
+            if (newNode.children && newNode.children.length > 0) {
+                replaceTree(newNode.children);
+            }
+        }
+    }
+
     const handleReloadButton = (_event: any) => {
-        console.log(initialAssuranceText);
+        const newTree = textToTree(initialAssuranceText);
+        replaceTree(newTree);
+        richTree = newTree.map(convertTreeNodeToDesiredNode);
+    };
+
+    const printNodes = () => {
+        //console.log(JSON.stringify(nodes, null, 2));
+        //console.log(JSON.stringify(edges, null, 2));
+        console.log(JSON.stringify(initialTree, null, 2));
     }
 
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
@@ -299,9 +318,10 @@ export default function App() {
                         onKeyDown={handleTab}
                     />
                 )}
-                {view === 'richTreeView' && <RichTreeView items={richTree}/>}
+                {view === 'richTreeView' && <RichTreeView items={richTree} onChange={handleReloadButton}/>}
                 <h5></h5>
                 <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                <Button variant="outlined" onClick={printNodes}>Print</Button>
             </div>
             <div className="right-pane">
                 <ReactFlow
