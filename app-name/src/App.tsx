@@ -174,53 +174,72 @@ function treeToText(tree: TreeNode[], level: number = 0): string {
 
 // Function to convert text to initialTree TODO fix the function
 function textToTree(text: string): TreeNode[] {
-    const lines = text.trim().split('\n');
-    const rootNodes: TreeNode[] = [];
-    const nodeStack: TreeNode[] = [];
+    const lines = text.split('\n');
+    const tree: TreeNode[] = [];
+    const nodesById: { [id: string]: TreeNode } = {};
+    const stack: { level: number, node: TreeNode }[] = [];
+
+    const indentLevel = (line: string) => line.match(/^ */)![0].length / 2;
 
     for (const line of lines) {
-        const indentMatch = line.match(/^\s*/);
-        const indentLevel = indentMatch ? indentMatch[0].length / 2 : 0; // assuming each level of indent is 2 spaces
+        const match = line.match(/^( *)- (\w+): (.+)$/);
+        if (!match) continue;
 
-        // Extract node ID and label
-        const nodeMatch = line.match(/- (\w+): (.+)/);
-        if (nodeMatch) {
-            const id = nodeMatch[1];
-            const label = nodeMatch[2];
-            const newNode: TreeNode = {
-                node: { id, data: { label } },
-                children: []
-            };
+        const [_, indent, id, label] = match;
+        const level = indentLevel(indent);
 
-            // Find the parent node based on indentLevel
-            while (nodeStack.length > indentLevel) {
-                nodeStack.pop(); // Pop until the correct level is found
+        const newNode: TreeNode = {
+            node: {
+                id,
+                position: { x: 0, y: 0 },  // Asignar la posición según sea necesario
+                data: { label }
+            },
+            children: []
+        };
+
+        nodesById[id] = newNode;
+
+        // Encontrar el nodo padre adecuado
+        let parent: TreeNode | undefined;
+
+        if (['C', 'A', 'J'].includes(id.charAt(0))) {
+            // Buscar el nodo padre en el mismo nivel de indentación que no empiece por 'C', 'A' o 'J'
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (stack[i].level === level && !['C', 'A', 'J'].includes(stack[i].node.node.id.charAt(0))) {
+                    parent = stack[i].node;
+                    break;
+                }
             }
-
-            if (nodeStack.length > 0) {
-                // The current top of the stack is the parent node
-                nodeStack[nodeStack.length - 1].children.push(newNode);
-            } else {
-                // This is a root node
-                rootNodes.push(newNode);
+        } else {
+            // Buscar el nodo padre en un nivel de indentación menor que tampoco empiece por 'C', 'A', o 'J'
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (stack[i].level < level && !['C', 'A', 'J'].includes(stack[i].node.node.id.charAt(0))) {
+                    parent = stack[i].node;
+                    break;
+                }
             }
-
-            // Push the new node onto the stack
-            nodeStack[indentLevel] = newNode;
         }
-    }
-    return rootNodes;
-}
 
+        if (parent) {
+            parent.children.push(newNode);
+        } else if (level === 0) {
+            tree.push(newNode);
+        }
+
+        stack.push({ level, node: newNode });
+    }
+
+    return tree;
+}
 
 // Debugging
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
+
 // let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 // const textTree = treeToText(initialTree);
 // const testingvariable = textToTree(textTree);
 // console.log(JSON.stringify(testingvariable, null, 2));
-console.log("Hola mundo");
 // console.log(JSON.stringify(initialTree, null, 2));
 // console.log(JSON.stringify(richTree, null, 2));
 // console.log(treeToText(initialTree))
@@ -250,7 +269,7 @@ export default function App() {
             setNodes((nodes) =>
                 nodes.map((node) =>
                     node.id === newNode.node.id
-                        ? { ...node, data: { ...node.data, label: newNode.node.data.label } }
+                        ? {...node, data: {...node.data, label: newNode.node.data.label}}
                         : node
                 )
             );
@@ -263,14 +282,13 @@ export default function App() {
 
     const handleReloadButton = (_event: any) => {
         const newTree = textToTree(initialAssuranceText);
-        replaceTree(newTree);
-        richTree = newTree.map(convertTreeNodeToDesiredNode);
+        replaceTree(newTree); // TODO check correct assignation
+        richTree = newTree.map(convertTreeNodeToDesiredNode); // TODO check correct tree structure
     };
 
     const printNodes = () => {
         //console.log(JSON.stringify(nodes, null, 2));
         //console.log(JSON.stringify(edges, null, 2));
-        console.log(JSON.stringify(initialTree, null, 2));
     }
 
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
