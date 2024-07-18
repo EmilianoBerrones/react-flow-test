@@ -337,12 +337,6 @@ export default function App() {
         richTree = newTree.map(convertTreeNodeToDesiredNode);
     };
 
-    // Debugging function
-    const printNodes = () => {
-        //console.log(JSON.stringify(nodes, null, 2));
-        //console.log(JSON.stringify(edges, null, 2));
-    }
-
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
     const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
         if (event.key === 'Tab') {
@@ -398,7 +392,6 @@ export default function App() {
                 {view === 'richTreeView' && <RichTreeView items={richTree} slots={{expandIcon: FlagCircleIcon, collapseIcon: FlagCircleOutlined, endIcon: ArrowCircleLeftOutlined}} onChange={handleReloadButton}/>}
                 <h5></h5>
                 <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
-                <Button variant="outlined" onClick={printNodes}>Print</Button>
             </div>
             <div className="right-pane">
                 <ReactFlow
