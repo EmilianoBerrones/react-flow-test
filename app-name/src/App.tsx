@@ -1,5 +1,14 @@
-import type {OnConnect} from "reactflow";
-import {addEdge, Background, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState,} from "reactflow";
+import {
+    addEdge,
+    Background,
+    Controls,
+    MarkerType,
+    MiniMap,
+    OnConnect,
+    ReactFlow,
+    useEdgesState,
+    useNodesState
+} from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
 import {SetStateAction, useCallback, useEffect, useState} from "react";
@@ -10,8 +19,10 @@ import "./updatenode.css";
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {Button, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
-// import { TreeViewBaseItem } from '@mui/x-initialTree-view/models';
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
+import FlagCircleIcon from '@mui/icons-material/FlagCircle';
+import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
+
 
 // Layouting elements with the Dagre library TODO change spacing between nodes
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -58,6 +69,27 @@ interface Edge {
     source: string;
     target: string;
     animated: boolean;
+    type?: string;
+    markerEnd?: {
+        type: MarkerType,
+        width: number,
+        height: number,
+        color: string,
+    };
+}
+// Arrow styles for the edges
+const arrowMarker = {
+    type: MarkerType.ArrowClosed,
+    width: 20,
+    height: 20,
+    color: 'black',
+}
+const arrowMarkerEmpty = {
+    type: MarkerType.ArrowClosed,
+    width: 20,
+    height: 20,
+    outlined: true,
+    color: 'grey',
 }
 
 // Definition of the stree structure
@@ -231,11 +263,19 @@ export default function App() {
         for (const node of nodes) {
             if (parentId) {
                 // Create an edge from the parent node to the current node
+                let animation = false;
+                let defaultArrow = arrowMarker;
+                if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
+                    animation = true
+                    defaultArrow = arrowMarkerEmpty;
+                }
                 edges.push({
                     id: `edge-${parentId}-${node.node.id}`,
                     source: parentId,
                     target: node.node.id,
-                    animated: true, // Or false depending on your preference
+                    animated: animation, // Or false depending on your preference
+                    type: 'step',
+                    markerEnd: defaultArrow,
                 });
             }
 
@@ -347,7 +387,7 @@ export default function App() {
                         onKeyDown={handleTab}
                     />
                 )}
-                {view === 'richTreeView' && <RichTreeView items={richTree} onChange={handleReloadButton}/>}
+                {view === 'richTreeView' && <RichTreeView items={richTree} slots={{expandIcon: FlagCircleIcon, collapseIcon: FlagCircleOutlined, endIcon: ArrowCircleLeftOutlined}} onChange={handleReloadButton}/>}
                 <h5></h5>
                 <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
                 <Button variant="outlined" onClick={printNodes}>Print</Button>
