@@ -2,7 +2,7 @@ import type {OnConnect} from "reactflow";
 import {addEdge, Background, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState,} from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import {SetStateAction, useCallback, useState} from "react";
+import {SetStateAction, useCallback, useEffect, useState} from "react";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -13,34 +13,34 @@ import {Button, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material"
 // import { TreeViewBaseItem } from '@mui/x-initialTree-view/models';
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 
-// Layouting elements with the Dagre library TODO implement dagre
-const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any; }) => {
+// Layouting elements with the Dagre library TODO change spacing between nodes
+const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-    g.setGraph({rankdir: options.direction});
+    g.setGraph({
+        rankdir: options.direction,
+        nodesep: 50,  // Increase node separation
+        ranksep : 100, // Increase rank separation
+    });
+
+    nodes.forEach((node) => {
+        const width = node.measured?.width ?? 172; // Provide default width if not available
+        const height = node.measured?.height ?? 36; // Provide default height if not available
+        g.setNode(node.id, { width, height });
+    });
 
     edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-    nodes.forEach((node) =>
-        g.setNode(node.id, {
-            ...node,
-            width: node.measured?.width ?? 0,
-            height: node.measured?.height ?? 0,
-        }),
-    );
 
     Dagre.layout(g);
 
-    return {
-        nodes: nodes.map((node) => {
-            const position = g.node(node.id);
-            // We are shifting the dagre node position (anchor=center center) to the top left
-            // so it matches the React Flow node anchor point (top left).
-            const x = position.x - (node.measured?.width ?? 0) / 2;
-            const y = position.y - (node.measured?.height ?? 0) / 2;
+    nodes.forEach((node) => {
+        const position = g.node(node.id);
+        node.position = {
+            x: position.x - (node.measured?.width ?? 172) / 2,
+            y: position.y - (node.measured?.height ?? 36) / 2
+        };
+    });
 
-            return {...node, position: {x, y}};
-        }),
-        edges,
-    };
+    return { nodes, edges };
 };
 
 // INTERFACES
@@ -268,7 +268,9 @@ export default function App() {
         };
 
         const newNodes = createNodesFromTree(tree);
-        setNodes(newNodes);
+        // Layout them with Dagre before drawing them
+        const { nodes: layoutedNodes} = getLayoutedElements(newNodes, edges, { direction: 'TB' });
+        setNodes(layoutedNodes);
     }
 
     // Function to replace the previous tree with the new one given as parameter.
@@ -306,6 +308,12 @@ export default function App() {
             textarea.selectionStart = textarea.selectionEnd = start + 1;
         }
     }
+
+    useEffect(() => {
+        const layoutedElements = getLayoutedElements(nodes, edges, { direction: 'TB' });
+        setNodes([...layoutedElements.nodes]);
+        setEdges([...layoutedElements.edges]);
+    }, [nodes.length, edges.length]);
 
     // HTML section of the code. 
     return (
