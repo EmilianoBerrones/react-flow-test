@@ -76,6 +76,9 @@ interface Edge {
         height: number,
         color: string,
     };
+    style?: {
+        stroke: string,
+    }
 }
 // Arrow styles for the edges
 const arrowMarker = {
@@ -84,6 +87,7 @@ const arrowMarker = {
     height: 20,
     color: 'black',
 }
+const arrowFill = {stroke: 'black'}
 const arrowMarkerEmpty = {
     type: MarkerType.ArrowClosed,
     width: 20,
@@ -91,6 +95,7 @@ const arrowMarkerEmpty = {
     outlined: true,
     color: 'grey',
 }
+const arrowFillEmpty = {stroke: 'grey'}
 
 // Definition of the stree structure
 interface TreeNode {
@@ -265,9 +270,11 @@ export default function App() {
                 // Create an edge from the parent node to the current node
                 let animation = false;
                 let defaultArrow = arrowMarker;
+                let defaultFill = arrowFill;
                 if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
                     animation = true
                     defaultArrow = arrowMarkerEmpty;
+                    defaultFill = arrowFillEmpty;
                 }
                 edges.push({
                     id: `edge-${parentId}-${node.node.id}`,
@@ -276,6 +283,7 @@ export default function App() {
                     animated: animation, // Or false depending on your preference
                     type: 'step',
                     markerEnd: defaultArrow,
+                    style: defaultFill,
                 });
             }
 
