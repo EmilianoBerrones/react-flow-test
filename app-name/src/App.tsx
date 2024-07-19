@@ -15,16 +15,18 @@ import {SetStateAction, useCallback, useEffect, useState} from "react";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
+import "./Navbar.jsx"
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
-import {Button, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
+import {Button, Container, Divider, Grid, InputLabel, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
+import Navbar from "./Navbar";
 
 
-// Layouting elements with the Dagre library TODO change spacing between nodes
+// Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({
@@ -150,9 +152,14 @@ function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     );
 }
 
+const defaultIndent = 2;
+let defaultSpace = "";
+for (let i = 0; i < defaultIndent; i++) {
+    defaultSpace += " ";
+}
 // Function to transform the initialTree to text, and show it in the text box on the left pane.
 function treeToText(tree: TreeNode[], level: number = 0): string {
-    const baseIndent = '    ';
+    const baseIndent = defaultSpace;
     let result = '';
 
     for (const treeNode of tree) {
@@ -180,7 +187,7 @@ function textToTree(text: string): TreeNode[] {
     const nodesById: { [id: string]: TreeNode } = {};
     const stack: { level: number, node: TreeNode }[] = [];
 
-    const indentLevel = (line: string) => line.match(/^ */)![0].length / 4;
+    const indentLevel = (line: string) => line.match(/^ */)![0].length / defaultIndent;
 
     for (const line of lines) {
         const match = line.match(/^( *)- (\w+): (.+)$/);
@@ -241,7 +248,7 @@ function textToTree(text: string): TreeNode[] {
 // TODO - Node searcher
 // TODO - Header bar
 // TODO - Highlight active node in text.
-// TODO - Node grid to insert it on the field. 
+// TODO - Node grid to insert it on the field.
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
@@ -363,6 +370,11 @@ export default function App() {
     const debugButton = () => {
         console.log(nodes)
         console.log(edges)
+        console.log(JSON.stringify(richTree, null, 2))
+    }
+
+    const handleIndent = () => {
+        console.log("Hola")
     }
 
     useEffect(() => {
@@ -375,38 +387,51 @@ export default function App() {
     return (
         <div className="app-container">
             <meta name="viewport" content="initial-scale=1, width=device-width"/>
+            <Navbar></Navbar>
             <div className="left-pane">
-                <h1>ProjectName</h1>
-                <ToggleButtonGroup
-                    value={view}
-                    exclusive
-                    onChange={handleViewChange}
-                    aria-label="view selection"
-                >
-                    <ToggleButton value="textField" aria-label="TextField">
-                        Text view
-                    </ToggleButton>
-                    <ToggleButton value="richTreeView" aria-label="RichTreeView">
-                        Tree view
-                    </ToggleButton>
-                </ToggleButtonGroup>
-                {view === 'textField' && (
-                    <TextField
-                        id="AssuranceText"
-                        multiline={true}
-                        fullWidth
-                        minRows={15}
-                        maxRows={45}
-                        variant="outlined"
-                        value={initialAssuranceText}
-                        onChange={(e) => setInitialAssuranceText(e.target.value)}
-                        onKeyDown={handleTab}
-                    />
-                )}
-                {view === 'richTreeView' && <RichTreeView items={richTree} slots={{expandIcon: FlagCircleIcon, collapseIcon: FlagCircleOutlined, endIcon: ArrowCircleLeftOutlined}} onChange={handleReloadButton}/>}
-                <h5></h5>
-                <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
-                <Button variant="outlined" onClick={debugButton}>PRINT</Button>
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <h1>ProjectName</h1>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <ToggleButtonGroup
+                            value={view}
+                            exclusive
+                            onChange={handleViewChange}
+                            aria-label="view selection"
+                        >
+                            <ToggleButton value="textField" aria-label="TextField">
+                                Text view
+                            </ToggleButton>
+                            <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                                Tree view
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Grid>
+                    <Grid item xs={12}>
+                        {view === 'textField' && (
+                            <TextField
+                                id="AssuranceText"
+                                multiline={true}
+                                fullWidth
+                                minRows={15}
+                                maxRows={45}
+                                variant="outlined"
+                                value={initialAssuranceText}
+                                onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                onKeyDown={handleTab}
+                            />
+                        )}
+                        {view === 'richTreeView' && <RichTreeView items={richTree} slots={{expandIcon: FlagCircleIcon, collapseIcon: FlagCircleOutlined, endIcon: ArrowCircleLeftOutlined}}/>}
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                        <Button variant="outlined" onClick={debugButton}>PRINT</Button>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField variant="outlined" onChange={handleIndent} label="Spacing"></TextField>
+                    </Grid>
+                </Grid>
             </div>
             <div className="right-pane">
                 <ReactFlow
