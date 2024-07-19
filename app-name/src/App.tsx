@@ -30,7 +30,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
     g.setGraph({
         rankdir: options.direction,
         nodesep: 50,  // Increase node separation
-        ranksep : 100, // Increase rank separation
+        ranksep : 150, // Increase rank separation
     });
 
     nodes.forEach((node) => {
@@ -180,7 +180,7 @@ function textToTree(text: string): TreeNode[] {
     const nodesById: { [id: string]: TreeNode } = {};
     const stack: { level: number, node: TreeNode }[] = [];
 
-    const indentLevel = (line: string) => line.match(/^ */)![0].length / 2;
+    const indentLevel = (line: string) => line.match(/^ */)![0].length / 4;
 
     for (const line of lines) {
         const match = line.match(/^( *)- (\w+): (.+)$/);
@@ -233,6 +233,15 @@ function textToTree(text: string): TreeNode[] {
     return tree;
 }
 
+// TODO make function that cleans the text in textfield. So that the nodes are not repeated
+// TODO make custom nodes with the correct design and content.
+// TODO make custom edge with outlined arrow
+// TODO possible add ons:
+// TODO - Indentation modifier
+// TODO - Node searcher
+// TODO - Header bar
+// TODO - Highlight active node in text.
+// TODO - Node grid to insert it on the field. 
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
@@ -351,6 +360,11 @@ export default function App() {
         }
     }
 
+    const debugButton = () => {
+        console.log(nodes)
+        console.log(edges)
+    }
+
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, { direction: 'TB' });
         setNodes([...layoutedElements.nodes]);
@@ -392,6 +406,7 @@ export default function App() {
                 {view === 'richTreeView' && <RichTreeView items={richTree} slots={{expandIcon: FlagCircleIcon, collapseIcon: FlagCircleOutlined, endIcon: ArrowCircleLeftOutlined}} onChange={handleReloadButton}/>}
                 <h5></h5>
                 <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                <Button variant="outlined" onClick={debugButton}>PRINT</Button>
             </div>
             <div className="right-pane">
                 <ReactFlow
