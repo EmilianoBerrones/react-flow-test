@@ -152,7 +152,7 @@ function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
 
 // Function to transform the initialTree to text, and show it in the text box on the left pane.
 function treeToText(tree: TreeNode[], level: number = 0): string {
-    const baseIndent = '  ';
+    const baseIndent = '    ';
     let result = '';
 
     for (const treeNode of tree) {
