@@ -30,8 +30,8 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({
         rankdir: options.direction,
-        nodesep: 50,  // Increase node separation
-        ranksep: 150, // Increase rank separation
+        nodesep: 150,  // Increase node separation
+        ranksep: 200, // Increase rank separation
     });
 
     nodes.forEach((node) => {
@@ -242,7 +242,7 @@ function textToTree(text: string): TreeNode[] {
 }
 
 // TODO make function that cleans the text in textfield. So that the nodes are not repeated
-// TODO make custom nodes with the correct design and content.
+// COMPLETE make custom nodes with the correct design and content.
 // TODO make custom edge with outlined arrow
 // TODO possible add ons:
 // TODO - Indentation modifier
@@ -326,7 +326,7 @@ export default function App() {
                     id: node.node.id,
                     data: node.node.data,
                     position: node.node.position,
-                    type: node.node.type
+                    type: defineTypeOfNode(node.node.id)
                 },
                 ...createNodesFromTree(node.children)
             ]);
@@ -336,6 +336,28 @@ export default function App() {
         // Layout them with Dagre before drawing them
         const {nodes: layoutedNodes} = getLayoutedElements(newNodes, edges, {direction: 'TB'});
         setNodes(layoutedNodes);
+    }
+
+    // Helper function to return the correct type of node depending on its id.
+    function defineTypeOfNode(id: string) {
+        if (id.startsWith('S')) {
+            if (id.includes('Sn')) {
+                return 'solution';
+            } else return 'strategy';
+        } else {
+            switch (id.charAt(0)) {
+                case 'G':
+                    return 'goal';
+                case 'C':
+                    return 'context';
+                case 'A':
+                    return 'assumption';
+                case 'J':
+                    return 'justification';
+                default:
+                    return 'default';
+            }
+        }
     }
 
     // Function to replace the previous tree with the new one given as parameter.
