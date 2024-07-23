@@ -1,12 +1,10 @@
 import type {Node, NodeTypes} from "reactflow";
 import {PositionLoggerNode} from "./PositionLoggerNode";
-import CustomNode from "./customNode.tsx";
 
 export const initialNodes = [
     {
         id: 'G1',
         data: {label: 'Map system is acceptably safe to operate'},
-        type: 'custom-node',
         position: {x: 0, y: 0},
     },
     {
@@ -53,5 +51,5 @@ export const initialNodes = [
 
 export const nodeTypes = {
     "position-logger": PositionLoggerNode,
-    custom: CustomNode,
+    // Add any of your custom nodes here!
 } satisfies NodeTypes;
