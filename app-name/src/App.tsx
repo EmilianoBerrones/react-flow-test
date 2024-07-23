@@ -15,15 +15,13 @@ import {SetStateAction, useCallback, useEffect, useState} from "react";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
-import "./Navbar.jsx"
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
-import {Button, Container, Divider, Grid, InputLabel, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
+import {Button, Grid, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
-import Navbar from "./Navbar";
 
 
 // Layouting elements with the Dagre library
@@ -387,7 +385,6 @@ export default function App() {
     return (
         <div className="app-container">
             <meta name="viewport" content="initial-scale=1, width=device-width"/>
-            <Navbar></Navbar>
             <div className="left-pane">
                 <Grid container spacing={2}>
                     <Grid item xs={12}>

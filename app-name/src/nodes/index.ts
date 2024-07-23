@@ -1,5 +1,6 @@
 import type {Node, NodeTypes} from "reactflow";
 import {PositionLoggerNode} from "./PositionLoggerNode";
+import customNode from "./customNode.tsx";
 
 export const initialNodes = [
     {
@@ -51,5 +52,5 @@ export const initialNodes = [
 
 export const nodeTypes = {
     "position-logger": PositionLoggerNode,
-    // Add any of your custom nodes here!
+    custom: customNode,
 } satisfies NodeTypes;
