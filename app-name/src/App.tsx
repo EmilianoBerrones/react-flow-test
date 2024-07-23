@@ -243,13 +243,19 @@ function textToTree(text: string): TreeNode[] {
 
 // TODO make function that cleans the text in textfield. So that the nodes are not repeated
 // COMPLETE make custom nodes with the correct design and content.
+// TODO reflect changes from the diargam to the text format
+// TODO export current tree to JSON format, and save the file.
+// TODO make an import JSON button.
 // TODO make custom edge with outlined arrow
 // TODO possible add ons:
 // TODO - Indentation modifier
 // TODO - Node searcher
 // TODO - Header bar
-// TODO - Highlight active node in text.
-// TODO - Node grid to insert it on the field.
+// TODO - Highlight active node in text and/or tree.
+// TODO - Node selector to insert it on the field.
+// TODO - Auto indent text
+
+
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
