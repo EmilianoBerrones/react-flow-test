@@ -7,7 +7,8 @@ import {
     OnConnect,
     ReactFlow,
     useEdgesState,
-    useNodesState
+    useNodesState,
+    ReactFlowProvider
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
@@ -30,13 +31,13 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
     g.setGraph({
         rankdir: options.direction,
         nodesep: 50,  // Increase node separation
-        ranksep : 150, // Increase rank separation
+        ranksep: 150, // Increase rank separation
     });
 
     nodes.forEach((node) => {
         const width = node.measured?.width ?? 172; // Provide default width if not available
         const height = node.measured?.height ?? 36; // Provide default height if not available
-        g.setNode(node.id, { width, height });
+        g.setNode(node.id, {width, height});
     });
 
     edges.forEach((edge) => g.setEdge(edge.source, edge.target));
@@ -51,7 +52,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
         };
     });
 
-    return { nodes, edges };
+    return {nodes, edges};
 };
 
 // INTERFACES
@@ -80,6 +81,7 @@ interface Edge {
         stroke: string,
     }
 }
+
 // Arrow styles for the edges
 const arrowMarker = {
     type: MarkerType.ArrowClosed,
@@ -155,6 +157,7 @@ let defaultSpace = "";
 for (let i = 0; i < defaultIndent; i++) {
     defaultSpace += " ";
 }
+
 // Function to transform the initialTree to text, and show it in the text box on the left pane.
 function treeToText(tree: TreeNode[], level: number = 0): string {
     const baseIndent = defaultSpace;
@@ -197,8 +200,8 @@ function textToTree(text: string): TreeNode[] {
         const newNode: TreeNode = {
             node: {
                 id,
-                position: { x: 0, y: 0 },  // Positions start at zero. Dagre changes the positions.
-                data: { label }
+                position: {x: 0, y: 0},  // Positions start at zero. Dagre changes the positions.
+                data: {label}
             },
             children: []
         };
@@ -233,7 +236,7 @@ function textToTree(text: string): TreeNode[] {
             tree.push(newNode);
         }
 
-        stack.push({ level, node: newNode });
+        stack.push({level, node: newNode});
     }
     return tree;
 }
@@ -331,7 +334,7 @@ export default function App() {
 
         const newNodes = createNodesFromTree(tree);
         // Layout them with Dagre before drawing them
-        const { nodes: layoutedNodes} = getLayoutedElements(newNodes, edges, { direction: 'TB' });
+        const {nodes: layoutedNodes} = getLayoutedElements(newNodes, edges, {direction: 'TB'});
         setNodes(layoutedNodes);
     }
 
@@ -376,76 +379,82 @@ export default function App() {
     }
 
     useEffect(() => {
-        const layoutedElements = getLayoutedElements(nodes, edges, { direction: 'TB' });
+        const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
     }, [nodes.length, edges.length]);
 
     // HTML section of the code. 
     return (
-        <div className="app-container">
-            <meta name="viewport" content="initial-scale=1, width=device-width"/>
-            <div className="left-pane">
-                <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                        <h1>ProjectName</h1>
+        <ReactFlowProvider>
+            <div className="app-container">
+                <meta name="viewport" content="initial-scale=1, width=device-width"/>
+                <div className="left-pane">
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <h1>ProjectName</h1>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <ToggleButtonGroup
+                                value={view}
+                                exclusive
+                                onChange={handleViewChange}
+                                aria-label="view selection"
+                            >
+                                <ToggleButton value="textField" aria-label="TextField">
+                                    Text view
+                                </ToggleButton>
+                                <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                                    Tree view
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                        </Grid>
+                        <Grid item xs={12}>
+                            {view === 'textField' && (
+                                <TextField
+                                    id="AssuranceText"
+                                    multiline={true}
+                                    fullWidth
+                                    minRows={15}
+                                    maxRows={45}
+                                    variant="outlined"
+                                    value={initialAssuranceText}
+                                    onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                    onKeyDown={handleTab}
+                                />
+                            )}
+                            {view === 'richTreeView' && <RichTreeView items={richTree} slots={{
+                                expandIcon: FlagCircleIcon,
+                                collapseIcon: FlagCircleOutlined,
+                                endIcon: ArrowCircleLeftOutlined
+                            }}/>}
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                            <Button variant="outlined" onClick={debugButton}>PRINT</Button>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField variant="outlined" onChange={handleIndent} label="Spacing"></TextField>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12}>
-                        <ToggleButtonGroup
-                            value={view}
-                            exclusive
-                            onChange={handleViewChange}
-                            aria-label="view selection"
-                        >
-                            <ToggleButton value="textField" aria-label="TextField">
-                                Text view
-                            </ToggleButton>
-                            <ToggleButton value="richTreeView" aria-label="RichTreeView">
-                                Tree view
-                            </ToggleButton>
-                        </ToggleButtonGroup>
-                    </Grid>
-                    <Grid item xs={12}>
-                        {view === 'textField' && (
-                            <TextField
-                                id="AssuranceText"
-                                multiline={true}
-                                fullWidth
-                                minRows={15}
-                                maxRows={45}
-                                variant="outlined"
-                                value={initialAssuranceText}
-                                onChange={(e) => setInitialAssuranceText(e.target.value)}
-                                onKeyDown={handleTab}
-                            />
-                        )}
-                        {view === 'richTreeView' && <RichTreeView items={richTree} slots={{expandIcon: FlagCircleIcon, collapseIcon: FlagCircleOutlined, endIcon: ArrowCircleLeftOutlined}}/>}
-                    </Grid>
-                    <Grid item xs={6}>
-                        <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
-                        <Button variant="outlined" onClick={debugButton}>PRINT</Button>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <TextField variant="outlined" onChange={handleIndent} label="Spacing"></TextField>
-                    </Grid>
-                </Grid>
+                </div>
+                <div className="right-pane">
+                    <ReactFlow
+                        nodes={nodes}
+                        nodeTypes={nodeTypes}
+                        onNodesChange={onNodesChange}
+                        edges={edges}
+                        edgeTypes={edgeTypes}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        fitView
+                    >
+                        <Background/>
+                        <MiniMap/>
+                        <Controls/>
+                    </ReactFlow>
+                </div>
             </div>
-            <div className="right-pane">
-                <ReactFlow
-                    nodes={nodes}
-                    nodeTypes={nodeTypes}
-                    onNodesChange={onNodesChange}
-                    edges={edges}
-                    edgeTypes={edgeTypes}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    fitView
-                >
-                    <Background/>
-                    <MiniMap/>
-                    <Controls/>
-                </ReactFlow>
-            </div>
-        </div>
+        </ReactFlowProvider>
     );
 }

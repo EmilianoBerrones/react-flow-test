@@ -5,6 +5,7 @@ import customNode from "./customNode.tsx";
 export const initialNodes = [
     {
         id: 'G1',
+        type: 'custom',
         data: {label: 'Map system is acceptably safe to operate'},
         position: {x: 0, y: 0},
     },
