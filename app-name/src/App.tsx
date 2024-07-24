@@ -12,7 +12,7 @@ import {
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import {SetStateAction, useCallback, useEffect, useState} from "react";
+import React, {SetStateAction, useCallback, useEffect, useState} from "react";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -90,13 +90,7 @@ const arrowMarker = {
     color: 'black',
 }
 const arrowFill = {stroke: 'black'}
-const arrowMarkerEmpty = {
-    type: MarkerType.ArrowClosed,
-    width: 20,
-    height: 20,
-    outlined: true,
-    color: 'grey',
-}
+const arrowMarkerEmpty = 'custom-marker';
 const arrowFillEmpty = {stroke: 'grey'}
 
 // Definition of the stree structure
@@ -292,7 +286,7 @@ export default function App() {
             if (parentId) {
                 // Create an edge from the parent node to the current node
                 let animation = false;
-                let defaultArrow = arrowMarker;
+                let defaultArrow : any = arrowMarker;
                 let defaultFill = arrowFill;
                 if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
                     animation = true
@@ -414,75 +408,94 @@ export default function App() {
 
     // HTML section of the code. 
     return (
-        <ReactFlowProvider>
-            <div className="app-container">
-                <meta name="viewport" content="initial-scale=1, width=device-width"/>
-                <div className="left-pane">
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <h1>ProjectName</h1>
+        <>
+            <svg
+                style={{display: 'inline-flex', position: 'absolute'}}
+            >
+                <marker
+                    id="custom-marker"
+                    viewBox="0 0 25 25"
+                    markerHeight={15}
+                    markerWidth={15}
+                    refX={12}
+                    refY={5}
+                    orient="180"
+                >
+                    <path fill="grey"
+                          d="M3.8 20q-.575 0-.875-.513t.025-1.012l8.2-13.125q.3-.475.85-.475t.85.475l8.2 13.125q.325.5.025 1.013T20.2 20zm1.8-2h12.8L12 7.75zm6.4-5.125">
+                    </path>
+                </marker>
+            </svg>
+            <ReactFlowProvider>
+                <div className="app-container">
+                    <meta name="viewport" content="initial-scale=1, width=device-width"/>
+                    <div className="left-pane">
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <h1>ProjectName</h1>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <ToggleButtonGroup
+                                    value={view}
+                                    exclusive
+                                    onChange={handleViewChange}
+                                    aria-label="view selection"
+                                >
+                                    <ToggleButton value="textField" aria-label="TextField">
+                                        Text view
+                                    </ToggleButton>
+                                    <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                                        Tree view
+                                    </ToggleButton>
+                                </ToggleButtonGroup>
+                            </Grid>
+                            <Grid item xs={12}>
+                                {view === 'textField' && (
+                                    <TextField
+                                        id="AssuranceText"
+                                        multiline={true}
+                                        fullWidth
+                                        minRows={15}
+                                        maxRows={45}
+                                        variant="outlined"
+                                        value={initialAssuranceText}
+                                        onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                        onKeyDown={handleTab}
+                                    />
+                                )}
+                                {view === 'richTreeView' && <RichTreeView items={richTree} slots={{
+                                    expandIcon: FlagCircleIcon,
+                                    collapseIcon: FlagCircleOutlined,
+                                    endIcon: ArrowCircleLeftOutlined
+                                }}/>}
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                <Button variant="outlined" onClick={debugButton}>PRINT</Button>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField variant="outlined" onChange={handleIndent} label="Spacing"></TextField>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={12}>
-                            <ToggleButtonGroup
-                                value={view}
-                                exclusive
-                                onChange={handleViewChange}
-                                aria-label="view selection"
-                            >
-                                <ToggleButton value="textField" aria-label="TextField">
-                                    Text view
-                                </ToggleButton>
-                                <ToggleButton value="richTreeView" aria-label="RichTreeView">
-                                    Tree view
-                                </ToggleButton>
-                            </ToggleButtonGroup>
-                        </Grid>
-                        <Grid item xs={12}>
-                            {view === 'textField' && (
-                                <TextField
-                                    id="AssuranceText"
-                                    multiline={true}
-                                    fullWidth
-                                    minRows={15}
-                                    maxRows={45}
-                                    variant="outlined"
-                                    value={initialAssuranceText}
-                                    onChange={(e) => setInitialAssuranceText(e.target.value)}
-                                    onKeyDown={handleTab}
-                                />
-                            )}
-                            {view === 'richTreeView' && <RichTreeView items={richTree} slots={{
-                                expandIcon: FlagCircleIcon,
-                                collapseIcon: FlagCircleOutlined,
-                                endIcon: ArrowCircleLeftOutlined
-                            }}/>}
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
-                            <Button variant="outlined" onClick={debugButton}>PRINT</Button>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField variant="outlined" onChange={handleIndent} label="Spacing"></TextField>
-                        </Grid>
-                    </Grid>
+                    </div>
+                    <div className="right-pane">
+                        <ReactFlow
+                            nodes={nodes}
+                            nodeTypes={nodeTypes}
+                            onNodesChange={onNodesChange}
+                            edges={edges}
+                            edgeTypes={edgeTypes}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={onConnect}
+                            fitView
+                        >
+                            <Background/>
+                            <MiniMap/>
+                            <Controls/>
+                        </ReactFlow>
+                    </div>
                 </div>
-                <div className="right-pane">
-                    <ReactFlow
-                        nodes={nodes}
-                        nodeTypes={nodeTypes}
-                        onNodesChange={onNodesChange}
-                        edges={edges}
-                        edgeTypes={edgeTypes}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
-                        fitView
-                    >
-                        <Background/>
-                        <MiniMap/>
-                        <Controls/>
-                    </ReactFlow>
-                </div>
-            </div>
-        </ReactFlowProvider>
+            </ReactFlowProvider>
+        </>
     );
 }
