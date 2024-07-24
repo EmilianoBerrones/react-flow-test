@@ -20,7 +20,7 @@ import "./updatenode.css";
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
-    Button,
+    Button, Divider,
     FormControl,
     Grid,
     InputLabel,
@@ -463,6 +463,7 @@ export default function App() {
                         <Grid container spacing={2}>
                             <Grid item xs={12}>
                                 <h1>ProjectName</h1>
+                                <Divider></Divider>
                             </Grid>
                             <Grid item xs={12}>
                                 <ToggleButtonGroup
@@ -501,10 +502,12 @@ export default function App() {
                             </Grid>
                             <Grid item xs={6}>
                                 <Button variant="outlined" fullWidth onClick={handleReloadButton}>Reload changes</Button>
-                                <Button variant="outlined" onClick={debugButton}>PRINT</Button>
                             </Grid>
                             <Grid item xs={6}>
                                 <Button variant="outlined" fullWidth onClick={exportToJSON}>Export graph to JSON</Button>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button variant="outlined" onClick={debugButton}>PRINT</Button>
                             </Grid>
                             <Grid item xs={12}>
                                 <FormControl fullWidth>
