@@ -19,7 +19,17 @@ import "./updatenode.css";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
-import {Button, Grid, TextField, ToggleButton, ToggleButtonGroup} from "@mui/material";
+import {
+    Button,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select, SelectChangeEvent,
+    TextField,
+    ToggleButton,
+    ToggleButtonGroup
+} from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
@@ -237,10 +247,11 @@ function textToTree(text: string): TreeNode[] {
 
 // TODO make function that cleans the text in textfield. So that the nodes are not repeated
 // COMPLETE make custom nodes with the correct design and content.
-// TODO reflect changes from the diargam to the text format
+// TODO clean custom nodes' outline
+// TODO reflect changes from the diagram to the text format
 // TODO export current tree to JSON format, and save the file.
 // TODO make an import JSON button.
-// TODO make custom edge with outlined arrow
+// COMPLETED make custom edge with outlined arrow
 // TODO possible add ons:
 // TODO - Indentation modifier
 // TODO - Node searcher
@@ -260,6 +271,7 @@ export default function App() {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
+    const [indent, setIndent] = useState(defaultIndent);
 
     const onConnect: OnConnect = useCallback(
         (connection) => setEdges((edges) => addEdge(connection, edges)),
@@ -371,7 +383,7 @@ export default function App() {
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
     const handleReloadButton = (_event: any) => {
-        const newTree = textToTree(initialAssuranceText);
+        const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
         replaceTree(newTree);
         richTree = newTree.map(convertTreeNodeToDesiredNode);
     };
@@ -390,15 +402,24 @@ export default function App() {
         }
     }
 
+    function replaceTabsWithSpaces(input: string, spacesPerTab: number = 8): string {
+        if (!input.includes('\t')) {
+            return input;
+        }
+        const spaces = ' '.repeat(spacesPerTab);
+        return input.replace(/\t/g, spaces);
+    }
+
+    const handleChangeIndent = (event: SelectChangeEvent) => {
+        setIndent(parseInt(event.target.value));
+    }
+
     const debugButton = () => {
         console.log(nodes)
         console.log(edges)
         console.log(JSON.stringify(richTree, null, 2))
     }
 
-    const handleIndent = () => {
-        console.log("Hola")
-    }
 
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
@@ -474,7 +495,18 @@ export default function App() {
                                 <Button variant="outlined" onClick={debugButton}>PRINT</Button>
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField variant="outlined" onChange={handleIndent} label="Spacing"></TextField>
+                                <FormControl fullWidth>
+                                    <InputLabel id="indentSelect">Indentation</InputLabel>
+                                    <Select
+                                        value={indent.toString()}
+                                        label="Indent"
+                                        onChange={handleChangeIndent}
+                                    >
+                                        <MenuItem value={2}>Two spaces</MenuItem>
+                                        <MenuItem value={4}>Four spaces</MenuItem>
+                                        <MenuItem value={8}>Tabulations</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </Grid>
                         </Grid>
                     </div>
