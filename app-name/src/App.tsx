@@ -20,15 +20,16 @@ import "./updatenode.css";
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
+    AppBar,
     Button, Divider,
     FormControl,
-    Grid,
+    Grid, IconButton,
     InputLabel,
     MenuItem,
     Select, SelectChangeEvent,
     TextField,
     ToggleButton,
-    ToggleButtonGroup
+    ToggleButtonGroup, Toolbar, Typography
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
@@ -254,6 +255,7 @@ function textToTree(text: string): TreeNode[] {
 // TODO add maxwidth values to CSS nodes.
 // TODO reflect changes from the diagram to the text format
 // TODO make an import JSON button.
+// TODO notify the user when the text does not have the specified structure
 
 // TODO possible add ons:
 // COMPLETE - Indentation modifier
@@ -300,7 +302,7 @@ export default function App() {
             if (parentId) {
                 // Create an edge from the parent node to the current node
                 let animation = false;
-                let defaultArrow : any = arrowMarker;
+                let defaultArrow: any = arrowMarker;
                 let defaultFill = arrowFill;
                 if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
                     animation = true
@@ -412,12 +414,45 @@ export default function App() {
         return input.replace(/\t/g, spaces);
     }
 
+    // Clean the text to add the hyphens.
+    function addHyphenToText(texto: string): string {
+        // Dividir el texto en líneas
+        const lineas = texto.split('\n');
+
+        // Transformar cada línea para agregar "- " antes de la primera mayúscula si no hay uno ya
+        const lineasConGuiones = lineas.map(linea => {
+            // Encontrar la posición de la primera letra mayúscula
+            const indicePrimeraMayuscula = linea.search(/[A-Z]/);
+
+            if (indicePrimeraMayuscula !== -1) {
+                // Verificar si antes de la primera mayúscula ya hay un "- "
+                const antesPrimeraMayuscula = linea.slice(0, indicePrimeraMayuscula);
+                if (antesPrimeraMayuscula.includes("- ")) {
+                    // Si ya hay un "- " antes de la primera mayúscula, devolver la línea como está
+                    return linea;
+                } else {
+                    // Insertar "- " justo antes de la primera mayúscula
+                    const lineaConGuion = antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
+                    return lineaConGuion;
+                }
+            } else {
+                // Si no hay letra mayúscula, devolver la línea como está
+                return linea;
+            }
+        });
+
+        // Unir las líneas de nuevo en un solo string
+        const textoConGuiones = lineasConGuiones.join('\n');
+
+        return textoConGuiones;
+    }
+
     const handleChangeIndent = (event: SelectChangeEvent) => {
         setIndent(parseInt(event.target.value));
     }
 
     const exportToJSON = () => {
-        const blob = new Blob([JSON.stringify(richTree, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(richTree, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -460,8 +495,25 @@ export default function App() {
             <ReactFlowProvider>
                 <div className="app-container">
                     <meta name="viewport" content="initial-scale=1, width=device-width"/>
-                    <div className="left-pane">
-                        <Grid container spacing={2}>
+                    <AppBar position="fixed" color={"transparent"}>
+                        <Toolbar>
+                            <IconButton
+                                size="large"
+                                edge="start"
+                                color="primary"
+                                aria-label="menu"
+                                sx={{mr: 2}}
+                            >
+                                <FlagCircleIcon/>
+                            </IconButton>
+                            <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
+                                ProjectName
+                            </Typography>
+                            <Button color="primary">Options</Button>
+                        </Toolbar>
+                    </AppBar>
+                    <Grid container direction="row" spacing={0} style={{marginTop: '4em'}}>
+                        <Grid container spacing={2} xs={4} padding="30px">
                             <Grid item xs={12}>
                                 <h1>ProjectName</h1>
                                 <Divider></Divider>
@@ -490,7 +542,7 @@ export default function App() {
                                         minRows={15}
                                         maxRows={45}
                                         variant="outlined"
-                                        value={initialAssuranceText}
+                                        value={addHyphenToText(initialAssuranceText)}
                                         onChange={(e) => setInitialAssuranceText(e.target.value)}
                                         onKeyDown={handleTab}
                                     />
@@ -502,10 +554,12 @@ export default function App() {
                                 }}/>}
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="outlined" fullWidth onClick={handleReloadButton}>Reload changes</Button>
+                                <Button variant="outlined" fullWidth onClick={handleReloadButton}>Reload
+                                    changes</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="outlined" fullWidth onClick={exportToJSON}>Export graph to JSON</Button>
+                                <Button variant="outlined" fullWidth onClick={exportToJSON}>Export graph to
+                                    JSON</Button>
                             </Grid>
                             <Grid item xs={12}>
                                 <Button variant="outlined" onClick={debugButton}>PRINT</Button>
@@ -525,23 +579,23 @@ export default function App() {
                                 </FormControl>
                             </Grid>
                         </Grid>
-                    </div>
-                    <div className="right-pane">
-                        <ReactFlow
-                            nodes={nodes}
-                            nodeTypes={nodeTypes}
-                            onNodesChange={onNodesChange}
-                            edges={edges}
-                            edgeTypes={edgeTypes}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            fitView
-                        >
-                            <Background/>
-                            <MiniMap/>
-                            <Controls/>
-                        </ReactFlow>
-                    </div>
+                        <Grid container xs={8}>
+                            <ReactFlow
+                                nodes={nodes}
+                                nodeTypes={nodeTypes}
+                                onNodesChange={onNodesChange}
+                                edges={edges}
+                                edgeTypes={edgeTypes}
+                                onEdgesChange={onEdgesChange}
+                                onConnect={onConnect}
+                                fitView
+                            >
+                                <Background/>
+                                <MiniMap/>
+                                <Controls/>
+                            </ReactFlow>
+                        </Grid>
+                    </Grid>
                 </div>
             </ReactFlowProvider>
         </>
