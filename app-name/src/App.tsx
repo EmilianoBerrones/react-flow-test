@@ -249,9 +249,10 @@ function textToTree(text: string): TreeNode[] {
 // COMPLETE make custom nodes with the correct design and content.
 // TODO clean custom nodes' outline
 // TODO reflect changes from the diagram to the text format
-// TODO export current tree to JSON format, and save the file.
+// COMPLETED export current tree to JSON format, and save the file.
 // TODO make an import JSON button.
 // COMPLETED make custom edge with outlined arrow
+// COMPLETED handle tabulations in textfield
 // TODO possible add ons:
 // TODO - Indentation modifier
 // TODO - Node searcher
@@ -414,9 +415,17 @@ export default function App() {
         setIndent(parseInt(event.target.value));
     }
 
+    const exportToJSON = () => {
+        const blob = new Blob([JSON.stringify(richTree, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nodes.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     const debugButton = () => {
-        console.log(nodes)
-        console.log(edges)
         console.log(JSON.stringify(richTree, null, 2))
     }
 
@@ -491,8 +500,11 @@ export default function App() {
                                 }}/>}
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                <Button variant="outlined" fullWidth onClick={handleReloadButton}>Reload changes</Button>
                                 <Button variant="outlined" onClick={debugButton}>PRINT</Button>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="outlined" fullWidth onClick={exportToJSON}>Export graph to JSON</Button>
                             </Grid>
                             <Grid item xs={12}>
                                 <FormControl fullWidth>
