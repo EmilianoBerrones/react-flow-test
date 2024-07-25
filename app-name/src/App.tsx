@@ -495,7 +495,7 @@ export default function App() {
             <ReactFlowProvider>
                 <div className="app-container">
                     <meta name="viewport" content="initial-scale=1, width=device-width"/>
-                    <AppBar position="fixed" color={"transparent"}>
+                    <AppBar position="fixed" color={"transparent"} style={{height: '5vh'}}>
                         <Toolbar>
                             <IconButton
                                 size="large"
@@ -512,88 +512,95 @@ export default function App() {
                             <Button color="primary">Options</Button>
                         </Toolbar>
                     </AppBar>
-                    <Grid container direction="row" spacing={0} style={{marginTop: '4em'}}>
-                        <Grid container spacing={2} xs={4} padding="30px">
-                            <Grid item xs={12}>
-                                <h1>ProjectName</h1>
-                                <Divider></Divider>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <ToggleButtonGroup
-                                    value={view}
-                                    exclusive
-                                    onChange={handleViewChange}
-                                    aria-label="view selection"
-                                >
-                                    <ToggleButton value="textField" aria-label="TextField">
-                                        Text view
-                                    </ToggleButton>
-                                    <ToggleButton value="richTreeView" aria-label="RichTreeView">
-                                        Tree view
-                                    </ToggleButton>
-                                </ToggleButtonGroup>
-                            </Grid>
-                            <Grid item xs={12}>
-                                {view === 'textField' && (
-                                    <TextField
-                                        id="AssuranceText"
-                                        multiline={true}
-                                        fullWidth
-                                        minRows={15}
-                                        maxRows={45}
-                                        variant="outlined"
-                                        value={addHyphenToText(initialAssuranceText)}
-                                        onChange={(e) => setInitialAssuranceText(e.target.value)}
-                                        onKeyDown={handleTab}
-                                    />
-                                )}
-                                {view === 'richTreeView' && <RichTreeView items={richTree} slots={{
-                                    expandIcon: FlagCircleIcon,
-                                    collapseIcon: FlagCircleOutlined,
-                                    endIcon: ArrowCircleLeftOutlined
-                                }}/>}
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Button variant="outlined" fullWidth onClick={handleReloadButton}>Reload
-                                    changes</Button>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Button variant="outlined" fullWidth onClick={exportToJSON}>Export graph to
-                                    JSON</Button>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Button variant="outlined" onClick={debugButton}>PRINT</Button>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <InputLabel id="indentSelect">Indentation</InputLabel>
-                                    <Select
-                                        value={indent.toString()}
-                                        label="Indent"
-                                        onChange={handleChangeIndent}
+                    <Grid container direction="row" spacing={0} style={{marginTop: '5vh', minHeight: '95vh'}}>
+                        <Grid item xs={4} padding="30px" style={{minHeight: '100%'}}>
+                            <Grid container direction="column" spacing={2} style={{minHeight: 'inherit'}} justifyContent="center">
+                                <Grid item xs={1}>
+                                    <h1>ProjectName</h1>
+                                    <Divider></Divider>
+                                </Grid>
+                                <Grid item xs={1}>
+                                    <ToggleButtonGroup
+                                        value={view}
+                                        exclusive
+                                        onChange={handleViewChange}
+                                        aria-label="view selection"
                                     >
-                                        <MenuItem value={2}>Two spaces</MenuItem>
-                                        <MenuItem value={4}>Four spaces</MenuItem>
-                                        <MenuItem value={8}>Tabulations</MenuItem>
-                                    </Select>
-                                </FormControl>
+                                        <ToggleButton value="textField" aria-label="TextField">
+                                            Text view
+                                        </ToggleButton>
+                                        <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                                            Tree view
+                                        </ToggleButton>
+                                    </ToggleButtonGroup>
+                                </Grid>
+                                <Grid item xs>
+                                    <Grid container direction="column" spacing={1} justifyContent="flex-start" height="100%">
+                                        <Grid item xs="auto">
+                                            {view === 'textField' && (
+                                                <TextField
+                                                    id="AssuranceText"
+                                                    multiline={true}
+                                                    fullWidth
+                                                    minRows={15}
+                                                    maxRows={45}
+                                                    variant="outlined"
+                                                    value={addHyphenToText(initialAssuranceText)}
+                                                    onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                                    onKeyDown={handleTab}
+                                                />
+                                            )}
+                                            {view === 'richTreeView' && <RichTreeView items={richTree} slots={{
+                                                expandIcon: FlagCircleIcon,
+                                                collapseIcon: FlagCircleOutlined,
+                                                endIcon: ArrowCircleLeftOutlined
+                                            }}/>}
+                                        </Grid>
+                                        <Grid item xs={1}>
+                                            <Button variant="outlined" onClick={handleReloadButton}>Reload
+                                                changes</Button>
+                                            <Button variant="outlined" onClick={exportToJSON}>Export graph to
+                                                JSON</Button>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                                <Grid item xs={1}>
+                                    <Button variant="outlined" onClick={debugButton}>PRINT</Button>
+                                </Grid>
+                                <Grid item xs={1}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="indentSelect">Indentation</InputLabel>
+                                        <Select
+                                            value={indent.toString()}
+                                            label="Indent"
+                                            onChange={handleChangeIndent}
+                                        >
+                                            <MenuItem value={2}>Two spaces</MenuItem>
+                                            <MenuItem value={4}>Four spaces</MenuItem>
+                                            <MenuItem value={8}>Tabulations</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
                             </Grid>
                         </Grid>
-                        <Grid container xs={8}>
-                            <ReactFlow
-                                nodes={nodes}
-                                nodeTypes={nodeTypes}
-                                onNodesChange={onNodesChange}
-                                edges={edges}
-                                edgeTypes={edgeTypes}
-                                onEdgesChange={onEdgesChange}
-                                onConnect={onConnect}
-                                fitView
-                            >
-                                <Background/>
-                                <MiniMap/>
-                                <Controls/>
-                            </ReactFlow>
+                        <Grid item xs={8} style={{minHeight: '95vh'}}>
+                            <Grid container style={{minHeight: "inherit"}}>
+                                <ReactFlow
+                                    nodes={nodes}
+                                    nodeTypes={nodeTypes}
+                                    onNodesChange={onNodesChange}
+                                    edges={edges}
+                                    edgeTypes={edgeTypes}
+                                    onEdgesChange={onEdgesChange}
+                                    onConnect={onConnect}
+                                    fitView
+                                    style={{minHeight: "inherit"}}
+                                >
+                                    <Background/>
+                                    <MiniMap/>
+                                    <Controls/>
+                                </ReactFlow>
+                            </Grid>
                         </Grid>
                     </Grid>
                 </div>
