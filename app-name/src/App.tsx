@@ -41,7 +41,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     g.setGraph({
         rankdir: options.direction,
-        nodesep: 180,  // Increase node separation
+        nodesep: 200,  // Increase node separation
         ranksep: 200, // Increase rank separation
     });
 
@@ -251,11 +251,12 @@ function textToTree(text: string): TreeNode[] {
 // COMPLETE make custom nodes with the correct design and content.
 // COMPLETE clean custom nodes' outline
 // COMPLETED export current tree to JSON format, and save the file.
-// TODO make function that cleans the text in textfield. So that the nodes are not repeated
-// TODO add maxwidth values to CSS nodes.
+// COMPLETED add maxwidth values to CSS nodes.
+// TODO add types of nodes undeveloped, uninstantiated, and undeveloped and uninstantiated.
 // TODO reflect changes from the diagram to the text format
 // TODO make an import JSON button.
 // TODO notify the user when the text does not have the specified structure
+// TODO Design and implement the header bar
 
 // TODO possible add ons:
 // COMPLETE - Indentation modifier

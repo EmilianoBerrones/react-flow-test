@@ -12,8 +12,28 @@ interface CustomNodeProps {
 }
 
 export const GoalNode: React.FC<CustomNodeProps> = ({id, data}) => {
+    let uninstantiated = false;
+    let undeveloped = false;
+    if (data.label.includes('uninstantiated')){
+        uninstantiated = true;
+    }
+    if (data.label.includes('undeveloped')){
+        undeveloped = true;
+    }
     return (
         <div className="goalNode">
+            {(uninstantiated || undeveloped) && (
+                <div className="nodeAttribute">
+                    {undeveloped && (
+                        <div className="nodeAttribute__undeveloped"></div>
+                    )}
+                    {uninstantiated && (
+                        <div className="nodeAttribute__uninstantiatedContainer">
+                            <div className="nodeAttribute__uninstantiated"></div>
+                        </div>
+                    )}
+                </div>
+            )}
             <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
             <div><b>{id}</b></div>
             <div>{data.label}</div>

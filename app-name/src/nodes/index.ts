@@ -11,7 +11,7 @@ export const initialNodes = [
     {
         id: 'G1',
         type: 'goal',
-        data: {label: 'Map system is acceptably safe to operate'},
+        data: {label: 'Map system is acceptably safe to operate (uninstantiated)'},
         position: {x: 0, y: 0},
     },
     {
@@ -67,6 +67,8 @@ export const initialNodes = [
 export const nodeTypes = {
     "position-logger": PositionLoggerNode,
     goal: GoalNode,
+    goal_uninstantiated: GoalNode,
+    goal_undeveloped: GoalNode,
     context: ContextNode,
     strategy: StrategyNode,
     assumption: AssumptionNode,

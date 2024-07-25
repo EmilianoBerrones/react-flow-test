@@ -1,7 +1,44 @@
 .goalNode {
+    position: relative;
     padding: 10px;
     border: 1.5px solid #777;
     background: #faefb6;
+    max-width: 25vh;
+}
+
+.nodeAttribute {
+    position: absolute;
+    width: 1.5vh;
+    height: 1.5vh;
+    bottom: -2vh; /* Mitad de la altura de .goalNode__undeveloped */
+    left: 50%;
+    background: #777777;
+    border: 2px solid #0000;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.nodeAttribute__undeveloped {
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    background: #ffffff;
+}
+
+.nodeAttribute__uninstantiatedContainer {
+    position: absolute;
+    width: 1.6vh;
+    height: 1.6vh;
+    background: #777777;
+    /*transform: translateX(3%) translateY(3%);*/
+    clip-path: polygon(0 0, 0 100%, 100% 0);
+}
+
+.nodeAttribute__uninstantiated {
+    position: absolute;
+    width: calc(1.6vh - 2px);
+    height: calc(1.6vh - 2px);
+    background: #ffffff;
+    clip-path: polygon(0 0, 0 100%, 100% 0);
 }
 
 .contextNode {
@@ -9,12 +46,14 @@
     border: 1.5px solid #777;
     border-radius: 20px;
     background: #faefb6;
+    max-width: 25vh;
 }
 
 .strategyNode {
     padding: 12px 32px;
     clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
     background: #faefb6;
+    max-width: 25vh;
 }
 
 .strategyNodeBorder {
@@ -23,12 +62,14 @@
     padding: 1px 1.5px;
     clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
     background: #777777;
+    max-width: 25vh;
 }
 
 .ajNode {
     padding: 22px;
     clip-path: ellipse(50% 50% at 50% 50%);
     background: #faefb6;
+    max-width: 25vh;
 }
 
 .ajNodeBorder {
@@ -37,6 +78,7 @@
     padding: 1px;
     clip-path: ellipse(50% 50% at 50% 50%);
     background: #777777;
+    max-width: 25vh;
 }
 
 .ajLetter {
@@ -46,6 +88,7 @@
     padding: 2px 5px;
     font-size: 23px;
     font-weight: bold;
+    max-width: 25vh;
 }
 
 .solutionNode {
@@ -55,6 +98,7 @@
     clip-path: ellipse(50% 50% at 50% 50%);
     background: #faefb6;
     align-content: center;
+    max-width: 25vh;
 }
 
 .solutionNodeBorder {
@@ -65,4 +109,5 @@
     padding: 1.5px;
     clip-path: ellipse(50% 50% at 50% 50%);
     background: #777777;
+    max-width: 25vh;
 }
