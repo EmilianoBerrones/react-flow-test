@@ -535,7 +535,7 @@ export default function App() {
                                     </ToggleButtonGroup>
                                 </Grid>
                                 <Grid item xs>
-                                    <Grid container direction="column" spacing={1} justifyContent="flex-start" height="100%">
+                                    <Grid container direction="column" spacing={1} justifyContent="flex-start" height="100%" maxHeight="100%" maxWidth="100%">
                                         <Grid item xs="auto">
                                             {view === 'textField' && (
                                                 <TextField
@@ -543,18 +543,25 @@ export default function App() {
                                                     multiline={true}
                                                     fullWidth
                                                     minRows={15}
-                                                    maxRows={45}
+                                                    maxRows={30}
                                                     variant="outlined"
                                                     value={addHyphenToText(initialAssuranceText)}
                                                     onChange={(e) => setInitialAssuranceText(e.target.value)}
                                                     onKeyDown={handleTab}
                                                 />
                                             )}
-                                            {view === 'richTreeView' && <RichTreeView items={richTree} slots={{
-                                                expandIcon: FlagCircleIcon,
-                                                collapseIcon: FlagCircleOutlined,
-                                                endIcon: ArrowCircleLeftOutlined
-                                            }}/>}
+                                            {view === 'richTreeView' && (
+                                                <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+                                                    <RichTreeView
+                                                        items={richTree}
+                                                        slots={{
+                                                            expandIcon: FlagCircleIcon,
+                                                            collapseIcon: FlagCircleOutlined,
+                                                            endIcon: ArrowCircleLeftOutlined
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </Grid>
                                         <Grid item xs={1}>
                                             <Button variant="outlined" onClick={handleReloadButton}>Reload
