@@ -71,7 +71,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
 interface Node {
     id: string;
     position: { x: number, y: number };
-    data: { label: string };
+    data: { label: string , id: string}; // TODO implement repeated nodes based on label id.
     type?: string;
 }
 
@@ -492,7 +492,7 @@ export default function App() {
             <ReactFlowProvider>
                 <div className="app-container">
                     <meta name="viewport" content="initial-scale=1, width=device-width"/>
-                    <AppBar position="fixed" color={"transparent"} style={{height: '5vh'}}>
+                    <AppBar position="fixed" color={"transparent"} style={{height: '7vh'}}>
                         <Toolbar>
                             <IconButton
                                 size="large"
@@ -509,9 +509,9 @@ export default function App() {
                             <Button color="primary">Options</Button>
                         </Toolbar>
                     </AppBar>
-                    <Grid container direction="row" spacing={0} style={{marginTop: '5vh', minHeight: '95vh'}}>
-                        <Grid item xs={4} padding="30px" style={{minHeight: '100%'}}>
-                            <Grid container direction="column" spacing={2} style={{minHeight: 'inherit'}} justifyContent="center">
+                    <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh', maxHeight: '93vh'}}>
+                        <Grid item xs={4} padding="30px" style={{minHeight: '100%', maxHeight: 'inherit'}}>
+                            <Grid container direction="column" spacing={2} style={{minHeight: 'inherit', maxHeight: 'inherit'}} justifyContent="center">
                                 <Grid item xs={1}>
                                     <h1>ProjectName</h1>
                                     <Divider></Divider>
@@ -531,7 +531,7 @@ export default function App() {
                                         </ToggleButton>
                                     </ToggleButtonGroup>
                                 </Grid>
-                                <Grid item xs>
+                                <Grid item xs style={{maxHeight: '60vh', overflowY: 'auto'}}>
                                     <Grid container direction="column" spacing={1} justifyContent="flex-start" height="100%" maxHeight="100%" maxWidth="100%">
                                         <Grid item xs="auto">
                                             {view === 'textField' && (
@@ -540,7 +540,7 @@ export default function App() {
                                                     multiline={true}
                                                     fullWidth
                                                     minRows={15}
-                                                    maxRows={30}
+                                                    maxRows={15}
                                                     variant="outlined"
                                                     value={addHyphenToText(initialAssuranceText)}
                                                     onChange={(e) => setInitialAssuranceText(e.target.value)}
@@ -584,7 +584,7 @@ export default function App() {
                                 </Grid>
                             </Grid>
                         </Grid>
-                        <Grid item xs={8} style={{minHeight: '95vh'}}>
+                        <Grid item xs={8} style={{minHeight: '92vh'}}>
                             <Grid container style={{minHeight: "inherit"}}>
                                 <ReactFlow
                                     nodes={nodes}

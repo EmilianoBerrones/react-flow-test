@@ -108,7 +108,6 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({id, data}) => {
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
     }
-    console.log(undeveloped)
     return (
         <div>
             {(uninstantiated || undeveloped) && (
