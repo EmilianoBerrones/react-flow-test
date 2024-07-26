@@ -252,7 +252,7 @@ function textToTree(text: string): TreeNode[] {
 // COMPLETE clean custom nodes' outline
 // COMPLETED export current tree to JSON format, and save the file.
 // COMPLETED add maxwidth values to CSS nodes.
-// TODO add types of nodes undeveloped, uninstantiated, and undeveloped and uninstantiated.
+// COMPLETED add types of nodes undeveloped, uninstantiated, and undeveloped and uninstantiated.
 // TODO reflect changes from the diagram to the text format
 // TODO make an import JSON button.
 // TODO notify the user when the text does not have the specified structure
@@ -462,10 +462,6 @@ export default function App() {
         URL.revokeObjectURL(url);
     }
 
-    const debugButton = () => {
-        console.log(JSON.stringify(richTree, null, 2))
-    }
-
 
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
@@ -571,9 +567,6 @@ export default function App() {
                                                 JSON</Button>
                                         </Grid>
                                     </Grid>
-                                </Grid>
-                                <Grid item xs={1}>
-                                    <Button variant="outlined" onClick={debugButton}>PRINT</Button>
                                 </Grid>
                                 <Grid item xs={1}>
                                     <FormControl fullWidth>

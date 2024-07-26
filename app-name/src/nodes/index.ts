@@ -11,7 +11,7 @@ export const initialNodes = [
     {
         id: 'G1',
         type: 'goal',
-        data: {label: 'Map system is acceptably safe to operate (uninstantiated)'},
+        data: {label: 'Map system is acceptably safe to operate)'},
         position: {x: 0, y: 0},
     },
     {
@@ -41,13 +41,13 @@ export const initialNodes = [
     {
         id: 'S1',
         type: 'strategy',
-        data: {label: 'Argumentation over each identified hazard'},
+        data: {label: 'Argumentation over each identified hazard undeveloped'},
         position: {x: 0, y: 500},
     },
     {
         id: 'A1',
         type: 'assumption',
-        data: {label: 'All hazards have been identified'},
+        data: {label: 'All hazards have been identified undeveloped'},
         position: {x: 200, y: 100},
     },
     {
@@ -59,7 +59,7 @@ export const initialNodes = [
     {
         id: 'Sn1',
         type: 'solution',
-        data: {label: 'Safety rules execution'},
+        data: {label: 'Safety rules execution undeveloped'},
         position: {x: 300, y: 400},
     },
 ] satisfies Node[];

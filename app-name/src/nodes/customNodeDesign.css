@@ -6,12 +6,18 @@
     max-width: 25vh;
 }
 
-.nodeAttribute {
+.nodeAttribute__container {
     position: absolute;
     width: 1.5vh;
     height: 1.5vh;
     bottom: -2vh; /* Mitad de la altura de .goalNode__undeveloped */
     left: 50%;
+}
+
+.nodeAttribute__undevelopedContainer {
+    position: inherit;
+    width: inherit;
+    height: inherit;
     background: #777777;
     border: 2px solid #0000;
     transform: translateX(-50%) rotate(45deg);
@@ -26,17 +32,18 @@
 
 .nodeAttribute__uninstantiatedContainer {
     position: absolute;
-    width: 1.6vh;
-    height: 1.6vh;
+    width: 1.8vh;
+    height: 1.8vh;
     background: #777777;
-    /*transform: translateX(3%) translateY(3%);*/
+    transform: translateX(-50%) translateY(5%) rotate(45deg);
     clip-path: polygon(0 0, 0 100%, 100% 0);
 }
 
 .nodeAttribute__uninstantiated {
     position: absolute;
-    width: calc(1.6vh - 2px);
-    height: calc(1.6vh - 2px);
+    width: 1.4vh;
+    height: 1.4vh;
+    transform: translateY(6%) translateX(6%);
     background: #ffffff;
     clip-path: polygon(0 0, 0 100%, 100% 0);
 }
@@ -50,6 +57,7 @@
 }
 
 .strategyNode {
+    position: relative;
     padding: 12px 32px;
     clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
     background: #faefb6;
@@ -57,7 +65,6 @@
 }
 
 .strategyNodeBorder {
-    display: inline-block;
     position: relative;
     padding: 1px 1.5px;
     clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
