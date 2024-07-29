@@ -6,9 +6,9 @@ import {
     MiniMap,
     OnConnect,
     ReactFlow,
+    ReactFlowProvider,
     useEdgesState,
-    useNodesState,
-    ReactFlowProvider
+    useNodesState
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
@@ -21,15 +21,20 @@ import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
     AppBar,
-    Button, Divider,
+    Button,
+    Divider,
     FormControl,
-    Grid, IconButton,
+    Grid,
+    IconButton,
     InputLabel,
     MenuItem,
-    Select, SelectChangeEvent,
+    Select,
+    SelectChangeEvent,
     TextField,
     ToggleButton,
-    ToggleButtonGroup, Toolbar, Typography
+    ToggleButtonGroup,
+    Toolbar,
+    Typography
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
@@ -134,23 +139,7 @@ function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
     return desiredNode;
 }
 
-const assignUniqueIds = (nodes: Node[]): Node[] => {
-    const idCount: { [key: string]: number } = {};
-
-    return nodes.map((node) => {
-        const baseId = node.data.id;
-        if (!idCount[baseId]) {
-            idCount[baseId] = 1;
-        } else {
-            idCount[baseId]++;
-        }
-        return {
-            ...node,
-            id: `${baseId}sub${idCount[baseId]}`,
-        };
-    });
-};
-
+// Function that assigns a unique Id to a node, given a tree parameter
 const assignUniqueIdsToTree = (trees: TreeNode[]): TreeNode[] => {
     const idCount: { [key: string]: number } = {};
 
@@ -174,7 +163,7 @@ const assignUniqueIdsToTree = (trees: TreeNode[]): TreeNode[] => {
     return trees.map(tree => assignUniqueIdsRecursive(tree));
 };
 
-// Function to build the initialTree TODO change function
+// Function to build the initialTree
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     // Creating a map of nodes with the field children initialized as an empty array
     const nodeMap = new Map<string, TreeNode>(
@@ -203,13 +192,13 @@ for (let i = 0; i < defaultIndent; i++) {
     defaultSpace += " ";
 }
 
-// Function to transform the initialTree to text, and show it in the text box on the left pane. TODO CHANGE
+// Function to transform the initialTree to text, and show it in the text box on the left pane.
 function treeToText(tree: TreeNode[], level: number = 0): string {
     const baseIndent = defaultSpace;
     let result = '';
 
     for (const treeNode of tree) {
-        const idFirstChar = treeNode.node.data.id.charAt(0);
+        const idFirstChar = treeNode.node.id.charAt(0);
         const needsSpecialIndent = (idFirstChar === 'C' || idFirstChar === 'A' || idFirstChar === 'J');
 
         // Determinar la indentación actual
@@ -226,7 +215,7 @@ function treeToText(tree: TreeNode[], level: number = 0): string {
     return result;
 }
 
-// Function to convert text to initialTree TODO CHANGE FUNCTION
+// Function to convert text to initialTree
 function textToTree(text: string): TreeNode[] {
     const lines = text.split('\n');
     const tree: TreeNode[] = [];
@@ -354,7 +343,7 @@ export default function App() {
                     id: `edge-${parentId}-${node.node.id}`,
                     source: parentId,
                     target: node.node.id,
-                    animated: animation, // Or false depending on your preference
+                    animated: animation,
                     type: 'step',
                     markerEnd: defaultArrow,
                     style: defaultFill,
@@ -389,9 +378,8 @@ export default function App() {
             ]);
         };
 
-        const newNodes = createNodesFromTree(tree);
         // Layout them with Dagre before drawing them
-        return newNodes;
+        return createNodesFromTree(tree);
     }
 
     // Helper function to return the correct type of node depending on its id.
@@ -475,8 +463,7 @@ export default function App() {
                     return linea;
                 } else {
                     // Insertar "- " justo antes de la primera mayúscula
-                    const lineaConGuion = antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
-                    return lineaConGuion;
+                    return antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
                 }
             } else {
                 // Si no hay letra mayúscula, devolver la línea como está
@@ -485,9 +472,7 @@ export default function App() {
         });
 
         // Unir las líneas de nuevo en un solo string
-        const textoConGuiones = lineasConGuiones.join('\n');
-
-        return textoConGuiones;
+        return lineasConGuiones.join('\n');
     }
 
     const handleChangeIndent = (event: SelectChangeEvent) => {
