@@ -1,21 +1,22 @@
 import {
     addEdge,
     Background,
+    Connection,
     Controls,
     MarkerType,
     MiniMap,
-    OnConnect,
     ReactFlow,
     ReactFlowProvider,
     useEdgesState,
-    useNodesState
+    useNodesState,
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import React, {SetStateAction, useCallback, useEffect, useState} from "react";
+import React, {SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
+import FormDialog from "./FormDialog.tsx";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
@@ -76,7 +77,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
 interface Node {
     id: string;
     position: { x: number, y: number };
-    data: { label: string , id: string}; // TODO implement repeated nodes based on label id.
+    data: { label: string, id: string }; // TODO implement repeated nodes based on label id.
     type?: string;
 }
 
@@ -282,19 +283,21 @@ function textToTree(text: string): TreeNode[] {
 // COMPLETED export current tree to JSON format, and save the file.
 // COMPLETED add maxwidth values to CSS nodes.
 // COMPLETED add types of nodes undeveloped, uninstantiated, and undeveloped and uninstantiated.
+// COMPLETED implement repeatable IDs
 // TODO reflect changes from the diagram to the text format
 // TODO make an import JSON button.
 // TODO notify the user when the text does not have the specified structure
 // TODO Design and implement the header bar
-// TODO implement possible option = see unique IDS
 
 // TODO possible add ons:
 // COMPLETE - Indentation modifier
 // TODO - Node searcher
-// TODO - Header bar
+// TODO   - Import from JSON
+// TODO   - Export to SVG, JPEG/PNG
 // TODO - Highlight active node in text and/or tree.
-// TODO - Node selector to insert it on the field.
+// TODO - Node selector to insert it on the field
 // TODO - Auto indent text
+// TODO - See unique IDs instead of label IDs
 
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
@@ -304,13 +307,53 @@ export default function App() {
     const [view, setView] = useState('textField'); // Estado para manejar la vista actual
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    // Parameters to create nodes on edge drop
+    const connectingNodeId = useRef(null);
+
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
     const [indent, setIndent] = useState(defaultIndent);
 
-    const onConnect: OnConnect = useCallback(
-        (connection) => setEdges((edges) => addEdge(connection, edges)),
-        [setEdges]
+    const onConnect = useCallback((params: Edge | Connection) => {
+        // reset the start node on connections
+        connectingNodeId.current = null;
+        setEdges((eds) => addEdge(params, eds));
+    }, []);
+
+    const onConnectStart = useCallback((_, { nodeId }) => {
+        connectingNodeId.current = nodeId;
+    }, []);
+
+    const onConnectEnd = useCallback(
+        (event : any) => {
+            if (!connectingNodeId.current) return;
+            const targetIsPane = event.target.classList.contains('react-flow__pane');
+
+            if (targetIsPane) {
+                let positionX = event.clientX;
+                let positionY = event.clientY;
+                const newNode = {
+                    id: 'test node',
+                    type: 'goal',
+                    position: {x: positionX, y: positionY},
+                    data: {label: 'text', id: 'test node'},
+                }
+                let edgeId = `edge-${connectingNodeId}-${newNode.id}`;
+                let edgeSource = connectingNodeId.current;
+                let edgeTarget = newNode.id;
+                const newEdge = {
+                    id: edgeId,
+                    source: edgeSource,
+                    target: edgeTarget,
+                    animated: false,
+                    type: 'step',
+                    markerEnd: arrowMarker,
+                    style: arrowFill
+                }
+                setNodes((nodes) => nodes.concat(newNode));
+                setEdges((edges) => edges.concat(newEdge));
+            }
+        },[]
     );
 
     const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
@@ -621,6 +664,8 @@ export default function App() {
                                     edgeTypes={edgeTypes}
                                     onEdgesChange={onEdgesChange}
                                     onConnect={onConnect}
+                                    onConnectStart={onConnectStart}
+                                    onConnectEnd={onConnectEnd}
                                     fitView
                                     style={{minHeight: "inherit"}}
                                 >
