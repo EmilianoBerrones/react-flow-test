@@ -134,7 +134,47 @@ function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
     return desiredNode;
 }
 
-// Function to build the initialTree
+const assignUniqueIds = (nodes: Node[]): Node[] => {
+    const idCount: { [key: string]: number } = {};
+
+    return nodes.map((node) => {
+        const baseId = node.data.id;
+        if (!idCount[baseId]) {
+            idCount[baseId] = 1;
+        } else {
+            idCount[baseId]++;
+        }
+        return {
+            ...node,
+            id: `${baseId}sub${idCount[baseId]}`,
+        };
+    });
+};
+
+const assignUniqueIdsToTree = (trees: TreeNode[]): TreeNode[] => {
+    const idCount: { [key: string]: number } = {};
+
+    const assignUniqueIdsRecursive = (treeNode: TreeNode): TreeNode => {
+        const baseId = treeNode.node.data.id;
+        if (!idCount[baseId]) {
+            idCount[baseId] = 1;
+        } else {
+            idCount[baseId]++;
+        }
+        treeNode.node.id = `${baseId}sub${idCount[baseId]}`;
+
+        // Recorrer los hijos de manera recursiva
+        if (treeNode.children) {
+            treeNode.children = treeNode.children.map(child => assignUniqueIdsRecursive(child));
+        }
+
+        return treeNode;
+    };
+
+    return trees.map(tree => assignUniqueIdsRecursive(tree));
+};
+
+// Function to build the initialTree TODO change function
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     // Creating a map of nodes with the field children initialized as an empty array
     const nodeMap = new Map<string, TreeNode>(
@@ -163,20 +203,20 @@ for (let i = 0; i < defaultIndent; i++) {
     defaultSpace += " ";
 }
 
-// Function to transform the initialTree to text, and show it in the text box on the left pane.
+// Function to transform the initialTree to text, and show it in the text box on the left pane. TODO CHANGE
 function treeToText(tree: TreeNode[], level: number = 0): string {
     const baseIndent = defaultSpace;
     let result = '';
 
     for (const treeNode of tree) {
-        const idFirstChar = treeNode.node.id.charAt(0);
+        const idFirstChar = treeNode.node.data.id.charAt(0);
         const needsSpecialIndent = (idFirstChar === 'C' || idFirstChar === 'A' || idFirstChar === 'J');
 
         // Determinar la indentación actual
         const indentLevel = (needsSpecialIndent && level > 0) ? level - 1 : level;
         const actualIndent = (indentLevel === 0 && needsSpecialIndent) ? '' : baseIndent.repeat(indentLevel);
 
-        result += `${actualIndent}- ${treeNode.node.id}: ${treeNode.node.data.label}\n`;
+        result += `${actualIndent}- ${treeNode.node.data.id}: ${treeNode.node.data.label}\n`;
 
         if (treeNode.children.length > 0) {
             result += treeToText(treeNode.children, level + 1);
@@ -186,7 +226,7 @@ function treeToText(tree: TreeNode[], level: number = 0): string {
     return result;
 }
 
-// Function to convert text to initialTree
+// Function to convert text to initialTree TODO CHANGE FUNCTION
 function textToTree(text: string): TreeNode[] {
     const lines = text.split('\n');
     const tree: TreeNode[] = [];
@@ -206,7 +246,7 @@ function textToTree(text: string): TreeNode[] {
             node: {
                 id,
                 position: {x: 0, y: 0},  // Positions start at zero. Dagre changes the positions.
-                data: {label}
+                data: {label, id}
             },
             children: []
         };
@@ -243,7 +283,7 @@ function textToTree(text: string): TreeNode[] {
 
         stack.push({level, node: newNode});
     }
-    return tree;
+    return assignUniqueIdsToTree(tree);
 }
 
 // COMPLETED make custom edge with outlined arrow
@@ -257,6 +297,7 @@ function textToTree(text: string): TreeNode[] {
 // TODO make an import JSON button.
 // TODO notify the user when the text does not have the specified structure
 // TODO Design and implement the header bar
+// TODO implement possible option = see unique IDS
 
 // TODO possible add ons:
 // COMPLETE - Indentation modifier
@@ -302,11 +343,10 @@ export default function App() {
         for (const node of nodes) {
             if (parentId) {
                 // Create an edge from the parent node to the current node
-                let animation = false;
+                const animation = false;
                 let defaultArrow: any = arrowMarker;
                 let defaultFill = arrowFill;
                 if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
-                    animation = true
                     defaultArrow = arrowMarkerEmpty;
                     defaultFill = arrowFillEmpty;
                 }
@@ -351,8 +391,7 @@ export default function App() {
 
         const newNodes = createNodesFromTree(tree);
         // Layout them with Dagre before drawing them
-        const {nodes: layoutedNodes} = getLayoutedElements(newNodes, edges, {direction: 'TB'});
-        setNodes(layoutedNodes);
+        return newNodes;
     }
 
     // Helper function to return the correct type of node depending on its id.
@@ -380,10 +419,13 @@ export default function App() {
     // Function to replace the previous tree with the new one given as parameter.
     function replaceTree(tree: TreeNode[]) {
         clearNodes(); // Deletes al nodes
-        addNodesFromTree(tree); // Adds new nodes based on the new Tree
         clearEdges(); // Deletes all edges
+        const newNodes = addNodesFromTree(tree); // Adds new nodes based on the new Tree
         const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
-        setEdges(newEdges);
+        // Layout them with Dagre before drawing them
+        const layoutedElements = getLayoutedElements(newNodes, newEdges, {direction: 'TB'});
+        setNodes([...layoutedElements.nodes]);
+        setEdges([...layoutedElements.edges]);
     }
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
