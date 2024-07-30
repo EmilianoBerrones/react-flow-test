@@ -28,6 +28,7 @@ import {
     Grid,
     IconButton,
     InputLabel,
+    Menu,
     MenuItem,
     Select,
     SelectChangeEvent,
@@ -276,6 +277,7 @@ function textToTree(text: string): TreeNode[] {
     return assignUniqueIdsToTree(tree);
 }
 
+
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
@@ -293,6 +295,8 @@ export default function App() {
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
     const [indent, setIndent] = useState(defaultIndent);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const inputFileRef = useRef(null);
 
     const onConnect = useCallback(() => {
         // reset the start node on connections
@@ -568,13 +572,59 @@ export default function App() {
         console.log(JSON.stringify(labels, null, 2));
     }
 
+    const importFromJSON = (event: any) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = JSON.parse(e.target.result as string);
+            console.log("Imported JSON content:", content);
+            const newTree = jsonToTree(content);
+            console.log("New tree structure:", newTree);
+            replaceTree(newTree);
+        };
+        reader.readAsText(file);
+    }
+
+    // Convert JSON to TreeNode[]
+    function jsonToTree(json: DesiredNode[]): TreeNode[] {
+        // Recursive function to convert each node
+        function convertNode(node: DesiredNode): TreeNode {
+            return {
+                node: {
+                    id: node.id,
+                    position: { x: 0, y: 0 }, // Positions are adjusted later
+                    data: { label: node.label },
+                    type: defineTypeOfNode(node.id)
+                },
+                children: node.children ? node.children.map(convertNode) : []
+            };
+        }
+
+        return json.map(convertNode);
+    }
+
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
     }, [nodes.length, edges.length]);
 
-    // HTML section of the code. 
+    //Handles Option button clicks (header bar)
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleImportButtonClick = () => {
+        if (inputFileRef.current) {
+            inputFileRef.current.click();
+        }
+    };
+
+    // HTML section of the code.
     return (
         <>
             <svg
@@ -598,27 +648,41 @@ export default function App() {
                 <div className="app-container">
                     <meta name="viewport" content="initial-scale=1, width=device-width"/>
                     <AppBar position="fixed" color={"transparent"} style={{height: '7vh'}}>
-                        <Toolbar>
-                            <IconButton
-                                size="large"
-                                edge="start"
-                                color="primary"
-                                aria-label="menu"
-                                sx={{mr: 2}}
-                            >
-                                <FlagCircleIcon/>
-                            </IconButton>
-                            <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
-                                ProjectName
-                            </Typography>
-                            <Button color="primary">Options</Button>
-                        </Toolbar>
+                    <Toolbar>
+                        <IconButton
+                            size="large"
+                            edge="start"
+                            color="primary"
+                            aria-label="menu"
+                            sx={{ mr: 2 }}
+                        >
+                            <FlagCircleIcon />
+                        </IconButton>
+                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} color="primary">                                ProjectName
+                        </Typography>
+                        <Button color="primary" onClick={handleClick}>Options</Button>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleClose}
+                        >
+                            <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
+                            <MenuItem onClick={handleImportButtonClick}>Import graphic from JSON
+                            <input
+                                accept="application/json"
+                                style={{ display: 'none' }}
+                                type="file"
+                                onChange={importFromJSON}
+                                ref={inputFileRef} // Referencia al input de archivo
+                            />
+                            </MenuItem>
+                            <MenuItem onClick={handleClose}>Option 3</MenuItem>
+                        </Menu>
+                    </Toolbar>
                     </AppBar>
-                    <Grid container direction="row" spacing={0}
-                          style={{marginTop: '8vh', minHeight: '92vh', maxHeight: '93vh'}}>
+                    <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh', maxHeight: '93vh'}}>
                         <Grid item xs={4} padding="30px" style={{minHeight: '100%', maxHeight: 'inherit'}}>
-                            <Grid container direction="column" spacing={2}
-                                  style={{minHeight: 'inherit', maxHeight: 'inherit'}} justifyContent="center">
+                            <Grid container direction="column" spacing={2} style={{minHeight: 'inherit', maxHeight: 'inherit'}} justifyContent="center">
                                 <Grid item xs={1}>
                                     <h1>ProjectName</h1>
                                     <Divider></Divider>
@@ -639,8 +703,7 @@ export default function App() {
                                     </ToggleButtonGroup>
                                 </Grid>
                                 <Grid item xs style={{maxHeight: '60vh', overflowY: 'auto'}}>
-                                    <Grid container direction="column" spacing={1} justifyContent="flex-start"
-                                          height="100%" maxHeight="100%" maxWidth="100%">
+                                    <Grid container direction="column" spacing={1} justifyContent="flex-start" height="100%" maxHeight="100%" maxWidth="100%">
                                         <Grid item xs="auto">
                                             {view === 'textField' && (
                                                 <TextField
@@ -650,13 +713,13 @@ export default function App() {
                                                     minRows={15}
                                                     maxRows={15}
                                                     variant="outlined"
-                                                    value={initialAssuranceText}
+                                                    value={addHyphenToText(initialAssuranceText)}
                                                     onChange={(e) => setInitialAssuranceText(e.target.value)}
                                                     onKeyDown={handleTab}
                                                 />
                                             )}
                                             {view === 'richTreeView' && (
-                                                <div style={{maxHeight: '55vh', overflowY: 'auto'}}>
+                                                <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
                                                     <RichTreeView
                                                         items={richTree}
                                                         slots={{
