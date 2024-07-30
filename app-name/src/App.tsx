@@ -16,7 +16,8 @@ import React, {SetStateAction, useCallback, useEffect, useRef, useState} from "r
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
-import FormDialog from "./FormDialog.tsx";
+import FormDialog from "./FormDialog";
+import {DialogProvider, useDialog} from "./DialogContext";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
@@ -309,6 +310,9 @@ export default function App() {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
+    let newNodeX = useRef(null);
+    let newNodeY = useRef(null);
+    const {openDialog, formData, setFormData, closeDialog, isOpen} = useDialog();
 
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
@@ -320,41 +324,49 @@ export default function App() {
         setEdges((eds) => addEdge(params, eds));
     }, []);
 
-    const onConnectStart = useCallback((_, { nodeId }) => {
+    const onConnectStart = useCallback((_, {nodeId}) => {
         connectingNodeId.current = nodeId;
     }, []);
 
     const onConnectEnd = useCallback(
-        (event : any) => {
+        (event: any) => {
             if (!connectingNodeId.current) return;
             const targetIsPane = event.target.classList.contains('react-flow__pane');
-
             if (targetIsPane) {
-                let positionX = event.clientX;
-                let positionY = event.clientY;
-                const newNode = {
-                    id: 'test node',
-                    type: 'goal',
-                    position: {x: positionX, y: positionY},
-                    data: {label: 'text', id: 'test node'},
-                }
-                let edgeId = `edge-${connectingNodeId}-${newNode.id}`;
-                let edgeSource = connectingNodeId.current;
-                let edgeTarget = newNode.id;
-                const newEdge = {
-                    id: edgeId,
-                    source: edgeSource,
-                    target: edgeTarget,
-                    animated: false,
-                    type: 'step',
-                    markerEnd: arrowMarker,
-                    style: arrowFill
-                }
-                setNodes((nodes) => nodes.concat(newNode));
-                setEdges((edges) => edges.concat(newEdge));
+                openDialog();
+                newNodeX = event.clientX;
+                newNodeY = event.clientY;
             }
-        },[]
+        }, []
     );
+
+    React.useEffect(() => {
+        if (!isOpen && formData) {
+            const newNodeInfo = formData.split(',');
+            const newNodeId = newNodeInfo[0];
+            const newNodeLabel = newNodeInfo[1];
+            console.log("Id: ", newNodeId);
+            console.log("label: ", newNodeLabel);
+            const newNode = {
+                id: 'Test node',
+                type: 'goal',
+                position: {x: newNodeX, y: newNodeY},
+                data: {label: newNodeLabel, id: newNodeId},
+            }
+            let edgeId = `edge-${connectingNodeId}-${newNode.id}`;
+            let edgeSource = connectingNodeId.current;
+            let edgeTarget = newNode.id;
+            const newEdge = {
+                id: edgeId,
+                source: edgeSource,
+                target: edgeTarget,
+                animated: false,
+                type: 'step',
+                markerEnd: arrowMarker,
+                style: arrowFill
+            }
+        }
+    }, [formData, isOpen]);
 
     const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
         if (newView !== null) {
@@ -532,6 +544,10 @@ export default function App() {
         URL.revokeObjectURL(url);
     }
 
+    const debug = () => {
+        console.log(formData);
+    }
+
 
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
@@ -579,9 +595,11 @@ export default function App() {
                             <Button color="primary">Options</Button>
                         </Toolbar>
                     </AppBar>
-                    <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh', maxHeight: '93vh'}}>
+                    <Grid container direction="row" spacing={0}
+                          style={{marginTop: '8vh', minHeight: '92vh', maxHeight: '93vh'}}>
                         <Grid item xs={4} padding="30px" style={{minHeight: '100%', maxHeight: 'inherit'}}>
-                            <Grid container direction="column" spacing={2} style={{minHeight: 'inherit', maxHeight: 'inherit'}} justifyContent="center">
+                            <Grid container direction="column" spacing={2}
+                                  style={{minHeight: 'inherit', maxHeight: 'inherit'}} justifyContent="center">
                                 <Grid item xs={1}>
                                     <h1>ProjectName</h1>
                                     <Divider></Divider>
@@ -602,7 +620,8 @@ export default function App() {
                                     </ToggleButtonGroup>
                                 </Grid>
                                 <Grid item xs style={{maxHeight: '60vh', overflowY: 'auto'}}>
-                                    <Grid container direction="column" spacing={1} justifyContent="flex-start" height="100%" maxHeight="100%" maxWidth="100%">
+                                    <Grid container direction="column" spacing={1} justifyContent="flex-start"
+                                          height="100%" maxHeight="100%" maxWidth="100%">
                                         <Grid item xs="auto">
                                             {view === 'textField' && (
                                                 <TextField
@@ -618,7 +637,7 @@ export default function App() {
                                                 />
                                             )}
                                             {view === 'richTreeView' && (
-                                                <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+                                                <div style={{maxHeight: '55vh', overflowY: 'auto'}}>
                                                     <RichTreeView
                                                         items={richTree}
                                                         slots={{
@@ -635,6 +654,7 @@ export default function App() {
                                                 changes</Button>
                                             <Button variant="outlined" onClick={exportToJSON}>Export graph to
                                                 JSON</Button>
+                                            <Button variant="outlined" onClick={debug}>Print</Button>
                                         </Grid>
                                     </Grid>
                                 </Grid>
@@ -656,6 +676,7 @@ export default function App() {
                         </Grid>
                         <Grid item xs={8} style={{minHeight: '92vh'}}>
                             <Grid container style={{minHeight: "inherit"}}>
+                                <FormDialog/>
                                 <ReactFlow
                                     nodes={nodes}
                                     nodeTypes={nodeTypes}
