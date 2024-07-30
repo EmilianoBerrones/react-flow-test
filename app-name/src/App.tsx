@@ -12,7 +12,7 @@ import {
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import React, {SetStateAction, useCallback, useEffect, useState} from "react";
+import React, {SetStateAction, useCallback, useEffect, useState, useRef} from "react";
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -25,6 +25,7 @@ import {
     FormControl,
     Grid, IconButton,
     InputLabel,
+    Menu,
     MenuItem,
     Select, SelectChangeEvent,
     TextField,
@@ -277,6 +278,8 @@ export default function App() {
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
     const [indent, setIndent] = useState(defaultIndent);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const inputFileRef = useRef(null);
 
     const onConnect: OnConnect = useCallback(
         (connection) => setEdges((edges) => addEdge(connection, edges)),
@@ -384,6 +387,9 @@ export default function App() {
         clearEdges(); // Deletes all edges
         const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
         setEdges(newEdges);
+        // Update the text representation of the tree
+        const newText = treeToText(tree);
+        setInitialAssuranceText(newText);
     }
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
@@ -462,12 +468,57 @@ export default function App() {
         URL.revokeObjectURL(url);
     }
 
+    const importFromJSON = (event: any) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = JSON.parse(e.target.result as string);
+            console.log("Imported JSON content:", content);
+            const newTree = jsonToTree(content);
+            console.log("New tree structure:", newTree);
+            replaceTree(newTree);
+        };
+        reader.readAsText(file);
+    }
+
+    // Convert JSON to TreeNode[]
+    function jsonToTree(json: DesiredNode[]): TreeNode[] {
+        // Recursive function to convert each node
+        function convertNode(node: DesiredNode): TreeNode {
+            return {
+                node: {
+                    id: node.id,
+                    position: { x: 0, y: 0 }, // Positions are adjusted later
+                    data: { label: node.label },
+                    type: defineTypeOfNode(node.id)
+                },
+                children: node.children ? node.children.map(convertNode) : []
+            };
+        }
+
+        return json.map(convertNode);
+    }
 
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
     }, [nodes.length, edges.length]);
+
+    //Handles Option button clicks (header bar) 
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleImportButtonClick = () => {
+        if (inputFileRef.current) {
+            inputFileRef.current.click();
+        }
+    };
 
     // HTML section of the code. 
     return (
@@ -493,21 +544,37 @@ export default function App() {
                 <div className="app-container">
                     <meta name="viewport" content="initial-scale=1, width=device-width"/>
                     <AppBar position="fixed" color={"transparent"} style={{height: '7vh'}}>
-                        <Toolbar>
-                            <IconButton
-                                size="large"
-                                edge="start"
-                                color="primary"
-                                aria-label="menu"
-                                sx={{mr: 2}}
-                            >
-                                <FlagCircleIcon/>
-                            </IconButton>
-                            <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
-                                ProjectName
-                            </Typography>
-                            <Button color="primary">Options</Button>
-                        </Toolbar>
+                    <Toolbar>
+                        <IconButton
+                            size="large"
+                            edge="start"
+                            color="primary"
+                            aria-label="menu"
+                            sx={{ mr: 2 }}
+                        >
+                            <FlagCircleIcon />
+                        </IconButton>
+                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} color="primary">                                ProjectName
+                        </Typography>
+                        <Button color="primary" onClick={handleClick}>Options</Button>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleClose}
+                        >
+                            <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
+                            <MenuItem onClick={handleImportButtonClick}>Import graphic from JSON
+                            <input
+                                accept="application/json"
+                                style={{ display: 'none' }}
+                                type="file"
+                                onChange={importFromJSON}
+                                ref={inputFileRef} // Referencia al input de archivo
+                            />
+                            </MenuItem>
+                            <MenuItem onClick={handleClose}>Option 3</MenuItem>
+                        </Menu>
+                    </Toolbar>
                     </AppBar>
                     <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh', maxHeight: '93vh'}}>
                         <Grid item xs={4} padding="30px" style={{minHeight: '100%', maxHeight: 'inherit'}}>
@@ -563,8 +630,6 @@ export default function App() {
                                         <Grid item xs={1}>
                                             <Button variant="outlined" onClick={handleReloadButton}>Reload
                                                 changes</Button>
-                                            <Button variant="outlined" onClick={exportToJSON}>Export graph to
-                                                JSON</Button>
                                         </Grid>
                                     </Grid>
                                 </Grid>
