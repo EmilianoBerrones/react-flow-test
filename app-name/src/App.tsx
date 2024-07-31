@@ -1,7 +1,5 @@
 import {
-    addEdge,
     Background,
-    Connection,
     Controls,
     MarkerType,
     MiniMap,
@@ -17,7 +15,7 @@ import React, {SetStateAction, useCallback, useEffect, useRef, useState} from "r
 import "reactflow/dist/style.css";
 import "./updatenode.css";
 import FormDialog from "./FormDialog";
-import {DialogProvider, useDialog} from "./DialogContext";
+import {useDialog} from "./DialogContext";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
@@ -165,24 +163,6 @@ const assignUniqueIdsToTree = (trees: TreeNode[]): TreeNode[] => {
     return trees.map(tree => assignUniqueIdsRecursive(tree));
 };
 
-const assignUniqueIds = (nodes: Node[]): Node[] => {
-    const idCount: { [key: string]: number } = {};
-
-    return nodes.map((node) => {
-        const baseId = node.data.id;
-        if (!idCount[baseId]) {
-            idCount[baseId] = 1;
-        } else {
-            idCount[baseId]++;
-        }
-        return {
-            ...node,
-            id: `${baseId}sub${idCount[baseId]}`,
-        };
-    });
-};
-
-
 // Function to build the initialTree
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     // Creating a map of nodes with the field children initialized as an empty array
@@ -328,19 +308,19 @@ export default function App() {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
-    const {openDialog, formData, setFormData, closeDialog, isOpen} = useDialog();
+    const {openDialog, formData, setFormData, isOpen} = useDialog();
 
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
     const [indent, setIndent] = useState(defaultIndent);
 
-    const onConnect = useCallback((params: Edge | Connection) => {
+    const onConnect = useCallback(() => {
         // reset the start node on connections
         console.log(connectingNodeId);
         connectingNodeId.current = null;
     }, []);
 
-    const onConnectStart = useCallback((_, {nodeId}) => {
+    const onConnectStart = useCallback((_:any, {nodeId}:any) => {
         connectingNodeId.current = nodeId;
     }, []);
 
@@ -384,6 +364,8 @@ export default function App() {
             replaceTree(newTree);
             richTree = newTree.map(convertTreeNodeToDesiredNode);
             setInitialAssuranceText(treeToText(newTree));
+            connectingNodeId.current = null;
+            setFormData('');
         }
     }, [formData, isOpen]);
 
