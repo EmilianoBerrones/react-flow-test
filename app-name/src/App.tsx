@@ -76,7 +76,7 @@ const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: a
 interface Node {
     id: string;
     position: { x: number, y: number };
-    data: { label: string, id: string }; // TODO implement repeated nodes based on label id.
+    data: { label: string, id: string };
     type?: string;
 }
 
@@ -283,16 +283,16 @@ function textToTree(text: string): TreeNode[] {
 // COMPLETED add maxwidth values to CSS nodes.
 // COMPLETED add types of nodes undeveloped, uninstantiated, and undeveloped and uninstantiated.
 // COMPLETED implement repeatable IDs
-// TODO reflect changes from the diagram to the text format
-// TODO make an import JSON button.
+// COMPLETED reflect changes from the diagram to the text format
+// TODO reflect label change on diagram to text.
 // TODO notify the user when the text does not have the specified structure
-// TODO Design and implement the header bar
+// TODO - DANI - Design and implement the header bar
 
 // TODO possible add ons:
 // COMPLETE - Indentation modifier
+// TODO PENDING REVIEW - Import from JSON
 // TODO - Node searcher
-// TODO   - Import from JSON
-// TODO   - Export to SVG, JPEG/PNG
+// TODO PENDING REVIEW - Export to SVG, JPEG/PNG
 // TODO - Highlight active node in text and/or tree.
 // TODO - Node selector to insert it on the field
 // TODO - Auto indent text
@@ -361,9 +361,10 @@ export default function App() {
             const newNodes = nodes.concat(newNode);
             const newEdges = edges.concat(newEdge);
             const newTree = buildTree(newNodes, newEdges);
-            replaceTree(newTree);
-            richTree = newTree.map(convertTreeNodeToDesiredNode);
-            setInitialAssuranceText(treeToText(newTree));
+            const uniqueTree = assignUniqueIdsToTree(newTree);
+            replaceTree(uniqueTree);
+            richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
+            setInitialAssuranceText(treeToText(uniqueTree));
             connectingNodeId.current = null;
             setFormData('');
         }
