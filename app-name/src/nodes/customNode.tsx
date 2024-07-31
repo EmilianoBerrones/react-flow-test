@@ -1,6 +1,6 @@
 // customNode.tsx
 import React from 'react';
-import {Handle, NodeToolbar, Position} from 'reactflow';
+import {Handle, NodeToolbar, Position, useReactFlow} from 'reactflow';
 import './customNodeDesign.css';
 import {Button} from "@mui/material";
 import {MuiColorInput} from "mui-color-input";
@@ -14,9 +14,10 @@ interface CustomNodeProps {
     };
 }
 
-export const GoalNode: React.FC<CustomNodeProps> = ({data}) => {
+export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const [label, setLabel] = React.useState(data.label);
+    const {setNodes, getNodes} = useReactFlow();
 
     let uninstantiated = false;
     let undeveloped = false;
@@ -33,10 +34,24 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data}) => {
 
     const handleLabel = () => {
         const newLabel = prompt('Enter the new label');
-        if (newLabel){
+        if (newLabel) {
             setLabel(newLabel);
+            const nodes = getNodes();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: newLabel,
+                        },
+                    };
+                }
+                return node;
+            });
+            setNodes(newNodes);
         }
-    }
+    };
 
     return (
         <div className="goalNode" style={{backgroundColor}}>

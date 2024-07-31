@@ -7,6 +7,8 @@ import {
     ReactFlowProvider,
     useEdgesState,
     useNodesState,
+    applyNodeChanges,
+    NodeChange,
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
@@ -301,6 +303,7 @@ function textToTree(text: string): TreeNode[] {
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
+let copyOfText = treeToText(initialTree);
 
 export default function App() {
     const [view, setView] = useState('textField'); // Estado para manejar la vista actual
@@ -475,6 +478,8 @@ export default function App() {
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
     const handleReloadButton = (_event: any) => {
+        console.log(copyOfText);
+        console.log(initialAssuranceText);
         const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
         replaceTree(newTree);
         richTree = newTree.map(convertTreeNodeToDesiredNode);
@@ -547,8 +552,7 @@ export default function App() {
     }
 
     const debug = () => {
-        console.log(nodes);
-        console.log(edges);
+        console.log(nodes[0]);
     }
 
 

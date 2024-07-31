@@ -1,5 +1,4 @@
 import type {Node, NodeTypes} from "reactflow";
-import {PositionLoggerNode} from "./PositionLoggerNode";
 import {GoalNode} from "./customNode.tsx";
 import {ContextNode} from "./customNode.tsx";
 import {StrategyNode} from "./customNode.tsx";
@@ -65,7 +64,6 @@ export const initialNodes = [
 ] satisfies Node[];
 
 export const nodeTypes = {
-    "position-logger": PositionLoggerNode,
     goal: GoalNode,
     goal_uninstantiated: GoalNode,
     goal_undeveloped: GoalNode,
