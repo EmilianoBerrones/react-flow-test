@@ -4,7 +4,7 @@ interface DialogContextProps {
     isOpen: boolean;
     openDialog: () => void;
     closeDialog: () => void;
-    formData: any;
+    formData: string;
     setFormData: (data: any) => void;
 }
 

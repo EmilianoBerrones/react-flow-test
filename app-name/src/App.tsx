@@ -165,6 +165,24 @@ const assignUniqueIdsToTree = (trees: TreeNode[]): TreeNode[] => {
     return trees.map(tree => assignUniqueIdsRecursive(tree));
 };
 
+const assignUniqueIds = (nodes: Node[]): Node[] => {
+    const idCount: { [key: string]: number } = {};
+
+    return nodes.map((node) => {
+        const baseId = node.data.id;
+        if (!idCount[baseId]) {
+            idCount[baseId] = 1;
+        } else {
+            idCount[baseId]++;
+        }
+        return {
+            ...node,
+            id: `${baseId}sub${idCount[baseId]}`,
+        };
+    });
+};
+
+
 // Function to build the initialTree
 function buildTree(nodes: Node[], edges: Edge[]): TreeNode[] {
     // Creating a map of nodes with the field children initialized as an empty array
@@ -310,8 +328,6 @@ export default function App() {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
-    let newNodeX = useRef(null);
-    let newNodeY = useRef(null);
     const {openDialog, formData, setFormData, closeDialog, isOpen} = useDialog();
 
     // Creation of initial assurance case text
@@ -320,8 +336,8 @@ export default function App() {
 
     const onConnect = useCallback((params: Edge | Connection) => {
         // reset the start node on connections
+        console.log(connectingNodeId);
         connectingNodeId.current = null;
-        setEdges((eds) => addEdge(params, eds));
     }, []);
 
     const onConnectStart = useCallback((_, {nodeId}) => {
@@ -334,8 +350,6 @@ export default function App() {
             const targetIsPane = event.target.classList.contains('react-flow__pane');
             if (targetIsPane) {
                 openDialog();
-                newNodeX = event.clientX;
-                newNodeY = event.clientY;
             }
         }, []
     );
@@ -345,15 +359,14 @@ export default function App() {
             const newNodeInfo = formData.split(',');
             const newNodeId = newNodeInfo[0];
             const newNodeLabel = newNodeInfo[1];
-            console.log("Id: ", newNodeId);
-            console.log("label: ", newNodeLabel);
+            const type = defineTypeOfNode(newNodeId);
             const newNode = {
-                id: 'Test node',
-                type: 'goal',
-                position: {x: newNodeX, y: newNodeY},
+                id: newNodeId,
+                type: type,
+                position: {x: 0, y: 0},
                 data: {label: newNodeLabel, id: newNodeId},
             }
-            let edgeId = `edge-${connectingNodeId}-${newNode.id}`;
+            let edgeId = `edge-${connectingNodeId.current}-${newNode.id}`;
             let edgeSource = connectingNodeId.current;
             let edgeTarget = newNode.id;
             const newEdge = {
@@ -365,6 +378,12 @@ export default function App() {
                 markerEnd: arrowMarker,
                 style: arrowFill
             }
+            const newNodes = nodes.concat(newNode);
+            const newEdges = edges.concat(newEdge);
+            const newTree = buildTree(newNodes, newEdges);
+            replaceTree(newTree);
+            richTree = newTree.map(convertTreeNodeToDesiredNode);
+            setInitialAssuranceText(treeToText(newTree));
         }
     }, [formData, isOpen]);
 
@@ -545,7 +564,8 @@ export default function App() {
     }
 
     const debug = () => {
-        console.log(formData);
+        console.log(nodes);
+        console.log(edges);
     }
 
 
