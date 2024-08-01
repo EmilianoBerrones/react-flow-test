@@ -494,7 +494,7 @@ export default function App() {
                 console.log('Different lengths:');
                 console.log('Labels:', labelsRef);
                 console.log('ActualLabels:', actualLabels);
-            } else {
+                // TODO implement add node
                 for (let i = 0; i < labelsRef.length; i++) {
                     if (labelsRef[i] !== actualLabels[i]) {
                         console.log(`Difference at index ${i}:`);
@@ -511,7 +511,7 @@ export default function App() {
                 }
             }
         }
-        if (!found){
+        if (!found) {
             const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
             replaceTree(newTree);
             richTree = newTree.map(convertTreeNodeToDesiredNode);
