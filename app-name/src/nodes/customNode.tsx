@@ -16,7 +16,6 @@ interface CustomNodeProps {
 
 export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
-    const [label, setLabel] = React.useState(data.label);
     const {setNodes, getNodes} = useReactFlow();
 
     let uninstantiated = false;
@@ -35,7 +34,7 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const handleLabel = () => {
         const newLabel = prompt('Enter the new label');
         if (newLabel) {
-            setLabel(newLabel);
+            data.label = newLabel;
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -76,7 +75,7 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
             </NodeToolbar>
             <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
             <div><b>{data.id}</b></div>
-            <div>{label}</div>
+            <div>{data.label}</div>
             <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
         </div>
     );

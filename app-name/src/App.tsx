@@ -7,8 +7,6 @@ import {
     ReactFlowProvider,
     useEdgesState,
     useNodesState,
-    applyNodeChanges,
-    NodeChange,
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
@@ -308,6 +306,7 @@ let copyOfText = treeToText(initialTree);
 export default function App() {
     const [view, setView] = useState('textField'); // Estado para manejar la vista actual
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const labels = useRef<string[]>(nodes.map(node => node.data.label));
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
@@ -323,7 +322,7 @@ export default function App() {
         connectingNodeId.current = null;
     }, []);
 
-    const onConnectStart = useCallback((_:any, {nodeId}:any) => {
+    const onConnectStart = useCallback((_: any, {nodeId}: any) => {
         connectingNodeId.current = nodeId;
     }, []);
 
@@ -371,7 +370,13 @@ export default function App() {
             connectingNodeId.current = null;
             setFormData('');
         }
-    }, [formData, isOpen]);
+        if (copyOfText !== initialAssuranceText) {
+            console.log('Copy text to clipboard');
+            handleReloadButton();
+            copyOfText = initialAssuranceText;
+        }
+    }, [formData, isOpen, initialAssuranceText]);
+
 
     const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
         if (newView !== null) {
@@ -478,11 +483,39 @@ export default function App() {
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
     const handleReloadButton = (_event: any) => {
-        console.log(copyOfText);
-        console.log(initialAssuranceText);
-        const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
-        replaceTree(newTree);
-        richTree = newTree.map(convertTreeNodeToDesiredNode);
+        // console.log(copyOfText);
+        // console.log(initialAssuranceText);
+        let found = false;
+        if (copyOfText === initialAssuranceText) {
+            console.log('Hola');
+            const actualLabels = nodes.map(node => node.data.label);
+            const labelsRef = labels.current;
+            if (labelsRef.length !== actualLabels.length) {
+                console.log('Different lengths:');
+                console.log('Labels:', labelsRef);
+                console.log('ActualLabels:', actualLabels);
+            } else {
+                for (let i = 0; i < labelsRef.length; i++) {
+                    if (labelsRef[i] !== actualLabels[i]) {
+                        console.log(`Difference at index ${i}:`);
+                        console.log('Label:', labelsRef[i]);
+                        console.log('ActualLabel:', actualLabels[i]);
+                        const newTree = buildTree(nodes, edges);
+                        const uniqueTree = assignUniqueIdsToTree(newTree);
+                        replaceTree(uniqueTree);
+                        richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
+                        setInitialAssuranceText(treeToText(uniqueTree));
+                        labels.current = actualLabels;
+                        found = true;
+                    }
+                }
+            }
+        }
+        if (!found){
+            const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
+            replaceTree(newTree);
+            richTree = newTree.map(convertTreeNodeToDesiredNode);
+        }
     };
 
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
@@ -552,9 +585,8 @@ export default function App() {
     }
 
     const debug = () => {
-        console.log(nodes[0]);
+        console.log(JSON.stringify(labels, null, 2));
     }
-
 
     useEffect(() => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
