@@ -375,7 +375,8 @@ export default function App() {
             handleReloadButton();
             copyOfText = initialAssuranceText;
         }
-    }, [formData, isOpen, initialAssuranceText]);
+        // automate label change
+    }, [formData, isOpen, initialAssuranceText, copyOfText]);
 
 
     const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
@@ -487,19 +488,19 @@ export default function App() {
         // console.log(initialAssuranceText);
         let found = false;
         if (copyOfText === initialAssuranceText) {
-            console.log('Hola');
             const actualLabels = nodes.map(node => node.data.label);
             const labelsRef = labels.current;
             if (labelsRef.length !== actualLabels.length) {
-                console.log('Different lengths:');
-                console.log('Labels:', labelsRef);
-                console.log('ActualLabels:', actualLabels);
-                // TODO implement add node
+                const newTree = buildTree(nodes, edges);
+                const uniqueTree = assignUniqueIdsToTree(newTree);
+                replaceTree(uniqueTree);
+                richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
+                setInitialAssuranceText(treeToText(uniqueTree));
+                labels.current = actualLabels;
+                found = true;
+            } else {
                 for (let i = 0; i < labelsRef.length; i++) {
                     if (labelsRef[i] !== actualLabels[i]) {
-                        console.log(`Difference at index ${i}:`);
-                        console.log('Label:', labelsRef[i]);
-                        console.log('ActualLabel:', actualLabels[i]);
                         const newTree = buildTree(nodes, edges);
                         const uniqueTree = assignUniqueIdsToTree(newTree);
                         replaceTree(uniqueTree);
