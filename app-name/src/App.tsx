@@ -371,22 +371,18 @@ export default function App() {
             setFormData('');
         }
         if (copyOfText !== initialAssuranceText) {
-            console.log('Copy text to clipboard');
             handleReloadButton();
             copyOfText = initialAssuranceText;
         }
-        let found = false;
         if (copyOfText === initialAssuranceText) {
             const actualLabels = nodes.map(node => node.data.label);
             const labelsRef = labels.current;
             if (labelsRef.length !== actualLabels.length) {
                 handleReloadAdvanced(actualLabels);
-                found = true;
             } else {
                 for (let i = 0; i < labelsRef.length; i++) {
                     if (labelsRef[i] !== actualLabels[i]) {
                         handleReloadAdvanced(actualLabels);
-                        found = true;
                     }
                 }
             }
