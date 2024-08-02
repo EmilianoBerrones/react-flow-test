@@ -375,8 +375,24 @@ export default function App() {
             handleReloadButton();
             copyOfText = initialAssuranceText;
         }
+        let found = false;
+        if (copyOfText === initialAssuranceText) {
+            const actualLabels = nodes.map(node => node.data.label);
+            const labelsRef = labels.current;
+            if (labelsRef.length !== actualLabels.length) {
+                handleReloadAdvanced(actualLabels);
+                found = true;
+            } else {
+                for (let i = 0; i < labelsRef.length; i++) {
+                    if (labelsRef[i] !== actualLabels[i]) {
+                        handleReloadAdvanced(actualLabels);
+                        found = true;
+                    }
+                }
+            }
+        }
         // automate label change
-    }, [formData, isOpen, initialAssuranceText, copyOfText]);
+    }, [formData, isOpen, initialAssuranceText, nodes]);
 
 
     const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
@@ -518,6 +534,15 @@ export default function App() {
             richTree = newTree.map(convertTreeNodeToDesiredNode);
         }
     };
+
+    const handleReloadAdvanced = (actualLabels: string[]) => {
+        const newTree = buildTree(nodes, edges);
+        const uniqueTree = assignUniqueIdsToTree(newTree);
+        replaceTree(uniqueTree);
+        richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
+        setInitialAssuranceText(treeToText(uniqueTree));
+        labels.current = actualLabels;
+    }
 
     // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
     const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
