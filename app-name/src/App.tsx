@@ -12,7 +12,7 @@ import {
     useReactFlow
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
-import React, {SetStateAction, useCallback, useEffect, useState, useRef} from "react";
+import React, {useCallback, useEffect, useState, useRef, useLayoutEffect} from "react";
 import "reactflow/dist/style.css";
 import "./updatenode.css";
 import {initialNodes, nodeTypes} from "./nodes";
@@ -271,12 +271,14 @@ function textToTree(text: string): TreeNode[] {
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 
-function FlowComponent({ view, setView, nodes, onNodesChange, edges, onEdgesChange, onConnect, handleReloadButton, handleTab, addHyphenToText, initialAssuranceText, setInitialAssuranceText, indent, handleChangeIndent, exportToImage, handleClick, anchorEl, handleClose, exportToJSON, handleImportButtonClick, importFromJSON, inputFileRef, handleSearch, handleSearchByText }) {
+function FlowComponent({ view, setView, nodes, onNodesChange, edges, 
+    onEdgesChange, onConnect, handleReloadButton, handleTab, addHyphenToText, 
+    initialAssuranceText, setInitialAssuranceText, indent, handleChangeIndent, 
+    handleClick, anchorEl, handleClose, exportToJSON, handleImportButtonClick, 
+    importFromJSON, inputFileRef, handleSearch, handleSearchByText }) {
     const { fitView, getViewport, setViewport } = useReactFlow();
-    const reactFlowWrapper = useRef(null);
     const [showMiniMap, setShowMiniMap] = useState(true);
     const [exporting, setExporting] = useState(false);
-    const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [searchMode, setSearchMode] = useState('id');
     const [searchValue, setSearchValue] = useState('');
 
@@ -313,14 +315,6 @@ function FlowComponent({ view, setView, nodes, onNodesChange, edges, onEdgesChan
         setExporting(format);
     };
 
-    const handleMenuClick = (event) => {
-        setMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setMenuAnchorEl(null);
-    };
-
     const handleSearchModeChange = (event, newSearchMode) => {
         if (newSearchMode !== null) {
             setSearchMode(newSearchMode);
@@ -343,8 +337,8 @@ function FlowComponent({ view, setView, nodes, onNodesChange, edges, onEdgesChan
     return (
         <div className="app-container">
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <AppBar position="fixed" color="transparent" sx={{ height: '5vh', display: 'flex', justifyContent: 'center' }}>
-                <Toolbar sx={{ minHeight: '5vh', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+            <AppBar position="fixed" color="transparent" sx={{ height: '8vh', display: 'flex', justifyContent: 'center' }}>
+                <Toolbar sx={{ minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
                 <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="menu" sx={{ mr: 2 }}>
                         <MenuIcon />
                     </IconButton>
@@ -503,6 +497,12 @@ export default function App() {
         [setEdges]
     );
 
+    useLayoutEffect(() => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, { direction: 'TB' });
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+    }, [nodes, edges, setNodes, setEdges]);
+
     const handleSearch = (searchId) => {
         setNodes((prevNodes) => prevNodes.map((node) => {
             if (node.id === searchId) {
@@ -522,7 +522,6 @@ export default function App() {
                 },
             };
         }));
-        fitView({ padding: 0.1 }); // Adjust to zoom in on the highlighted node if needed
     };
 
     const handleSearchByText = (searchText) => {
@@ -544,13 +543,6 @@ export default function App() {
                 },
             };
         }));
-        fitView({ padding: 0.1 }); // Adjust to zoom in on the highlighted node if needed
-    };
-
-    const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
-        if (newView !== null) {
-            setView(newView);
-        }
     };
 
     const clearNodes = () => {
