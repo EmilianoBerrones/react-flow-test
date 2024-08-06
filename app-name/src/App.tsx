@@ -1,5 +1,5 @@
 import {
-    Background,
+    Background, BackgroundVariant,
     Controls,
     MarkerType,
     MiniMap,
@@ -274,41 +274,6 @@ function textToTree(text: string): TreeNode[] {
     }
     return assignUniqueIdsToTree(tree);
 }
-
-// COMPLETED make custom edge with outlined arrow
-// COMPLETED handle tabulations in textfield
-// COMPLETE make custom nodes with the correct design and content.
-// COMPLETE clean custom nodes' outline
-// COMPLETED export current tree to JSON format, and save the file.
-// COMPLETED add maxwidth values to CSS nodes.
-// COMPLETED add types of nodes undeveloped, uninstantiated, and undeveloped and uninstantiated.
-// COMPLETED implement repeatable IDs
-// COMPLETED reflect changes from the diagram to the text format
-// COMPLETED - DANI - Design and implement the header bar
-// COMPLETED reflect label change on diagram to text.
-// TODO notify the user when the text does not have the specified structure
-// TODO read from .txt and .docx files
-// TODO add project names and spaces
-// TODO implement file name and path on export
-// TODO implement x and y indicators on right pane
-// TODO change id on nodes
-// TODO change edge type
-// TODO change node names on richtree
-// TODO add GPT4o and GPT4turbo implementations with Oluwafemi
-// TODO add animations
-
-// TODO possible add ons:
-// COMPLETE - Indentation modifier
-// COMPLETED - Import from JSON
-// COMPLETED - Node searcher
-// COMPLETED - Export to SVG, JPEG/PNG
-// COMPLETED - Highlight active node in text and/or tree.
-// COMPLETED - Node selector to insert it on the field
-// TODO - Auto indent text
-// TODO - See unique IDs instead of label IDs
-// TODO - change background color
-// TODO - hidable left pane
-// TODO - custom layout
 
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
@@ -763,7 +728,7 @@ export default function App() {
                                     fitView
                                     style={{minHeight: "inherit"}}
                                 >
-                                    <Background/>
+                                    <Background variant={BackgroundVariant.Dots}/> {/*implement background color here */}
                                     <MiniMap/>
                                     <Controls/>
                                 </ReactFlow>
