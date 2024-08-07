@@ -11,6 +11,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 
 import React, {SetStateAction, useCallback, useEffect, useRef, useState} from "react";
+import {debounce} from 'lodash';
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -473,40 +474,14 @@ export default function App() {
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
     const handleReloadButton = (_event: any) => {
-        // console.log(copyOfText);
-        // console.log(initialAssuranceText);
-        let found = false;
-        if (copyOfText === initialAssuranceText) {
-            const actualLabels = nodes.map(node => node.data.label);
-            const labelsRef = labels.current;
-            if (labelsRef.length !== actualLabels.length) {
-                const newTree = buildTree(nodes, edges);
-                const uniqueTree = assignUniqueIdsToTree(newTree);
-                replaceTree(uniqueTree);
-                richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
-                setInitialAssuranceText(treeToText(uniqueTree));
-                labels.current = actualLabels;
-                found = true;
-            } else {
-                for (let i = 0; i < labelsRef.length; i++) {
-                    if (labelsRef[i] !== actualLabels[i]) {
-                        const newTree = buildTree(nodes, edges);
-                        const uniqueTree = assignUniqueIdsToTree(newTree);
-                        replaceTree(uniqueTree);
-                        richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
-                        setInitialAssuranceText(treeToText(uniqueTree));
-                        labels.current = actualLabels;
-                        found = true;
-                    }
-                }
-            }
-        }
-        if (!found) {
-            const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
-            replaceTree(newTree);
-            richTree = newTree.map(convertTreeNodeToDesiredNode);
-        }
-    };
+        console.log(copyOfText);
+        console.log(initialAssuranceText);
+        const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
+        replaceTree(newTree);
+        richTree = newTree.map(convertTreeNodeToDesiredNode);
+    }
+
+    
 
     const handleReloadAdvanced = (actualLabels: string[]) => {
         const newTree = buildTree(nodes, edges);
@@ -669,7 +644,7 @@ export default function App() {
                                                     minRows={15}
                                                     maxRows={15}
                                                     variant="outlined"
-                                                    value={addHyphenToText(initialAssuranceText)}
+                                                    value={initialAssuranceText}
                                                     onChange={(e) => setInitialAssuranceText(e.target.value)}
                                                     onKeyDown={handleTab}
                                                 />
