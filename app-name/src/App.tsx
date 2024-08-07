@@ -10,7 +10,7 @@ import {
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import React, {useCallback, useEffect, useRef, useState, useLayoutEffect} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {debounce} from 'lodash';
 
 import "reactflow/dist/style.css";
@@ -286,15 +286,61 @@ let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 let copyOfText = treeToText(initialTree);
 
 function FlowComponent({
-                           view, setView, nodes, onNodesChange, edges,
-                           onEdgesChange, onConnect, handleReloadButton, handleTab, addHyphenToText,
-                           initialAssuranceText, setInitialAssuranceText, indent, handleChangeIndent,
-                           handleClick, anchorEl, handleClose, exportToJSON, handleImportButtonClick,
-                           importFromJSON, inputFileRef, handleSearch, handleSearchByText, onConnectStart, onConnectEnd
-                       }) {
+                           view,
+                           setView,
+                           nodes,
+                           onNodesChange,
+                           edges,
+                           onEdgesChange,
+                           onConnect,
+                           handleReloadButton,
+                           handleTab,
+                           addHyphenToText,
+                           initialAssuranceText,
+                           setInitialAssuranceText,
+                           indent,
+                           handleChangeIndent,
+                           handleClick,
+                           anchorEl,
+                           handleClose,
+                           exportToJSON,
+                           handleImportButtonClick,
+                           importFromJSON,
+                           inputFileRef,
+                           handleSearch,
+                           handleSearchByText,
+                           onConnectStart,
+                           onConnectEnd
+                       }: {
+    view: any;
+    setView: any;
+    nodes: any;
+    onNodesChange: any;
+    edges: any;
+    onEdgesChange: any;
+    onConnect: any;
+    handleReloadButton: any;
+    handleTab: any;
+    addHyphenToText: any;
+    initialAssuranceText: any;
+    setInitialAssuranceText: any;
+    indent: any;
+    handleChangeIndent: any;
+    handleClick: any;
+    anchorEl: any;
+    handleClose: any;
+    exportToJSON: any;
+    handleImportButtonClick: any;
+    importFromJSON: any;
+    inputFileRef: any;
+    handleSearch: any;
+    handleSearchByText: any;
+    onConnectStart: any;
+    onConnectEnd: any;
+}) {
     const {fitView, getViewport, setViewport} = useReactFlow();
     const [showMiniMap, setShowMiniMap] = useState(true);
-    const [exporting, setExporting] = useState(false);
+    const [exporting, setExporting] = useState('');
     const [searchMode, setSearchMode] = useState('id');
     const [searchValue, setSearchValue] = useState('');
 
@@ -321,7 +367,7 @@ function FlowComponent({
 
                 setViewport(originalViewport);
                 setShowMiniMap(true);
-                setExporting(false);
+                setExporting('');
             }, 100); // Delay to ensure state update
         }
     }, [exporting]);
@@ -331,7 +377,7 @@ function FlowComponent({
         setExporting(format);
     };
 
-    const handleSearchModeChange = (event: any, newSearchMode: any) => {
+    const handleSearchModeChange = (_event: any, newSearchMode: any) => {
         if (newSearchMode !== null) {
             setSearchMode(newSearchMode);
         }
