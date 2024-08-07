@@ -349,7 +349,7 @@ export default function App() {
             setFormData('');
         }
         if (copyOfText !== initialAssuranceText) {
-            handleReloadButton();
+            debouncedHandleReloadButton();
             copyOfText = initialAssuranceText;
         }
         if (copyOfText === initialAssuranceText) {
@@ -361,10 +361,14 @@ export default function App() {
                 for (let i = 0; i < labelsRef.length; i++) {
                     if (labelsRef[i] !== actualLabels[i]) {
                         handleReloadAdvanced(actualLabels);
+                        break;
                     }
                 }
             }
         }
+        return () => {
+            debouncedHandleReloadButton.cancel();
+        };
         // automate label change
     }, [formData, isOpen, initialAssuranceText, nodes]);
 
@@ -473,7 +477,7 @@ export default function App() {
     }
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
-    const handleReloadButton = (_event: any) => {
+    const handleReloadButton = () => {
         console.log(copyOfText);
         console.log(initialAssuranceText);
         const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
@@ -481,7 +485,9 @@ export default function App() {
         richTree = newTree.map(convertTreeNodeToDesiredNode);
     }
 
-    
+    const debouncedHandleReloadButton = debounce(() => {
+        handleReloadButton();
+    }, 2500);
 
     const handleReloadAdvanced = (actualLabels: string[]) => {
         const newTree = buildTree(nodes, edges);
