@@ -61,7 +61,6 @@ export default function FormDialog() {
                         const dropdownOption = formJson.dropdown;
                         const result = nodeId + "," + nodeData;
                         setFormData(result);
-                        console.log(nodeId, nodeData, dropdownOption);
                         closeDialog();
                     },
                 }}

@@ -6,11 +6,11 @@ import {
     ReactFlow,
     ReactFlowProvider,
     useEdgesState,
-    useNodesState,
+    useNodesState, useReactFlow,
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
-import React, {SetStateAction, useCallback, useEffect, useRef, useState, useLayoutEffect} from "react";
+import React, {useCallback, useEffect, useRef, useState, useLayoutEffect} from "react";
 import {debounce} from 'lodash';
 
 import "reactflow/dist/style.css";
@@ -290,7 +290,7 @@ function FlowComponent({
                            onEdgesChange, onConnect, handleReloadButton, handleTab, addHyphenToText,
                            initialAssuranceText, setInitialAssuranceText, indent, handleChangeIndent,
                            handleClick, anchorEl, handleClose, exportToJSON, handleImportButtonClick,
-                           importFromJSON, inputFileRef, handleSearch, handleSearchByText
+                           importFromJSON, inputFileRef, handleSearch, handleSearchByText, onConnectStart, onConnectEnd
                        }) {
     const {fitView, getViewport, setViewport} = useReactFlow();
     const [showMiniMap, setShowMiniMap] = useState(true);
@@ -326,18 +326,18 @@ function FlowComponent({
         }
     }, [exporting]);
 
-    const handleExport = (format) => {
+    const handleExport = (format: any) => {
         setShowMiniMap(false);
         setExporting(format);
     };
 
-    const handleSearchModeChange = (event, newSearchMode) => {
+    const handleSearchModeChange = (event: any, newSearchMode: any) => {
         if (newSearchMode !== null) {
             setSearchMode(newSearchMode);
         }
     };
 
-    const handleSearchChange = (event) => {
+    const handleSearchChange = (event: any) => {
         setSearchValue(event.target.value);
     };
 
@@ -351,155 +351,177 @@ function FlowComponent({
     };
 
     return (
-        <div className="app-container">
-            <meta name="viewport" content="width=device-width, initial-scale=1"/>
-            <AppBar position="fixed" color="transparent"
-                    sx={{height: '8vh', display: 'flex', justifyContent: 'center'}}>
-                <Toolbar sx={{minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px'}}>
-                    <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="menu"
-                                sx={{mr: 2}}>
-                        <MenuIcon/>
-                    </IconButton>
-                    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                        <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
-                        <MenuItem onClick={handleImportButtonClick}>
-                            Import graphic from JSON
-                            <input
-                                accept="application/json"
-                                style={{display: 'none'}}
-                                type="file"
-                                onChange={importFromJSON}
-                                ref={inputFileRef}
+        <>
+            <svg
+                style={{display: 'inline-flex', position: 'absolute'}}
+            >
+                <marker
+                    id="custom-marker"
+                    viewBox="0 0 25 25"
+                    markerHeight={15}
+                    markerWidth={15}
+                    refX={12}
+                    refY={5}
+                    orient="180"
+                >
+                    <path fill="grey"
+                          d="M3.8 20q-.575 0-.875-.513t.025-1.012l8.2-13.125q.3-.475.85-.475t.85.475l8.2 13.125q.325.5.025 1.013T20.2 20zm1.8-2h12.8L12 7.75zm6.4-5.125">
+                    </path>
+                </marker>
+            </svg>
+            <div className="app-container">
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <AppBar position="fixed" color="transparent"
+                        sx={{height: '8vh', display: 'flex', justifyContent: 'center'}}>
+                    <Toolbar sx={{minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px'}}>
+                        <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="menu"
+                                    sx={{mr: 2}}>
+                            <MenuIcon/>
+                        </IconButton>
+                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                            <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
+                            <MenuItem onClick={handleImportButtonClick}>
+                                Import graphic from JSON
+                                <input
+                                    accept="application/json"
+                                    style={{display: 'none'}}
+                                    type="file"
+                                    onChange={importFromJSON}
+                                    ref={inputFileRef}
+                                />
+                            </MenuItem>
+                            <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
+                            <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
+                            <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
+                        </Menu>
+                        <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
+                            ProjectName
+                        </Typography>
+                        <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
+                            <TextField
+                                label={`Search by ${searchMode}`}
+                                variant="outlined"
+                                sx={{height: '36px', flexGrow: 1, maxWidth: '300px', marginRight: '8px'}}
+                                size="small"
+                                value={searchValue}
+                                onChange={handleSearchChange}
                             />
-                        </MenuItem>
-                        <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
-                        <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
-                        <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
-                    </Menu>
-                    <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
-                        ProjectName
-                    </Typography>
-                    <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
-                        <TextField
-                            label={`Search by ${searchMode}`}
-                            variant="outlined"
-                            sx={{height: '36px', flexGrow: 1, maxWidth: '300px', marginRight: '8px'}}
-                            size="small"
-                            value={searchValue}
-                            onChange={handleSearchChange}
-                        />
-                        <Button variant="contained" color="primary" onClick={handleSearchSubmit}>Search</Button>
-                        <ToggleButtonGroup
-                            value={searchMode}
-                            exclusive
-                            onChange={handleSearchModeChange}
-                            aria-label="search mode"
-                            sx={{marginLeft: '8px'}}
-                        >
-                            <ToggleButton value="id" aria-label="search by ID">
-                                ID
-                            </ToggleButton>
-                            <ToggleButton value="text" aria-label="search by text">
-                                Text
-                            </ToggleButton>
-                        </ToggleButtonGroup>
-                    </div>
-                </Toolbar>
-            </AppBar>
-            <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh'}}>
-                <Grid item xs={12} md={4} padding="30px" style={{minHeight: '100%'}}>
-                    <Grid container direction="column" spacing={2} style={{minHeight: 'inherit'}}
-                          justifyContent="center">
-                        <Grid item>
-                            <h1>ProjectName</h1>
-                            <Divider/>
-                        </Grid>
-                        <Grid item>
+                            <Button variant="contained" color="primary" onClick={handleSearchSubmit}>Search</Button>
                             <ToggleButtonGroup
-                                value={view}
+                                value={searchMode}
                                 exclusive
-                                onChange={(_event, newView) => setView(newView)}
-                                aria-label="view selection"
+                                onChange={handleSearchModeChange}
+                                aria-label="search mode"
+                                sx={{marginLeft: '8px'}}
                             >
-                                <ToggleButton value="textField" aria-label="TextField">
-                                    Text view
+                                <ToggleButton value="id" aria-label="search by ID">
+                                    ID
                                 </ToggleButton>
-                                <ToggleButton value="richTreeView" aria-label="RichTreeView">
-                                    Tree view
+                                <ToggleButton value="text" aria-label="search by text">
+                                    Text
                                 </ToggleButton>
                             </ToggleButtonGroup>
-                        </Grid>
-                        <Grid item style={{flex: 1, maxHeight: '60vh', overflowY: 'auto'}}>
-                            <Grid container direction="column" spacing={1} justifyContent="flex-start"
-                                  style={{height: '100%'}}>
-                                <Grid item>
-                                    {view === 'textField' && (
-                                        <TextField
-                                            id="AssuranceText"
-                                            multiline
-                                            fullWidth
-                                            minRows={15}
-                                            variant="outlined"
-                                            value={addHyphenToText(initialAssuranceText)}
-                                            onChange={(e) => setInitialAssuranceText(e.target.value)}
-                                            onKeyDown={handleTab}
-                                        />
-                                    )}
-                                    {view === 'richTreeView' && (
-                                        <div style={{maxHeight: '55vh', overflowY: 'auto'}}>
-                                            <RichTreeView
-                                                items={richTree}
-                                                slots={{
-                                                    expandIcon: FlagCircleIcon,
-                                                    collapseIcon: FlagCircleOutlined,
-                                                    endIcon: ArrowCircleLeftOutlined
-                                                }}
+                        </div>
+                    </Toolbar>
+                </AppBar>
+                <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh'}}>
+                    <Grid item xs={12} md={4} padding="30px" style={{minHeight: '100%'}}>
+                        <Grid container direction="column" spacing={2} style={{minHeight: 'inherit'}}
+                              justifyContent="center">
+                            <Grid item>
+                                <h1>ProjectName</h1>
+                                <Divider/>
+                            </Grid>
+                            <Grid item>
+                                <ToggleButtonGroup
+                                    value={view}
+                                    exclusive
+                                    onChange={(_event, newView) => setView(newView)}
+                                    aria-label="view selection"
+                                >
+                                    <ToggleButton value="textField" aria-label="TextField">
+                                        Text view
+                                    </ToggleButton>
+                                    <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                                        Tree view
+                                    </ToggleButton>
+                                </ToggleButtonGroup>
+                            </Grid>
+                            <Grid item style={{flex: 1, maxHeight: '60vh', overflowY: 'auto'}}>
+                                <Grid container direction="column" spacing={1} justifyContent="flex-start"
+                                      style={{height: '100%'}}>
+                                    <Grid item>
+                                        {view === 'textField' && (
+                                            <TextField
+                                                id="AssuranceText"
+                                                multiline
+                                                fullWidth
+                                                minRows={15}
+                                                variant="outlined"
+                                                value={addHyphenToText(initialAssuranceText)}
+                                                onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                                onKeyDown={handleTab}
                                             />
-                                        </div>
-                                    )}
-                                </Grid>
-                                <Grid item>
-                                    <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                        )}
+                                        {view === 'richTreeView' && (
+                                            <div style={{maxHeight: '55vh', overflowY: 'auto'}}>
+                                                <RichTreeView
+                                                    items={richTree}
+                                                    slots={{
+                                                        expandIcon: FlagCircleIcon,
+                                                        collapseIcon: FlagCircleOutlined,
+                                                        endIcon: ArrowCircleLeftOutlined
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </Grid>
+                                    <Grid item>
+                                        <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                    </Grid>
                                 </Grid>
                             </Grid>
+                            <Grid item>
+                                <FormControl fullWidth>
+                                    <InputLabel id="indentSelect">Indentation</InputLabel>
+                                    <Select
+                                        value={indent.toString()}
+                                        label="Indent"
+                                        onChange={handleChangeIndent}
+                                    >
+                                        <MenuItem value={2}>Two spaces</MenuItem>
+                                        <MenuItem value={4}>Four spaces</MenuItem>
+                                        <MenuItem value={8}>Tabulations</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
                         </Grid>
-                        <Grid item>
-                            <FormControl fullWidth>
-                                <InputLabel id="indentSelect">Indentation</InputLabel>
-                                <Select
-                                    value={indent.toString()}
-                                    label="Indent"
-                                    onChange={handleChangeIndent}
-                                >
-                                    <MenuItem value={2}>Two spaces</MenuItem>
-                                    <MenuItem value={4}>Four spaces</MenuItem>
-                                    <MenuItem value={8}>Tabulations</MenuItem>
-                                </Select>
-                            </FormControl>
+                    </Grid>
+                    <Grid item xs={12} md={8} style={{minHeight: '92vh'}}>
+                        <Grid container style={{minHeight: "inherit"}}>
+                            <FormDialog/>
+                            <ReactFlow
+                                nodes={nodes}
+                                nodeTypes={nodeTypes}
+                                onNodesChange={onNodesChange}
+                                edges={edges}
+                                edgeTypes={edgeTypes}
+                                onEdgesChange={onEdgesChange}
+                                onConnect={onConnect}
+                                fitView
+                                style={{minHeight: "inherit"}}
+                                onConnectStart={onConnectStart}
+                                onConnectEnd={onConnectEnd}
+                            >
+                                <Background variant={BackgroundVariant.Dots}/>
+                                {showMiniMap && <MiniMap/>}
+                                <Controls/>
+                            </ReactFlow>
                         </Grid>
                     </Grid>
                 </Grid>
-                <Grid item xs={12} md={8} style={{minHeight: '92vh'}}>
-                    <Grid container style={{minHeight: "inherit"}}>
-                        <ReactFlow
-                            nodes={nodes}
-                            nodeTypes={nodeTypes}
-                            onNodesChange={onNodesChange}
-                            edges={edges}
-                            edgeTypes={edgeTypes}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            fitView
-                            style={{minHeight: "inherit"}}
-                        >
-                            <Background/>
-                            {showMiniMap && <MiniMap/>}
-                            <Controls/>
-                        </ReactFlow>
-                    </Grid>
-                </Grid>
-            </Grid>
-        </div>
+            </div>
+        </>
     );
 }
 
@@ -519,8 +541,6 @@ export default function App() {
     const inputFileRef = useRef(null);
 
     const onConnect = useCallback(() => {
-        // reset the start node on connections
-        console.log(connectingNodeId);
         connectingNodeId.current = null;
     }, []);
 
@@ -538,13 +558,7 @@ export default function App() {
         }, []
     );
 
-    useLayoutEffect(() => {
-        const {nodes: layoutedNodes, edges: layoutedEdges} = getLayoutedElements(nodes, edges, {direction: 'TB'});
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-    }, [nodes, edges, setNodes, setEdges]);
-
-    const handleSearch = (searchId) => {
+    const handleSearch = (searchId: any) => {
         setNodes((prevNodes) => prevNodes.map((node) => {
             if (node.id === searchId) {
                 return {
@@ -624,13 +638,7 @@ export default function App() {
     }, [formData, isOpen, initialAssuranceText, nodes]);
 
 
-    const handleViewChange = (_event: any, newView: SetStateAction<string> | null) => {
-        if (newView !== null) {
-            setView(newView);
-        }
-    };
-
-    const handleSearchByText = (searchText) => {
+    const handleSearchByText = (searchText: any) => {
         setNodes((prevNodes) => prevNodes.map((node) => {
             if (node.data.label.includes(searchText)) {
                 return {
@@ -750,8 +758,6 @@ export default function App() {
 
     // Function to reflect the new nodes and edges after the assurance text is modified.
     const handleReloadButton = () => {
-        console.log(copyOfText);
-        console.log(initialAssuranceText);
         const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
         replaceTree(newTree);
         richTree = newTree.map(convertTreeNodeToDesiredNode);
@@ -828,9 +834,6 @@ export default function App() {
         URL.revokeObjectURL(url);
     }
 
-    const debug = () => {
-        console.log(JSON.stringify(labels, null, 2));
-    }
 
     const importFromJSON = (event: any) => {
         const file = event.target.files[0];
@@ -869,7 +872,7 @@ export default function App() {
         setEdges([...layoutedElements.edges]);
     }, [nodes.length, edges.length]);
 
-    const exportToImage = async (fitView, getViewport, setViewport, format: string) => {
+    const exportToImage = async (fitView:any, getViewport:any, setViewport:any, format: string) => {
         const originalViewport = getViewport();
         fitView();
 
@@ -893,7 +896,7 @@ export default function App() {
         }, 1000);
     };
 
-    const handleClick = (event) => {
+    const handleClick = (event: any) => {
         setAnchorEl(event.currentTarget);
     };
 
@@ -909,52 +912,35 @@ export default function App() {
 
     // HTML section of the code.
     return (
-        <>
-            <svg
-                style={{display: 'inline-flex', position: 'absolute'}}
-            >
-                <marker
-                    id="custom-marker"
-                    viewBox="0 0 25 25"
-                    markerHeight={15}
-                    markerWidth={15}
-                    refX={12}
-                    refY={5}
-                    orient="180"
-                >
-                    <path fill="grey"
-                          d="M3.8 20q-.575 0-.875-.513t.025-1.012l8.2-13.125q.3-.475.85-.475t.85.475l8.2 13.125q.325.5.025 1.013T20.2 20zm1.8-2h12.8L12 7.75zm6.4-5.125">
-                    </path>
-                </marker>
-            </svg>
-            <ReactFlowProvider>
-                <FlowComponent
-                    view={view}
-                    setView={setView}
-                    nodes={nodes}
-                    onNodesChange={onNodesChange}
-                    edges={edges}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    handleReloadButton={handleReloadButton}
-                    handleTab={handleTab}
-                    addHyphenToText={addHyphenToText}
-                    initialAssuranceText={initialAssuranceText}
-                    setInitialAssuranceText={setInitialAssuranceText}
-                    indent={indent}
-                    handleChangeIndent={handleChangeIndent}
-                    exportToImage={exportToImage}
-                    handleClick={handleClick}
-                    anchorEl={anchorEl}
-                    handleClose={handleClose}
-                    exportToJSON={exportToJSON}
-                    handleImportButtonClick={handleImportButtonClick}
-                    importFromJSON={importFromJSON}
-                    inputFileRef={inputFileRef}
-                    handleSearch={handleSearch}
-                    handleSearchByText={handleSearchByText}
-                />
-            </ReactFlowProvider>
-        </>
+        <ReactFlowProvider>
+            <FlowComponent
+                view={view}
+                setView={setView}
+                nodes={nodes}
+                onNodesChange={onNodesChange}
+                edges={edges}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onConnectStart={onConnectStart}
+                onConnectEnd={onConnectEnd}
+                handleReloadButton={handleReloadButton}
+                handleTab={handleTab}
+                addHyphenToText={addHyphenToText}
+                initialAssuranceText={initialAssuranceText}
+                setInitialAssuranceText={setInitialAssuranceText}
+                indent={indent}
+                handleChangeIndent={handleChangeIndent}
+                exportToImage={exportToImage}
+                handleClick={handleClick}
+                anchorEl={anchorEl}
+                handleClose={handleClose}
+                exportToJSON={exportToJSON}
+                handleImportButtonClick={handleImportButtonClick}
+                importFromJSON={importFromJSON}
+                inputFileRef={inputFileRef}
+                handleSearch={handleSearch}
+                handleSearchByText={handleSearchByText}
+            />
+        </ReactFlowProvider>
     );
 }
