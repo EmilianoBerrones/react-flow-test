@@ -1,12 +1,14 @@
 import {
-    Background, BackgroundVariant,
+    Background,
+    BackgroundVariant,
     Controls,
     MarkerType,
     MiniMap,
     ReactFlow,
     ReactFlowProvider,
     useEdgesState,
-    useNodesState, useReactFlow,
+    useNodesState,
+    useReactFlow,
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
@@ -22,7 +24,7 @@ import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
     AppBar,
-    Button,
+    Button, ButtonGroup,
     Divider,
     FormControl,
     Grid,
@@ -31,7 +33,7 @@ import {
     Menu,
     MenuItem,
     Select,
-    SelectChangeEvent,
+    SelectChangeEvent, Slider, Switch,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
@@ -44,6 +46,7 @@ import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
+import {MuiColorInput} from "mui-color-input";
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -284,6 +287,7 @@ function textToTree(text: string): TreeNode[] {
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 let copyOfText = treeToText(initialTree);
+let oneTime = 0; // Function to handle layouting one time
 
 function FlowComponent() {
     // Values for getting and setting the viewport
@@ -295,6 +299,7 @@ function FlowComponent() {
     const [anchorEl, setAnchorEl] = useState(null);
     const inputFileRef = useRef<HTMLInputElement>(null);
     const [isPanelOpen, setPanelOpen] = useState(false);
+    const [backgroundShapes, setBackgroundShapes] = useState(BackgroundVariant.Dots);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -469,7 +474,10 @@ function FlowComponent() {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
-        handleReloadButton();
+        if (oneTime < 2){
+            handleReloadButton();
+            oneTime +=1;
+        }
     }, [nodes.length, edges.length]);
 
     // Functions to clear the nodes and edges so they can be redrawn.
@@ -750,6 +758,10 @@ function FlowComponent() {
         setPanelOpen(true);
     }
 
+    const handleBackgroundChange = (newBackground: BackgroundVariant) => {
+        setBackgroundShapes(newBackground);
+    };
+
     // HTML section
     return (
         <>
@@ -914,11 +926,15 @@ function FlowComponent() {
                                 onConnectStart={onConnectStart}
                                 onConnectEnd={onConnectEnd}
                             >
-                                <Background variant={BackgroundVariant.Dots}/>
+                                <Background variant={backgroundShapes}/>
                                 {showMiniMap && <MiniMap/>}
                                 <Controls/>
                             </ReactFlow>
-                            <SidePanel isPanelOpen={isPanelOpen} handleClosePanel={handleClosePanel}/>
+                            <SidePanel
+                                isPanelOpen={isPanelOpen}
+                                handleClosePanel={handleClosePanel}
+                                setNewBackgroundShape={handleBackgroundChange}
+                            />
                             <Button style={{position: 'absolute', top: '50%', right: '0px'}} onClick={handleOpenPanel}>Abrir
                                 panel</Button>
                         </Grid>
@@ -929,7 +945,15 @@ function FlowComponent() {
     );
 }
 
-const SidePanel = ({isPanelOpen, handleClosePanel}: { isPanelOpen: boolean; handleClosePanel: () => void }) => {
+const SidePanel = ({
+                       isPanelOpen,
+                       handleClosePanel,
+                       setNewBackgroundShape,
+                       }
+                       : {
+    isPanelOpen: boolean;
+    handleClosePanel: () => void ;
+    setNewBackgroundShape: any; }) => {
     return (
         <div
             style={{
@@ -941,34 +965,53 @@ const SidePanel = ({isPanelOpen, handleClosePanel}: { isPanelOpen: boolean; hand
                 backgroundColor: '#fff',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)',
                 padding: '20px',
-                width: '300px',
+                width: '350px',
                 transition: 'right 0.3s ease-in-out',
             }}
         >
             <Grid container direction='column' spacing={1}>
-                <Grid item alignSelf='center'>
-                    <Button variant='text' onClick={handleClosePanel}>Close</Button>
-                </Grid>
-                <Divider/>
                 <Grid item>
-                    Grid style
+                    <p>Grid style</p>
+                </Grid>
+                <Grid item alignSelf="center">
+                    <ButtonGroup variant="text">
+                        <Button onClick={() => setNewBackgroundShape(BackgroundVariant.Lines)}>
+                            Lines
+                        </Button>
+                        <Button onClick={() => setNewBackgroundShape(BackgroundVariant.Dots)}>
+                            Dots
+                        </Button>
+                        <Button onClick={() => setNewBackgroundShape(BackgroundVariant.Cross)}>
+                            Cross
+                        </Button>
+                        <Button onClick={() => setNewBackgroundShape(BackgroundVariant)}>
+                            Empty
+                        </Button>
+                    </ButtonGroup>
                 </Grid>
                 <Grid item>
                     Grid size
+                    <Slider defaultValue={50}
+                    ></Slider>
                 </Grid>
-                <Grid item>
-                    Grid color
+                <Grid item style={{justifySelf: 'center'}}>
+                    <p>
+                        Grid color
+                    </p>
+                    <MuiColorInput format="hex" value={'#FFFFFF'}></MuiColorInput>
                 </Grid>
-                <Divider/>
                 <Grid item>
                     Ruler
-                </Grid>
-                <Divider/>
-                <Grid item>
-                    Background
+                    <Switch defaultChecked/>
                 </Grid>
                 <Grid item>
-                    Shape color
+                    <p>
+                        Background color
+                    </p>
+                    <MuiColorInput format="hex" value={'#FFFFFF'}></MuiColorInput>
+                </Grid>
+                <Grid item alignSelf='center'>
+                    <Button variant='text' onClick={handleClosePanel}>Close</Button>
                 </Grid>
             </Grid>
         </div>

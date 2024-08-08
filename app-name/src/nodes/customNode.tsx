@@ -17,6 +17,7 @@ interface CustomNodeProps {
 export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
+    const {setEdges, getEdges} = useReactFlow();
 
     let uninstantiated = false;
     let undeveloped = false;
@@ -52,6 +53,17 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
         }
     };
 
+    const deleteNode = () => {
+        const nodes = getNodes();
+        const updatedNodes = nodes.filter((node) => node.id !== id);
+
+        const edges = getEdges();
+        const updatedEdges = edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+    };
+
     return (
         <div className="goalNode" style={{backgroundColor}}>
             {(uninstantiated || undeveloped) && (
@@ -71,7 +83,7 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
             <NodeToolbar>
                 <Button variant="outlined" onClick={handleLabel}>Edit</Button>
                 <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined">Delete</Button>
+                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
             </NodeToolbar>
             <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
             <div><b>{data.id}</b></div>
@@ -81,7 +93,11 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     );
 };
 
-export const ContextNode: React.FC<CustomNodeProps> = ({data}) => {
+export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
+    const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
+    const {setNodes, getNodes} = useReactFlow();
+    const {setEdges, getEdges} = useReactFlow();
+
     let uninstantiated = false;
     let undeveloped = false;
     if (data.label.includes('uninstantiated')) {
@@ -90,8 +106,45 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data}) => {
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
     }
+
+    const handleColorChange = (newValue: React.SetStateAction<string>) => {
+        setBackgroundColor(newValue);
+    }
+
+    const handleLabel = () => {
+        const newLabel = prompt('Enter the new label');
+        if (newLabel) {
+            data.label = newLabel;
+            const nodes = getNodes();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: newLabel,
+                        },
+                    };
+                }
+                return node;
+            });
+            setNodes(newNodes);
+        }
+    };
+
+    const deleteNode = () => {
+        const nodes = getNodes();
+        const updatedNodes = nodes.filter((node) => node.id !== id);
+
+        const edges = getEdges();
+        const updatedEdges = edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+    };
+
     return (
-        <div className="contextNode">
+        <div className="contextNode" style={{backgroundColor}}>
             {(uninstantiated || undeveloped) && (
                 <div className="nodeAttribute__container">
                     {undeveloped && (
@@ -106,6 +159,11 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data}) => {
                     )}
                 </div>
             )}
+            <NodeToolbar>
+                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+            </NodeToolbar>
             <Handle type="target" position={Position.Top} style={{background: '#555'}}/>
             <div><b>{data.id}</b></div>
             <div>{data.label}</div>
@@ -114,7 +172,11 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data}) => {
     );
 };
 
-export const StrategyNode: React.FC<CustomNodeProps> = ({data}) => {
+export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
+    const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
+    const {setNodes, getNodes} = useReactFlow();
+    const {setEdges, getEdges} = useReactFlow();
+
     let uninstantiated = false;
     let undeveloped = false;
     if (data.label.includes('uninstantiated')) {
@@ -123,6 +185,43 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data}) => {
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
     }
+
+    const handleColorChange = (newValue: React.SetStateAction<string>) => {
+        setBackgroundColor(newValue);
+    }
+
+    const handleLabel = () => {
+        const newLabel = prompt('Enter the new label');
+        if (newLabel) {
+            data.label = newLabel;
+            const nodes = getNodes();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: newLabel,
+                        },
+                    };
+                }
+                return node;
+            });
+            setNodes(newNodes);
+        }
+    };
+
+    const deleteNode = () => {
+        const nodes = getNodes();
+        const updatedNodes = nodes.filter((node) => node.id !== id);
+
+        const edges = getEdges();
+        const updatedEdges = edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+    };
+
     return (
         <div>
             {(uninstantiated || undeveloped) && (
@@ -139,8 +238,13 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data}) => {
                     )}
                 </div>
             )}
+            <NodeToolbar>
+                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+            </NodeToolbar>
             <div className="strategyNodeBorder">
-                <div className="strategyNode">
+                <div className="strategyNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
                     <div>{data.label}</div>
@@ -151,7 +255,11 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data}) => {
     );
 };
 
-export const AssumptionNode: React.FC<CustomNodeProps> = ({data}) => {
+export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
+    const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
+    const {setNodes, getNodes} = useReactFlow();
+    const {setEdges, getEdges} = useReactFlow();
+
     let uninstantiated = false;
     let undeveloped = false;
     if (data.label.includes('uninstantiated')) {
@@ -160,6 +268,43 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data}) => {
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
     }
+
+    const handleColorChange = (newValue: React.SetStateAction<string>) => {
+        setBackgroundColor(newValue);
+    }
+
+    const handleLabel = () => {
+        const newLabel = prompt('Enter the new label');
+        if (newLabel) {
+            data.label = newLabel;
+            const nodes = getNodes();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: newLabel,
+                        },
+                    };
+                }
+                return node;
+            });
+            setNodes(newNodes);
+        }
+    };
+
+    const deleteNode = () => {
+        const nodes = getNodes();
+        const updatedNodes = nodes.filter((node) => node.id !== id);
+
+        const edges = getEdges();
+        const updatedEdges = edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+    };
+
     return (
         <div>
             {(uninstantiated || undeveloped) && (
@@ -176,8 +321,13 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data}) => {
                     )}
                 </div>
             )}
+            <NodeToolbar>
+                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+            </NodeToolbar>
             <div className="ajNodeBorder">
-                <div className="ajNode">
+                <div className="ajNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
                     <div>{data.label}</div>
@@ -191,7 +341,11 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data}) => {
     );
 };
 
-export const JustificationNode: React.FC<CustomNodeProps> = ({data}) => {
+export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
+    const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
+    const {setNodes, getNodes} = useReactFlow();
+    const {setEdges, getEdges} = useReactFlow();
+
     let uninstantiated = false;
     let undeveloped = false;
     if (data.label.includes('uninstantiated')) {
@@ -200,6 +354,43 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data}) => {
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
     }
+
+    const handleColorChange = (newValue: React.SetStateAction<string>) => {
+        setBackgroundColor(newValue);
+    }
+
+    const handleLabel = () => {
+        const newLabel = prompt('Enter the new label');
+        if (newLabel) {
+            data.label = newLabel;
+            const nodes = getNodes();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: newLabel,
+                        },
+                    };
+                }
+                return node;
+            });
+            setNodes(newNodes);
+        }
+    };
+
+    const deleteNode = () => {
+        const nodes = getNodes();
+        const updatedNodes = nodes.filter((node) => node.id !== id);
+
+        const edges = getEdges();
+        const updatedEdges = edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+    };
+
     return (
         <div>
             {(uninstantiated || undeveloped) && (
@@ -216,8 +407,13 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data}) => {
                     )}
                 </div>
             )}
+            <NodeToolbar>
+                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+            </NodeToolbar>
             <div className="ajNodeBorder">
-                <div className="ajNode">
+                <div className="ajNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
                     <div>{data.label}</div>
@@ -231,7 +427,11 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data}) => {
     );
 };
 
-export const SolutionNode: React.FC<CustomNodeProps> = ({data}) => {
+export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
+    const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
+    const {setNodes, getNodes} = useReactFlow();
+    const {setEdges, getEdges} = useReactFlow();
+
     let uninstantiated = false;
     let undeveloped = false;
     if (data.label.includes('uninstantiated')) {
@@ -240,6 +440,43 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data}) => {
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
     }
+
+    const handleColorChange = (newValue: React.SetStateAction<string>) => {
+        setBackgroundColor(newValue);
+    }
+
+    const handleLabel = () => {
+        const newLabel = prompt('Enter the new label');
+        if (newLabel) {
+            data.label = newLabel;
+            const nodes = getNodes();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: newLabel,
+                        },
+                    };
+                }
+                return node;
+            });
+            setNodes(newNodes);
+        }
+    };
+
+    const deleteNode = () => {
+        const nodes = getNodes();
+        const updatedNodes = nodes.filter((node) => node.id !== id);
+
+        const edges = getEdges();
+        const updatedEdges = edges.filter((edge) => edge.source !== id && edge.target !== id);
+
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+    };
+
     return (
         <div>
             {(uninstantiated || undeveloped) && (
@@ -256,8 +493,13 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data}) => {
                     )}
                 </div>
             )}
+            <NodeToolbar>
+                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+            </NodeToolbar>
             <div className="solutionNodeBorder">
-                <div className="solutionNode">
+                <div className="solutionNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
                     <div style={{
