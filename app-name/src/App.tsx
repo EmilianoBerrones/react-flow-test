@@ -285,65 +285,156 @@ let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 let copyOfText = treeToText(initialTree);
 
-function FlowComponent({
-                           view,
-                           setView,
-                           nodes,
-                           onNodesChange,
-                           edges,
-                           onEdgesChange,
-                           onConnect,
-                           handleReloadButton,
-                           handleTab,
-                           addHyphenToText,
-                           initialAssuranceText,
-                           setInitialAssuranceText,
-                           indent,
-                           handleChangeIndent,
-                           handleClick,
-                           anchorEl,
-                           handleClose,
-                           exportToJSON,
-                           handleImportButtonClick,
-                           importFromJSON,
-                           inputFileRef,
-                           handleSearch,
-                           handleSearchByText,
-                           onConnectStart,
-                           onConnectEnd
-                       }: {
-    view: any;
-    setView: any;
-    nodes: any;
-    onNodesChange: any;
-    edges: any;
-    onEdgesChange: any;
-    onConnect: any;
-    handleReloadButton: any;
-    handleTab: any;
-    addHyphenToText: any;
-    initialAssuranceText: any;
-    setInitialAssuranceText: any;
-    indent: any;
-    handleChangeIndent: any;
-    handleClick: any;
-    anchorEl: any;
-    handleClose: any;
-    exportToJSON: any;
-    handleImportButtonClick: any;
-    importFromJSON: any;
-    inputFileRef: any;
-    handleSearch: any;
-    handleSearchByText: any;
-    onConnectStart: any;
-    onConnectEnd: any;
-}) {
+function FlowComponent() {
+    // Values for getting and setting the viewport
     const {fitView, getViewport, setViewport} = useReactFlow();
     const [showMiniMap, setShowMiniMap] = useState(true);
     const [exporting, setExporting] = useState('');
     const [searchMode, setSearchMode] = useState('id');
     const [searchValue, setSearchValue] = useState('');
+    const [anchorEl, setAnchorEl] = useState(null);
+    const inputFileRef = useRef<HTMLInputElement>(null);
 
+    // Values for the nodes and their functionality
+    const [indent, setIndent] = useState(defaultIndent);
+    const [view, setView] = useState('textField'); // Estado para manejar la vista actual
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const labels = useRef<string[]>(nodes.map(node => node.data.label));
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+    // Parameters to create nodes on edge drop
+    const connectingNodeId = useRef(null);
+    const {openDialog, formData, setFormData, isOpen} = useDialog();
+
+    // Creation of initial assurance case text
+    const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
+
+    // Function to clean the connecting node when it's created
+    const onConnect = useCallback(() => {
+        connectingNodeId.current = null;
+    }, []);
+
+    // Function to keep track of the connecting node
+    const onConnectStart = useCallback((_: any, {nodeId}: any) => {
+        connectingNodeId.current = nodeId;
+    }, []);
+
+    // Function to open a dialog on edge drop, if the connecting node is not itself.
+    const onConnectEnd = useCallback(
+        (event: any) => {
+            if (!connectingNodeId.current) return;
+            const targetIsPane = event.target.classList.contains('react-flow__pane');
+            if (targetIsPane) {
+                openDialog();
+            }
+        }, []
+    );
+
+    // Function to handle node search by id
+    const handleSearch = (searchId: any) => {
+        setNodes((prevNodes) => prevNodes.map((node) => {
+            if (node.id === searchId) {
+                return {
+                    ...node,
+                    style: {
+                        ...node.style,
+                        border: '2px solid red',
+                    },
+                };
+            }
+            return {
+                ...node,
+                style: {
+                    ...node.style,
+                    border: 'none',
+                },
+            };
+        }));
+    };
+
+
+    // Function to handel node search by text
+    const handleSearchByText = (searchText: any) => {
+        setNodes((prevNodes) => prevNodes.map((node) => {
+            if (node.data.label.includes(searchText)) {
+                return {
+                    ...node,
+                    style: {
+                        ...node.style,
+                        border: '2px solid red',
+                    },
+                };
+            }
+            return {
+                ...node,
+                style: {
+                    ...node.style,
+                    border: 'none',
+                },
+            };
+        }));
+    };
+
+    // Function to synchronize the data between the graph, textview and treeview
+    useEffect(() => {
+        if (!isOpen && formData) {
+            const newNodeInfo = formData.split(',');
+            const newNodeId = newNodeInfo[0];
+            const newNodeLabel = newNodeInfo[1];
+            const type = defineTypeOfNode(newNodeId);
+            const newNode = {
+                id: newNodeId,
+                type: type,
+                position: {x: 0, y: 0},
+                data: {label: newNodeLabel, id: newNodeId},
+            }
+            let edgeId = `edge-${connectingNodeId.current}-${newNode.id}`;
+            let edgeSource = connectingNodeId.current;
+            let edgeTarget = newNode.id;
+            const newEdge = {
+                id: edgeId,
+                source: edgeSource,
+                target: edgeTarget,
+                animated: false,
+                type: 'step',
+                markerEnd: arrowMarker,
+                style: arrowFill
+            }
+            const newNodes = nodes.concat(newNode);
+            const newEdges = edges.concat(newEdge);
+            const newTree = buildTree(newNodes, newEdges);
+            const uniqueTree = assignUniqueIdsToTree(newTree);
+            replaceTree(uniqueTree);
+            richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
+            setInitialAssuranceText(treeToText(uniqueTree));
+            connectingNodeId.current = null;
+            setFormData('');
+        }
+        if (copyOfText !== initialAssuranceText) {
+            debouncedHandleReloadButton();
+            copyOfText = initialAssuranceText;
+        }
+        if (copyOfText === initialAssuranceText) {
+            const actualLabels = nodes.map(node => node.data.label);
+            const labelsRef = labels.current;
+            if (labelsRef.length !== actualLabels.length) {
+                handleReloadAdvanced(actualLabels);
+            } else {
+                for (let i = 0; i < labelsRef.length; i++) {
+                    if (labelsRef[i] !== actualLabels[i]) {
+                        handleReloadAdvanced(actualLabels);
+                        break;
+                    }
+                }
+            }
+        }
+        return () => {
+            debouncedHandleReloadButton.cancel();
+        };
+        // automate label change
+    }, [formData, isOpen, initialAssuranceText, nodes]);
+
+    // Function to detect when the nodes are going to be exported to an image format, and then export them
     useEffect(() => {
         if (exporting) {
             const originalViewport = getViewport();
@@ -372,21 +463,274 @@ function FlowComponent({
         }
     }, [exporting]);
 
+    // Function that layouts the graph initially
+    useEffect(() => {
+        const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
+        setNodes([...layoutedElements.nodes]);
+        setEdges([...layoutedElements.edges]);
+    }, [nodes.length, edges.length]);
+
+    // Functions to clear the nodes and edges so they can be redrawn.
+    const clearNodes = () => {
+        setNodes([]);
+    };
+    const clearEdges = () => {
+        setEdges([])
+    };
+
+    // Helper function to recursively generate edges from a tree
+    const generateEdgesFromNodes = (nodes: TreeNode[], edges: Edge[] = [], parentId?: string): void => {
+        for (const node of nodes) {
+            if (parentId) {
+                // Create an edge from the parent node to the current node
+                const animation = false;
+                let defaultArrow: any = arrowMarker;
+                let defaultFill = arrowFill;
+                if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
+                    defaultArrow = arrowMarkerEmpty;
+                    defaultFill = arrowFillEmpty;
+                }
+                edges.push({
+                    id: `edge-${parentId}-${node.node.id}`,
+                    source: parentId,
+                    target: node.node.id,
+                    animated: animation,
+                    type: 'step',
+                    markerEnd: defaultArrow,
+                    style: defaultFill,
+                });
+            }
+
+            // Recursively generate edges for child nodes
+            if (node.children.length > 0) {
+                generateEdgesFromNodes(node.children, edges, node.node.id);
+            }
+        }
+    };
+
+    // Main function to get edges from an array of tree nodes given as parameter.
+    const addEdgesFromTree = (nodes: TreeNode[]): Edge[] => {
+        const edges: Edge[] = [];
+        generateEdgesFromNodes(nodes, edges);
+        return edges;
+    };
+
+    // Main function to add the nodes from a tree structure given as parameter
+    function addNodesFromTree(tree: TreeNode[]) {
+        const createNodesFromTree = (nodes: TreeNode[]): Node[] => {
+            return nodes.flatMap(node => [
+                {
+                    id: node.node.id,
+                    data: node.node.data,
+                    position: node.node.position,
+                    type: defineTypeOfNode(node.node.id)
+                },
+                ...createNodesFromTree(node.children)
+            ]);
+        };
+
+        // Layout them with Dagre before drawing them
+        return createNodesFromTree(tree);
+    }
+
+    // Helper function to return the correct type of node depending on its id.
+    function defineTypeOfNode(id: string) {
+        if (id.startsWith('S')) {
+            if (id.includes('Sn')) {
+                return 'solution';
+            } else return 'strategy';
+        } else {
+            switch (id.charAt(0)) {
+                case 'G':
+                    return 'goal';
+                case 'C':
+                    return 'context';
+                case 'A':
+                    return 'assumption';
+                case 'J':
+                    return 'justification';
+                default:
+                    return 'default';
+            }
+        }
+    }
+
+    // Function to replace the previous tree with the new one given as parameter.
+    function replaceTree(tree: TreeNode[]) {
+        clearNodes(); // Deletes al nodes
+        clearEdges(); // Deletes all edges
+        const newNodes = addNodesFromTree(tree); // Adds new nodes based on the new Tree
+        const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
+        // Layout them with Dagre before drawing them
+        const layoutedElements = getLayoutedElements(newNodes, newEdges, {direction: 'TB'});
+        setNodes([...layoutedElements.nodes]);
+        setEdges([...layoutedElements.edges]);
+    }
+
+    // Function to reflect the new nodes and edges after the assurance text is modified.
+    const handleReloadButton = () => {
+        const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
+        replaceTree(newTree);
+        richTree = newTree.map(convertTreeNodeToDesiredNode);
+    }
+
+    // Function to delay the reload button by 2500 ms
+    const debouncedHandleReloadButton = debounce(() => {
+        handleReloadButton();
+    }, 2500);
+
+    // Alternate version to handle reload when scanning for new labels.
+    const handleReloadAdvanced = (actualLabels: string[]) => {
+        const newTree = buildTree(nodes, edges);
+        const uniqueTree = assignUniqueIdsToTree(newTree);
+        replaceTree(uniqueTree);
+        richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
+        setInitialAssuranceText(treeToText(uniqueTree));
+        labels.current = actualLabels;
+    }
+
+    // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
+    const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const textarea = event.target as HTMLTextAreaElement;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            textarea.value = textarea.value.substring(0, start) + "\t" + textarea.value.substring(end);
+
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }
+    }
+
+    // Function that replaces tabs with spaces
+    function replaceTabsWithSpaces(input: string, spacesPerTab: number = 8): string {
+        if (!input.includes('\t')) {
+            return input;
+        }
+        const spaces = ' '.repeat(spacesPerTab);
+        return input.replace(/\t/g, spaces);
+    }
+
+    // Function that adds hyphens to a text so the text is properly formatted.
+    function addHyphenToText(texto: string): string {
+        const lineas = texto.split('\n');
+        const lineasConGuiones = lineas.map(linea => {
+            const indicePrimeraMayuscula = linea.search(/[A-Z]/);
+
+            if (indicePrimeraMayuscula !== -1) {
+                const antesPrimeraMayuscula = linea.slice(0, indicePrimeraMayuscula);
+                if (antesPrimeraMayuscula.includes("- ")) {
+                    return linea;
+                } else {
+                    // Insertar "- " justo antes de la primera mayúscula
+                    return antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
+                }
+            } else {
+                return linea;
+            }
+        });
+
+        // Unir las líneas de nuevo en un solo string
+        return lineasConGuiones.join('\n');
+    }
+
+    // Function to export to JSON
+    const exportToJSON = () => {
+        const blob = new Blob([JSON.stringify(richTree, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nodes.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Function to import from JSON file.
+    const importFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            console.error("No file selected");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e: ProgressEvent<FileReader>) => {
+            if (e.target && typeof e.target.result === 'string') {
+                try {
+                    const content = JSON.parse(e.target.result);
+                    console.log("Imported JSON content:", content);
+                    const newTree = jsonToTree(content);
+                    console.log("New tree structure:", newTree);
+                    replaceTree(newTree);
+                    handleReloadButton();
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                }
+            } else {
+                console.error("Failed to read file content");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Convert JSON to TreeNode[]
+    function jsonToTree(json: DesiredNode[]): TreeNode[] {
+        // Recursive function to convert each node
+        function convertNode(node: DesiredNode): TreeNode {
+            return {
+                node: {
+                    id: node.id,
+                    position: {x: 0, y: 0}, // Positions are adjusted later
+                    data: {label: node.label, id: node.id},
+                    type: defineTypeOfNode(node.id)
+                },
+                children: node.children ? node.children.map(convertNode) : []
+            };
+        }
+
+        return json.map(convertNode);
+    }
+
+    const handleClick = (event: any) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    // Function to handle the import button
+    const handleImportButtonClick = () => {
+        if (inputFileRef.current) {
+            inputFileRef.current.click();
+        }
+    };
+
+    // Function to handle the export and the viewport.
     const handleExport = (format: any) => {
         setShowMiniMap(false);
         setExporting(format);
     };
 
+    // Function to handle the indentation change
+    const handleChangeIndent = (event: SelectChangeEvent) => {
+        setIndent(parseInt(event.target.value));
+    }
+
+    // Function to handle the searching mode
     const handleSearchModeChange = (_event: any, newSearchMode: any) => {
         if (newSearchMode !== null) {
             setSearchMode(newSearchMode);
         }
     };
 
+    // Function to handle when the search type changes.
     const handleSearchChange = (event: any) => {
         setSearchValue(event.target.value);
     };
 
+    // Function to call for either id or text searches.
     const handleSearchSubmit = () => {
         if (searchMode === 'id') {
             handleSearch(searchValue);
@@ -396,6 +740,7 @@ function FlowComponent({
         setSearchValue('');
     };
 
+    // HTML section
     return (
         <>
             <svg
@@ -572,421 +917,10 @@ function FlowComponent({
 }
 
 export default function App() {
-    const [view, setView] = useState('textField'); // Estado para manejar la vista actual
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const labels = useRef<string[]>(nodes.map(node => node.data.label));
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    // Parameters to create nodes on edge drop
-    const connectingNodeId = useRef(null);
-    const {openDialog, formData, setFormData, isOpen} = useDialog();
-
-    // Creation of initial assurance case text
-    const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
-    const [indent, setIndent] = useState(defaultIndent);
-    const [anchorEl, setAnchorEl] = useState(null);
-    const inputFileRef = useRef(null);
-
-    const onConnect = useCallback(() => {
-        connectingNodeId.current = null;
-    }, []);
-
-    const onConnectStart = useCallback((_: any, {nodeId}: any) => {
-        connectingNodeId.current = nodeId;
-    }, []);
-
-    const onConnectEnd = useCallback(
-        (event: any) => {
-            if (!connectingNodeId.current) return;
-            const targetIsPane = event.target.classList.contains('react-flow__pane');
-            if (targetIsPane) {
-                openDialog();
-            }
-        }, []
-    );
-
-    const handleSearch = (searchId: any) => {
-        setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.id === searchId) {
-                return {
-                    ...node,
-                    style: {
-                        ...node.style,
-                        border: '2px solid red',
-                    },
-                };
-            }
-            return {
-                ...node,
-                style: {
-                    ...node.style,
-                    border: 'none',
-                },
-            };
-        }));
-    };
-
-    React.useEffect(() => {
-        if (!isOpen && formData) {
-            const newNodeInfo = formData.split(',');
-            const newNodeId = newNodeInfo[0];
-            const newNodeLabel = newNodeInfo[1];
-            const type = defineTypeOfNode(newNodeId);
-            const newNode = {
-                id: newNodeId,
-                type: type,
-                position: {x: 0, y: 0},
-                data: {label: newNodeLabel, id: newNodeId},
-            }
-            let edgeId = `edge-${connectingNodeId.current}-${newNode.id}`;
-            let edgeSource = connectingNodeId.current;
-            let edgeTarget = newNode.id;
-            const newEdge = {
-                id: edgeId,
-                source: edgeSource,
-                target: edgeTarget,
-                animated: false,
-                type: 'step',
-                markerEnd: arrowMarker,
-                style: arrowFill
-            }
-            const newNodes = nodes.concat(newNode);
-            const newEdges = edges.concat(newEdge);
-            const newTree = buildTree(newNodes, newEdges);
-            const uniqueTree = assignUniqueIdsToTree(newTree);
-            replaceTree(uniqueTree);
-            richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
-            setInitialAssuranceText(treeToText(uniqueTree));
-            connectingNodeId.current = null;
-            setFormData('');
-        }
-        if (copyOfText !== initialAssuranceText) {
-            debouncedHandleReloadButton();
-            copyOfText = initialAssuranceText;
-        }
-        if (copyOfText === initialAssuranceText) {
-            const actualLabels = nodes.map(node => node.data.label);
-            const labelsRef = labels.current;
-            if (labelsRef.length !== actualLabels.length) {
-                handleReloadAdvanced(actualLabels);
-            } else {
-                for (let i = 0; i < labelsRef.length; i++) {
-                    if (labelsRef[i] !== actualLabels[i]) {
-                        handleReloadAdvanced(actualLabels);
-                        break;
-                    }
-                }
-            }
-        }
-        return () => {
-            debouncedHandleReloadButton.cancel();
-        };
-        // automate label change
-    }, [formData, isOpen, initialAssuranceText, nodes]);
-
-
-    const handleSearchByText = (searchText: any) => {
-        setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.data.label.includes(searchText)) {
-                return {
-                    ...node,
-                    style: {
-                        ...node.style,
-                        border: '2px solid red',
-                    },
-                };
-            }
-            return {
-                ...node,
-                style: {
-                    ...node.style,
-                    border: 'none',
-                },
-            };
-        }));
-    };
-
-    // Functions to clear the nodes and edges so they can be redrawn.
-    const clearNodes = () => {
-        setNodes([]);
-    };
-    const clearEdges = () => {
-        setEdges([])
-    };
-
-    // Helper function to recursively generate edges from a tree
-    const generateEdgesFromNodes = (nodes: TreeNode[], edges: Edge[] = [], parentId?: string): void => {
-        for (const node of nodes) {
-            if (parentId) {
-                // Create an edge from the parent node to the current node
-                const animation = false;
-                let defaultArrow: any = arrowMarker;
-                let defaultFill = arrowFill;
-                if (node.node.id[0] === 'C' || node.node.id[0] === 'A' || node.node.id[0] === 'J') {
-                    defaultArrow = arrowMarkerEmpty;
-                    defaultFill = arrowFillEmpty;
-                }
-                edges.push({
-                    id: `edge-${parentId}-${node.node.id}`,
-                    source: parentId,
-                    target: node.node.id,
-                    animated: animation,
-                    type: 'step',
-                    markerEnd: defaultArrow,
-                    style: defaultFill,
-                });
-            }
-
-            // Recursively generate edges for child nodes
-            if (node.children.length > 0) {
-                generateEdgesFromNodes(node.children, edges, node.node.id);
-            }
-        }
-    };
-
-    // Main function to get edges from an array of tree nodes given as parameter.
-    const addEdgesFromTree = (nodes: TreeNode[]): Edge[] => {
-        const edges: Edge[] = [];
-        generateEdgesFromNodes(nodes, edges);
-        return edges;
-    };
-
-    // Main function to add the nodes from a tree structure given as parameter
-    function addNodesFromTree(tree: TreeNode[]) {
-        const createNodesFromTree = (nodes: TreeNode[]): Node[] => {
-            return nodes.flatMap(node => [
-                {
-                    id: node.node.id,
-                    data: node.node.data,
-                    position: node.node.position,
-                    type: defineTypeOfNode(node.node.id)
-                },
-                ...createNodesFromTree(node.children)
-            ]);
-        };
-
-        // Layout them with Dagre before drawing them
-        return createNodesFromTree(tree);
-    }
-
-    // Helper function to return the correct type of node depending on its id.
-    function defineTypeOfNode(id: string) {
-        if (id.startsWith('S')) {
-            if (id.includes('Sn')) {
-                return 'solution';
-            } else return 'strategy';
-        } else {
-            switch (id.charAt(0)) {
-                case 'G':
-                    return 'goal';
-                case 'C':
-                    return 'context';
-                case 'A':
-                    return 'assumption';
-                case 'J':
-                    return 'justification';
-                default:
-                    return 'default';
-            }
-        }
-    }
-
-    // Function to replace the previous tree with the new one given as parameter.
-    function replaceTree(tree: TreeNode[]) {
-        clearNodes(); // Deletes al nodes
-        clearEdges(); // Deletes all edges
-        const newNodes = addNodesFromTree(tree); // Adds new nodes based on the new Tree
-        const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
-        // Layout them with Dagre before drawing them
-        const layoutedElements = getLayoutedElements(newNodes, newEdges, {direction: 'TB'});
-        setNodes([...layoutedElements.nodes]);
-        setEdges([...layoutedElements.edges]);
-    }
-
-    // Function to reflect the new nodes and edges after the assurance text is modified.
-    const handleReloadButton = () => {
-        const newTree = textToTree(replaceTabsWithSpaces(initialAssuranceText));
-        replaceTree(newTree);
-        richTree = newTree.map(convertTreeNodeToDesiredNode);
-    }
-
-    const debouncedHandleReloadButton = debounce(() => {
-        handleReloadButton();
-    }, 2500);
-
-    const handleReloadAdvanced = (actualLabels: string[]) => {
-        const newTree = buildTree(nodes, edges);
-        const uniqueTree = assignUniqueIdsToTree(newTree);
-        replaceTree(uniqueTree);
-        richTree = uniqueTree.map(convertTreeNodeToDesiredNode);
-        setInitialAssuranceText(treeToText(uniqueTree));
-        labels.current = actualLabels;
-    }
-
-    // Function for handling [Tab] on the TextArea so assurance cases can be written properly.
-    const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Tab') {
-            event.preventDefault();
-            const textarea = event.target as HTMLTextAreaElement;
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-
-            textarea.value = textarea.value.substring(0, start) + "\t" + textarea.value.substring(end);
-
-            textarea.selectionStart = textarea.selectionEnd = start + 1;
-        }
-    }
-
-    function replaceTabsWithSpaces(input: string, spacesPerTab: number = 8): string {
-        if (!input.includes('\t')) {
-            return input;
-        }
-        const spaces = ' '.repeat(spacesPerTab);
-        return input.replace(/\t/g, spaces);
-    }
-
-    function addHyphenToText(texto: string): string {
-        const lineas = texto.split('\n');
-        const lineasConGuiones = lineas.map(linea => {
-            const indicePrimeraMayuscula = linea.search(/[A-Z]/);
-
-            if (indicePrimeraMayuscula !== -1) {
-                const antesPrimeraMayuscula = linea.slice(0, indicePrimeraMayuscula);
-                if (antesPrimeraMayuscula.includes("- ")) {
-                    return linea;
-                } else {
-                    // Insertar "- " justo antes de la primera mayúscula
-                    return antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
-                }
-            } else {
-                return linea;
-            }
-        });
-
-        // Unir las líneas de nuevo en un solo string
-        return lineasConGuiones.join('\n');
-    }
-
-    const handleChangeIndent = (event: SelectChangeEvent) => {
-        setIndent(parseInt(event.target.value));
-    }
-
-    const exportToJSON = () => {
-        const blob = new Blob([JSON.stringify(richTree, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'nodes.json';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-
-    const importFromJSON = (event: any) => {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = JSON.parse(e.target.result as string);
-            console.log("Imported JSON content:", content);
-            const newTree = jsonToTree(content);
-            console.log("New tree structure:", newTree);
-            replaceTree(newTree);
-        };
-        reader.readAsText(file);
-    }
-
-    // Convert JSON to TreeNode[]
-    function jsonToTree(json: DesiredNode[]): TreeNode[] {
-        // Recursive function to convert each node
-        function convertNode(node: DesiredNode): TreeNode {
-            return {
-                node: {
-                    id: node.id,
-                    position: {x: 0, y: 0}, // Positions are adjusted later
-                    data: {label: node.label, id: node.id},
-                    type: defineTypeOfNode(node.id)
-                },
-                children: node.children ? node.children.map(convertNode) : []
-            };
-        }
-
-        return json.map(convertNode);
-    }
-
-    useEffect(() => {
-        const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
-        setNodes([...layoutedElements.nodes]);
-        setEdges([...layoutedElements.edges]);
-    }, [nodes.length, edges.length]);
-
-    const exportToImage = async (fitView:any, getViewport:any, setViewport:any, format: string) => {
-        const originalViewport = getViewport();
-        fitView();
-
-        setTimeout(async () => {
-            const element = document.querySelector('.react-flow') as HTMLElement;
-            let dataUrl;
-
-            if (format === 'png') {
-                dataUrl = await htmlToImage.toPng(element);
-            } else if (format === 'jpeg') {
-                dataUrl = await htmlToImage.toJpeg(element);
-            } else if (format === 'svg') {
-                dataUrl = await htmlToImage.toSvg(element);
-            }
-
-            if (dataUrl) {
-                download(dataUrl, `graph.${format}`);
-            }
-
-            setViewport(originalViewport);
-        }, 1000);
-    };
-
-    const handleClick = (event: any) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleImportButtonClick = () => {
-        if (inputFileRef.current) {
-            inputFileRef.current.click();
-        }
-    };
-
-    // HTML section of the code.
+    // Function to encapsule the HTML into a ReactFlow provider
     return (
         <ReactFlowProvider>
-            <FlowComponent
-                view={view}
-                setView={setView}
-                nodes={nodes}
-                onNodesChange={onNodesChange}
-                edges={edges}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onConnectStart={onConnectStart}
-                onConnectEnd={onConnectEnd}
-                handleReloadButton={handleReloadButton}
-                handleTab={handleTab}
-                addHyphenToText={addHyphenToText}
-                initialAssuranceText={initialAssuranceText}
-                setInitialAssuranceText={setInitialAssuranceText}
-                indent={indent}
-                handleChangeIndent={handleChangeIndent}
-                exportToImage={exportToImage}
-                handleClick={handleClick}
-                anchorEl={anchorEl}
-                handleClose={handleClose}
-                exportToJSON={exportToJSON}
-                handleImportButtonClick={handleImportButtonClick}
-                importFromJSON={importFromJSON}
-                inputFileRef={inputFileRef}
-                handleSearch={handleSearch}
-                handleSearchByText={handleSearchByText}
-            />
+            <FlowComponent/>
         </ReactFlowProvider>
     );
 }
