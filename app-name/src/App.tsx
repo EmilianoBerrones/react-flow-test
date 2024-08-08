@@ -294,6 +294,7 @@ function FlowComponent() {
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const inputFileRef = useRef<HTMLInputElement>(null);
+    const [isPanelOpen, setPanelOpen] = useState(false);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -468,6 +469,7 @@ function FlowComponent() {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
+        handleReloadButton();
     }, [nodes.length, edges.length]);
 
     // Functions to clear the nodes and edges so they can be redrawn.
@@ -740,6 +742,14 @@ function FlowComponent() {
         setSearchValue('');
     };
 
+    const handleClosePanel = () => {
+        setPanelOpen(false);
+    }
+
+    const handleOpenPanel = () => {
+        setPanelOpen(true);
+    }
+
     // HTML section
     return (
         <>
@@ -889,7 +899,7 @@ function FlowComponent() {
                         </Grid>
                     </Grid>
                     <Grid item xs={12} md={8} style={{minHeight: '92vh'}}>
-                        <Grid container style={{minHeight: "inherit"}}>
+                        <Grid container style={{minHeight: "inherit", position: 'relative', overflowX: 'hidden'}}>
                             <FormDialog/>
                             <ReactFlow
                                 nodes={nodes}
@@ -908,6 +918,9 @@ function FlowComponent() {
                                 {showMiniMap && <MiniMap/>}
                                 <Controls/>
                             </ReactFlow>
+                            <SidePanel isPanelOpen={isPanelOpen} handleClosePanel={handleClosePanel}/>
+                            <Button style={{position: 'absolute', top: '50%', right: '0px'}} onClick={handleOpenPanel}>Abrir
+                                panel</Button>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -915,6 +928,53 @@ function FlowComponent() {
         </>
     );
 }
+
+const SidePanel = ({isPanelOpen, handleClosePanel}: { isPanelOpen: boolean; handleClosePanel: () => void }) => {
+    return (
+        <div
+            style={{
+                position: 'absolute',
+                top: '50%',
+                right: isPanelOpen ? '0px' : '-400px',
+                visibility: isPanelOpen ? 'visible' : 'hidden',
+                transform: 'translateY(-50%)',
+                backgroundColor: '#fff',
+                boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)',
+                padding: '20px',
+                width: '300px',
+                transition: 'right 0.3s ease-in-out',
+            }}
+        >
+            <Grid container direction='column' spacing={1}>
+                <Grid item alignSelf='center'>
+                    <Button variant='text' onClick={handleClosePanel}>Close</Button>
+                </Grid>
+                <Divider/>
+                <Grid item>
+                    Grid style
+                </Grid>
+                <Grid item>
+                    Grid size
+                </Grid>
+                <Grid item>
+                    Grid color
+                </Grid>
+                <Divider/>
+                <Grid item>
+                    Ruler
+                </Grid>
+                <Divider/>
+                <Grid item>
+                    Background
+                </Grid>
+                <Grid item>
+                    Shape color
+                </Grid>
+            </Grid>
+        </div>
+    );
+};
+
 
 export default function App() {
     // Function to encapsule the HTML into a ReactFlow provider
