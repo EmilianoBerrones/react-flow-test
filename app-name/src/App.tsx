@@ -300,6 +300,9 @@ function FlowComponent() {
     const inputFileRef = useRef<HTMLInputElement>(null);
     const [isPanelOpen, setPanelOpen] = useState(false);
     const [backgroundShapes, setBackgroundShapes] = useState(BackgroundVariant.Dots);
+    const [backgroundPaneColor, setBackgroundPaneColor] = useState('#ffffff');
+    const [shapeColor, setShapeColor] = useState('#777777');
+    const [shapeGap, setShapeGap] = useState(28)
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -762,6 +765,10 @@ function FlowComponent() {
         setBackgroundShapes(newBackground);
     };
 
+    const handleShapeGap = (event: Event, newValue: number | number[]) => {
+        setShapeGap(newValue as number);
+    };
+
     // HTML section
     return (
         <>
@@ -926,7 +933,11 @@ function FlowComponent() {
                                 onConnectStart={onConnectStart}
                                 onConnectEnd={onConnectEnd}
                             >
-                                <Background variant={backgroundShapes}/>
+                                <Background
+                                    variant={backgroundShapes}
+                                    color={shapeColor}
+                                    gap={shapeGap}
+                                    style={{backgroundColor: backgroundPaneColor}}/>
                                 {showMiniMap && <MiniMap/>}
                                 <Controls/>
                             </ReactFlow>
@@ -934,6 +945,12 @@ function FlowComponent() {
                                 isPanelOpen={isPanelOpen}
                                 handleClosePanel={handleClosePanel}
                                 setNewBackgroundShape={handleBackgroundChange}
+                                backgroundPaneColor={backgroundPaneColor}
+                                setBackgroundPaneColor={setBackgroundPaneColor}
+                                shapeColor={shapeColor}
+                                setShapeColor={setShapeColor}
+                                shapeGap={shapeGap}
+                                handleShapeGap={handleShapeGap}
                             />
                             <Button style={{position: 'absolute', top: '50%', right: '0px'}} onClick={handleOpenPanel}>Abrir
                                 panel</Button>
@@ -949,11 +966,23 @@ const SidePanel = ({
                        isPanelOpen,
                        handleClosePanel,
                        setNewBackgroundShape,
+                       backgroundPaneColor,
+                       setBackgroundPaneColor,
+                       shapeColor,
+                       setShapeColor,
+                       shapeGap,
+                       handleShapeGap,
                        }
                        : {
     isPanelOpen: boolean;
     handleClosePanel: () => void ;
-    setNewBackgroundShape: any; }) => {
+    setNewBackgroundShape: any;
+    backgroundPaneColor: any;
+    setBackgroundPaneColor: any;
+    shapeColor: any;
+    setShapeColor: any;
+    shapeGap: any;
+    handleShapeGap: any;}) => {
     return (
         <div
             style={{
@@ -991,14 +1020,19 @@ const SidePanel = ({
                 </Grid>
                 <Grid item>
                     Grid size
-                    <Slider defaultValue={50}
-                    ></Slider>
+                    <Slider
+                        value={shapeGap}
+                        onChange={handleShapeGap}
+                        min={1}
+                        max={100}
+                        step={1}
+                    />
                 </Grid>
                 <Grid item style={{justifySelf: 'center'}}>
                     <p>
                         Grid color
                     </p>
-                    <MuiColorInput format="hex" value={'#FFFFFF'}></MuiColorInput>
+                    <MuiColorInput format="hex" value={shapeColor} onChange={setShapeColor}></MuiColorInput>
                 </Grid>
                 <Grid item>
                     Ruler
@@ -1008,7 +1042,7 @@ const SidePanel = ({
                     <p>
                         Background color
                     </p>
-                    <MuiColorInput format="hex" value={'#FFFFFF'}></MuiColorInput>
+                    <MuiColorInput format="hex" value={backgroundPaneColor} onChange={setBackgroundPaneColor}></MuiColorInput>
                 </Grid>
                 <Grid item alignSelf='center'>
                     <Button variant='text' onClick={handleClosePanel}>Close</Button>

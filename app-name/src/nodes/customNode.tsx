@@ -2,7 +2,7 @@
 import React from 'react';
 import {Handle, NodeToolbar, Position, useReactFlow} from 'reactflow';
 import './customNodeDesign.css';
-import {Button} from "@mui/material";
+import {Button, Grid} from "@mui/material";
 import {MuiColorInput} from "mui-color-input";
 
 
@@ -81,9 +81,11 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container>
+                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                </Grid>
             </NodeToolbar>
             <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
             <div><b>{data.id}</b></div>
@@ -160,9 +162,11 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container>
+                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                </Grid>
             </NodeToolbar>
             <Handle type="target" position={Position.Top} style={{background: '#555'}}/>
             <div><b>{data.id}</b></div>
@@ -239,9 +243,11 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container>
+                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                </Grid>
             </NodeToolbar>
             <div className="strategyNodeBorder">
                 <div className="strategyNode" style={{backgroundColor}}>
@@ -322,9 +328,11 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container>
+                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                </Grid>
             </NodeToolbar>
             <div className="ajNodeBorder">
                 <div className="ajNode" style={{backgroundColor}}>
@@ -408,9 +416,11 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container>
+                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                </Grid>
             </NodeToolbar>
             <div className="ajNodeBorder">
                 <div className="ajNode" style={{backgroundColor}}>
@@ -494,9 +504,11 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container>
+                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
+                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                </Grid>
             </NodeToolbar>
             <div className="solutionNodeBorder">
                 <div className="solutionNode" style={{backgroundColor}}>
