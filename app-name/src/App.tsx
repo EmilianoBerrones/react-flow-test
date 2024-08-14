@@ -46,6 +46,7 @@ import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import {MuiColorInput} from "mui-color-input";
 
 // Layouting elements with the Dagre library
@@ -758,14 +759,14 @@ function FlowComponent() {
     }
 
     const handleOpenPanel = () => {
-        setPanelOpen(true);
+        setPanelOpen(!isPanelOpen);
     }
 
     const handleBackgroundChange = (newBackground: BackgroundVariant) => {
         setBackgroundShapes(newBackground);
     };
 
-    const handleShapeGap = (event: Event, newValue: number | number[]) => {
+    const handleShapeGap = (_event: Event, newValue: number | number[]) => {
         setShapeGap(newValue as number);
     };
 
@@ -952,8 +953,17 @@ function FlowComponent() {
                                 shapeGap={shapeGap}
                                 handleShapeGap={handleShapeGap}
                             />
-                            <Button style={{position: 'absolute', top: '50%', right: '0px'}} onClick={handleOpenPanel}>Abrir
-                                panel</Button>
+                            {/*<Button style={{position: 'absolute', top: '50%', right: '0px'}} onClick={handleOpenPanel}>Abrir*/}
+                            {/*    panel</Button>*/}
+                            <IconButton style={{
+                                position: 'absolute',
+                                top: '50%',
+                                right: isPanelOpen ? '400px' : '0px',
+                                transition: 'right 0.3s ease-in-out, transform 0.4s ease-in-out',
+                                transform: isPanelOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            }} onClick={handleOpenPanel}>
+                                <ArrowBackIosRoundedIcon></ArrowBackIosRoundedIcon>
+                            </IconButton>
                         </Grid>
                     </Grid>
                 </Grid>
