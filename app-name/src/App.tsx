@@ -1185,7 +1185,7 @@ function FlowComponent() {
                                     gap={shapeGap}
                                     style={{backgroundColor: backgroundPaneColor}}/>
                                 {showMiniMap && <MiniMap/>}
-                                <Controls/>
+                            <Controls style={{marginLeft:25}}/>
                             </ReactFlow>
                             <SidePanel
                                 isPanelOpen={isPanelOpen}
