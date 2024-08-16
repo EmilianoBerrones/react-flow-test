@@ -1,4 +1,5 @@
 import {
+    addEdge,
     Background,
     BackgroundVariant,
     Controls,
@@ -322,10 +323,10 @@ function FlowComponent() {
 
     const [actualNode, setActualNode] = useState('');
     const [actualLetter, setActualLetter] = useState('');
-    const onDragStart = (data : any) => (event : any) => {
+    const onDragStart = (data: any) => (event: any) => {
         event.dataTransfer.setData('application/reactflow', 'custom-node');
         event.dataTransfer.effectAllowed = 'move';
-        switch (data){
+        switch (data) {
             case 'goal':
                 setActualNode('goal');
                 setActualLetter('G')
@@ -356,7 +357,7 @@ function FlowComponent() {
         }
     };
 
-    const onDrop = (event : any) => {
+    const onDrop = (event: any) => {
         event.preventDefault();
         const reactFlowBounds = event.target.getBoundingClientRect();
         const position = {
@@ -365,8 +366,8 @@ function FlowComponent() {
         };
         const targetIsPane = event.target.classList.contains('react-flow__pane');
         if (targetIsPane) {
-            const idPrompt = prompt('Enter the'+ defineTypeOfNode(actualLetter) +' node ID number: ');
-            if (idPrompt){
+            const idPrompt = prompt('Enter the' + defineTypeOfNode(actualLetter) + ' node ID number: ');
+            if (idPrompt) {
                 const nodeId = actualLetter + idPrompt;
                 const newNode = {
                     id: nodeId,
@@ -381,7 +382,7 @@ function FlowComponent() {
         setActualNode('');
     };
 
-    const onDragOver = (event : any) => {
+    const onDragOver = (event: any) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     };
@@ -402,7 +403,26 @@ function FlowComponent() {
         (event: any) => {
             if (!connectingNodeId.current) return;
             const targetIsPane = event.target.classList.contains('react-flow__pane');
-            if (targetIsPane) {
+            const elements = document.elementsFromPoint(event.clientX, event.clientY);
+            const targetNode = elements.find((el) => el.classList.contains('react-flow__node'));
+
+            if (targetNode) {
+                const targetNodeId = targetNode.getAttribute('data-id');
+                if (targetNodeId) {
+                    if (targetNodeId !== connectingNodeId.current) {
+                        const newEdge = {
+                            id: `edge-${connectingNodeId.current}-${targetNodeId}`,
+                            source: connectingNodeId.current,
+                            target: targetNodeId,
+                            animated: false,
+                            type: 'step',
+                            markerEnd: arrowMarker,
+                            style: arrowFill
+                        }
+                        setEdges((eds) => addEdge(newEdge, eds));
+                    }
+                }
+            } else if (targetIsPane) {
                 openDialog();
             }
         }, []
@@ -546,9 +566,9 @@ function FlowComponent() {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
-        if (oneTime < 2){
+        if (oneTime < 2) {
             handleReloadButton();
-            oneTime +=1;
+            oneTime += 1;
         }
     }, [nodes.length, edges.length]);
 
@@ -839,7 +859,7 @@ function FlowComponent() {
     };
 
     const debug = () => {
-        console.log(nodes);
+        console.log(edges);
     }
 
     // HTML section
@@ -948,7 +968,7 @@ function FlowComponent() {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
-                                            }}
+                                                 }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('context')}>
                                                 Context
@@ -960,7 +980,7 @@ function FlowComponent() {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
-                                            }}
+                                                 }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('strategy')}>
                                                 <div className="strategyNode">
@@ -1005,7 +1025,7 @@ function FlowComponent() {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
-                                            }}
+                                                 }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('solution')}>
                                                 <div className="solutionNode" style={{width: '60px', height: '60px'}}>
@@ -1016,7 +1036,7 @@ function FlowComponent() {
                                     </Grid>
                                 </AccordionDetails>
                             </Accordion>
-                            <Accordion defaultExpanded  disableGutters>
+                            <Accordion defaultExpanded disableGutters>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Text editor
                                 </AccordionSummary>
@@ -1081,7 +1101,8 @@ function FlowComponent() {
                                         {/*    </FormControl>*/}
                                         {/*</Grid>*/}
                                         <Grid item>
-                                            <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                            <Button variant="outlined" onClick={handleReloadButton}>Reload
+                                                changes</Button>
                                             <Button variant="outlined" onClick={debug}>Print</Button>
                                         </Grid>
                                     </Grid>
@@ -1095,7 +1116,7 @@ function FlowComponent() {
                                   minHeight: "inherit",
                                   position: 'relative',
                                   overflowX: 'hidden'
-                        }}
+                              }}
                               onDrop={onDrop}
                               onDragOver={onDragOver}
                         >
@@ -1159,17 +1180,18 @@ const SidePanel = ({
                        setShapeColor,
                        shapeGap,
                        handleShapeGap,
-                       }
+                   }
                        : {
     isPanelOpen: boolean;
-    handleClosePanel: () => void ;
+    handleClosePanel: () => void;
     setNewBackgroundShape: any;
     backgroundPaneColor: any;
     setBackgroundPaneColor: any;
     shapeColor: any;
     setShapeColor: any;
     shapeGap: any;
-    handleShapeGap: any;}) => {
+    handleShapeGap: any;
+}) => {
     return (
         <div
             style={{
@@ -1229,7 +1251,8 @@ const SidePanel = ({
                     <p>
                         Background color
                     </p>
-                    <MuiColorInput format="hex" value={backgroundPaneColor} onChange={setBackgroundPaneColor}></MuiColorInput>
+                    <MuiColorInput format="hex" value={backgroundPaneColor}
+                                   onChange={setBackgroundPaneColor}></MuiColorInput>
                 </Grid>
                 <Grid item alignSelf='center'>
                     <Button variant='text' onClick={handleClosePanel}>Close</Button>
