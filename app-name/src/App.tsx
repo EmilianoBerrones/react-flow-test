@@ -44,11 +44,12 @@ import {
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import Chip from '@mui/material/Chip';
 import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
-import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import {MuiColorInput} from "mui-color-input";
 
 // Layouting elements with the Dagre library
@@ -936,6 +937,9 @@ function FlowComponent() {
                             <MenuIcon/>
                         </IconButton>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                        <Divider>
+                            <Chip label="JSON Manager" size="small" />
+                        </Divider>
                             <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
                             <MenuItem onClick={handleImportButtonClick}>
                                 Import graphic from JSON
@@ -947,6 +951,9 @@ function FlowComponent() {
                                     ref={inputFileRef}
                                 />
                             </MenuItem>
+                            <Divider>
+                                <Chip label="Image Export" size="small" />
+                            </Divider>
                             <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
