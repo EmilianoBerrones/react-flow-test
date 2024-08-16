@@ -285,58 +285,67 @@ function textToTree(text: string): TreeNode[] {
     return assignUniqueIdsToTree(tree);
 }
 
-const Ruler = () => {
+const Ruler = ({ showRuler }: { showRuler: boolean }) => {
     const { x, y } = useViewport();
     const rulerRef = useRef(null);
-  
+
     useEffect(() => {
-      const canvas:any = rulerRef.current;
-      const ctx = canvas.getContext('2d');
-      const width = canvas.width;
-      const height = canvas.height;
-      const step = 100; // Fixed step size for ruler lines
-  
-      ctx.clearRect(0, 0, width, height);
-      ctx.strokeStyle = '#000';
-      ctx.fillStyle = '#000';
-      ctx.lineWidth = 1;
-  
-      // Draw top ruler (x-axis)
-      for (let i = x % step; i < width; i += step) {
-        const position = Math.round(i - x); // Corrected to move in the same direction as canvas
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, 20);
-        ctx.stroke();
-        ctx.fillText(position, i + 2, 10); // Display the fixed position on the ruler
-      }
-  
-      // Draw left ruler (y-axis)
-      for (let i = y % step; i < height; i += step) {
-        const position = Math.round(i - y); // Corrected to move in the same direction as canvas
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(20, i);
-        ctx.stroke();
-        ctx.fillText(position, 2, i + 10); // Display the fixed position on the ruler
-      }
-    }, [x, y]);
-  
+        const canvas: any = rulerRef.current;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const step = 100; // Fixed step size for ruler lines
+
+        ctx.clearRect(0, 0, width, height);
+
+        if (showRuler) {
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#000';
+            ctx.lineWidth = 1;
+
+            // Draw top ruler (x-axis)
+            for (let i = x % step; i < width; i += step) {
+                const position = Math.round(i - x); // Corrected to move in the same direction as canvas
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, 20);
+                ctx.stroke();
+                ctx.fillText(position, i + 2, 10); // Display the fixed position on the ruler
+            }
+
+            // Draw left ruler (y-axis)
+            for (let i = y % step; i < height; i += step) {
+                const position = Math.round(i - y); // Corrected to move in the same direction as canvas
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(20, i);
+                ctx.stroke();
+                ctx.fillText(position, 2, i + 10); // Display the fixed position on the ruler
+            }
+        }
+
+        return () => {
+            // Clear the canvas when the component is unmounted or re-rendered
+            ctx.clearRect(0, 0, width, height);
+        };
+    }, [x, y, showRuler]);
+
     return (
-      <canvas
-        ref={rulerRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
-          zIndex: 1,
-        }}
-      />
+        <canvas
+            ref={rulerRef}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                pointerEvents: 'none',
+                zIndex: 1,
+                display: showRuler ? 'block' : 'none', // Toggle display based on state
+            }}
+        />
     );
-  };
+};
 
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
@@ -358,6 +367,8 @@ function FlowComponent() {
     const [backgroundPaneColor, setBackgroundPaneColor] = useState('#ffffff');
     const [shapeColor, setShapeColor] = useState('#777777');
     const [shapeGap, setShapeGap] = useState(28)
+
+    const [showRuler, setShowRuler] = useState(true);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -1153,7 +1164,7 @@ function FlowComponent() {
                               onDragOver={onDragOver}
                         >
                             <FormDialog/>
-                            <Ruler />
+                            <Ruler showRuler={showRuler} />
 
                             <ReactFlow
                                 nodes={nodes}
@@ -1186,6 +1197,8 @@ function FlowComponent() {
                                 setShapeColor={setShapeColor}
                                 shapeGap={shapeGap}
                                 handleShapeGap={handleShapeGap}
+                                showRuler={showRuler}  // Pass showRuler state
+                                toggleRuler={() => setShowRuler(!showRuler)}
                             />
                             <IconButton style={{
                                 position: 'absolute',
@@ -1205,15 +1218,17 @@ function FlowComponent() {
 }
 
 const SidePanel = ({
-                       isPanelOpen,
-                       handleClosePanel,
-                       setNewBackgroundShape,
-                       backgroundPaneColor,
-                       setBackgroundPaneColor,
-                       shapeColor,
-                       setShapeColor,
-                       shapeGap,
-                       handleShapeGap,
+                        isPanelOpen,
+                        handleClosePanel,
+                        setNewBackgroundShape,
+                        backgroundPaneColor,
+                        setBackgroundPaneColor,
+                        shapeColor,
+                        setShapeColor,
+                        shapeGap,
+                        handleShapeGap,
+                        showRuler, // Add showRuler prop
+                        toggleRuler // Add toggleRuler prop
                        }
                        : {
     isPanelOpen: boolean;
@@ -1224,7 +1239,10 @@ const SidePanel = ({
     shapeColor: any;
     setShapeColor: any;
     shapeGap: any;
-    handleShapeGap: any;}) => {
+    handleShapeGap: any;
+    showRuler: boolean;
+    toggleRuler: () => void;
+}) => {
     return (
         <div
             style={{
@@ -1277,8 +1295,8 @@ const SidePanel = ({
                     <MuiColorInput format="hex" value={shapeColor} onChange={setShapeColor}></MuiColorInput>
                 </Grid>
                 <Grid item>
-                    Ruler
-                    <Switch defaultChecked/>
+                    <p>Ruler</p>
+                    <Switch checked={showRuler} onChange={toggleRuler} />
                 </Grid>
                 <Grid item>
                     <p>
