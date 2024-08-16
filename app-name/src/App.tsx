@@ -9,6 +9,7 @@ import {
     useEdgesState,
     useNodesState,
     useReactFlow,
+    useViewport,
 } from "reactflow";
 import Dagre from '@dagrejs/dagre'
 
@@ -284,6 +285,58 @@ function textToTree(text: string): TreeNode[] {
     return assignUniqueIdsToTree(tree);
 }
 
+const Ruler = () => {
+    const { x, y } = useViewport();
+    const rulerRef = useRef(null);
+  
+    useEffect(() => {
+      const canvas:any = rulerRef.current;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const step = 100; // Fixed step size for ruler lines
+  
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = '#000';
+      ctx.fillStyle = '#000';
+      ctx.lineWidth = 1;
+  
+      // Draw top ruler (x-axis)
+      for (let i = x % step; i < width; i += step) {
+        const position = Math.round(i - x); // Corrected to move in the same direction as canvas
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 20);
+        ctx.stroke();
+        ctx.fillText(position, i + 2, 10); // Display the fixed position on the ruler
+      }
+  
+      // Draw left ruler (y-axis)
+      for (let i = y % step; i < height; i += step) {
+        const position = Math.round(i - y); // Corrected to move in the same direction as canvas
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(20, i);
+        ctx.stroke();
+        ctx.fillText(position, 2, i + 10); // Display the fixed position on the ruler
+      }
+    }, [x, y]);
+  
+    return (
+      <canvas
+        ref={rulerRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+    );
+  };
 
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
@@ -1100,6 +1153,8 @@ function FlowComponent() {
                               onDragOver={onDragOver}
                         >
                             <FormDialog/>
+                            <Ruler />
+
                             <ReactFlow
                                 nodes={nodes}
                                 nodeTypes={nodeTypes}
