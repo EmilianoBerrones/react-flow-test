@@ -305,7 +305,8 @@ function FlowComponent() {
     const [backgroundShapes, setBackgroundShapes] = useState(BackgroundVariant.Dots);
     const [backgroundPaneColor, setBackgroundPaneColor] = useState('#ffffff');
     const [shapeColor, setShapeColor] = useState('#777777');
-    const [shapeGap, setShapeGap] = useState(28)
+    const [shapeGap, setShapeGap] = useState(28);
+    const [edgeType, setEdgeType] = useState('step');
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -323,6 +324,8 @@ function FlowComponent() {
 
     const [actualNode, setActualNode] = useState('');
     const [actualLetter, setActualLetter] = useState('');
+
+
     const onDragStart = (data: any) => (event: any) => {
         event.dataTransfer.setData('application/reactflow', 'custom-node');
         event.dataTransfer.effectAllowed = 'move';
@@ -415,7 +418,7 @@ function FlowComponent() {
                             source: connectingNodeId.current,
                             target: targetNodeId,
                             animated: false,
-                            type: 'step',
+                            type: edgeType, // TODO 1
                             markerEnd: arrowMarker,
                             style: arrowFill
                         }
@@ -494,7 +497,7 @@ function FlowComponent() {
                 source: edgeSource,
                 target: edgeTarget,
                 animated: false,
-                type: 'step',
+                type: edgeType, // TODO 2
                 markerEnd: arrowMarker,
                 style: arrowFill
             }
@@ -570,7 +573,10 @@ function FlowComponent() {
             handleReloadButton();
             oneTime += 1;
         }
-    }, [nodes.length, edges.length]);
+        if (edgeType){
+            handleReloadButton();
+        }
+    }, [nodes.length, edges.length, edgeType]);
 
     // Functions to clear the nodes and edges so they can be redrawn.
     const clearNodes = () => {
@@ -597,7 +603,7 @@ function FlowComponent() {
                     source: parentId,
                     target: node.node.id,
                     animated: animation,
-                    type: 'step',
+                    type: edgeType, // todo 3
                     markerEnd: defaultArrow,
                     style: defaultFill,
                 });
@@ -858,8 +864,16 @@ function FlowComponent() {
         setShapeGap(newValue as number);
     };
 
+    const handleEdgeTypeChange = useCallback((data: string) => {
+        return () => {
+            console.log(data);
+            setEdgeType(data);
+        };
+    }, []);
+
     const debug = () => {
         console.log(edges);
+        console.log(edgeType);
     }
 
     // HTML section
@@ -1152,6 +1166,7 @@ function FlowComponent() {
                                 setShapeColor={setShapeColor}
                                 shapeGap={shapeGap}
                                 handleShapeGap={handleShapeGap}
+                                handleEdgeTypeChange={handleEdgeTypeChange}
                             />
                             <IconButton style={{
                                 position: 'absolute',
@@ -1180,6 +1195,7 @@ const SidePanel = ({
                        setShapeColor,
                        shapeGap,
                        handleShapeGap,
+                       handleEdgeTypeChange,
                    }
                        : {
     isPanelOpen: boolean;
@@ -1191,6 +1207,7 @@ const SidePanel = ({
     setShapeColor: any;
     shapeGap: any;
     handleShapeGap: any;
+    handleEdgeTypeChange: any;
 }) => {
     return (
         <div
@@ -1224,6 +1241,25 @@ const SidePanel = ({
                         </Button>
                         <Button onClick={() => setNewBackgroundShape(BackgroundVariant)}>
                             Empty
+                        </Button>
+                    </ButtonGroup>
+                </Grid>
+                <Grid item>
+                    <p>Connection style</p>
+                </Grid>
+                <Grid item alignSelf='center'>
+                    <ButtonGroup variant='text'>
+                        <Button onClick={handleEdgeTypeChange('straight')}>
+                            Straight
+                        </Button>
+                        <Button onClick={handleEdgeTypeChange('step')}>
+                            Step
+                        </Button>
+                        <Button onClick={handleEdgeTypeChange('smoothstep')}>
+                            Smooth
+                        </Button>
+                        <Button onClick={handleEdgeTypeChange('simplebezier')}>
+                            Bezier
                         </Button>
                     </ButtonGroup>
                 </Grid>
