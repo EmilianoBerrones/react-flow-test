@@ -23,6 +23,7 @@ import {useDialog} from "./DialogContext";
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
+    Accordion, AccordionDetails, AccordionSummary,
     AppBar,
     Button, ButtonGroup,
     Divider,
@@ -42,7 +43,7 @@ import {
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
-import {ArrowCircleLeftOutlined, FlagCircleOutlined} from "@mui/icons-material";
+import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -318,6 +319,73 @@ function FlowComponent() {
 
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
+
+    const [actualNode, setActualNode] = useState('');
+    const [actualLetter, setActualLetter] = useState('');
+    const onDragStart = (data : any) => (event : any) => {
+        event.dataTransfer.setData('application/reactflow', 'custom-node');
+        event.dataTransfer.effectAllowed = 'move';
+        switch (data){
+            case 'goal':
+                setActualNode('goal');
+                setActualLetter('G')
+                break;
+            case 'context':
+                setActualNode('context');
+                setActualLetter('C')
+                break;
+            case 'assumption':
+                setActualNode('assumption');
+                setActualLetter('A')
+                break;
+            case 'justification':
+                setActualNode('justification');
+                setActualLetter('J')
+                break;
+            case 'strategy':
+                setActualNode('strategy');
+                setActualLetter('S')
+                break;
+            case 'solution':
+                setActualNode('solution');
+                setActualLetter('Sn')
+                break;
+            default:
+                setActualNode('goal');
+                break;
+        }
+    };
+
+    const onDrop = (event : any) => {
+        event.preventDefault();
+        const reactFlowBounds = event.target.getBoundingClientRect();
+        const position = {
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+        };
+        const targetIsPane = event.target.classList.contains('react-flow__pane');
+        if (targetIsPane) {
+            const idPrompt = prompt('Enter the'+ defineTypeOfNode(actualLetter) +' node ID number: ');
+            if (idPrompt){
+                const nodeId = actualLetter + idPrompt;
+                const newNode = {
+                    id: nodeId,
+                    data: {label: 'New label', id: nodeId},
+                    position: {x: position.x, y: position.y},
+                    type: actualNode,
+                }
+                const newNodes = nodes.concat(newNode);
+                setNodes(newNodes);
+            }
+        }
+        setActualNode('');
+    };
+
+    const onDragOver = (event : any) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    };
+
 
     // Function to clean the connecting node when it's created
     const onConnect = useCallback(() => {
@@ -770,6 +838,10 @@ function FlowComponent() {
         setShapeGap(newValue as number);
     };
 
+    const debug = () => {
+        console.log(nodes);
+    }
+
     // HTML section
     return (
         <>
@@ -845,81 +917,188 @@ function FlowComponent() {
                         </div>
                     </Toolbar>
                 </AppBar>
-                <Grid container direction="row" spacing={0} style={{marginTop: '8vh', minHeight: '92vh'}}>
-                    <Grid item xs={12} md={4} padding="30px" style={{minHeight: '100%'}}>
+                <Grid container direction="row" spacing={0} style={{marginTop: '8vh', maxHeight: '92vh'}}>
+                    <Grid item xs={12} md={4} padding="30px" style={{maxHeight: 'inherit', overflowY: 'auto'}}>
                         <Grid container direction="column" spacing={2} style={{minHeight: 'inherit'}}
                               justifyContent="center">
                             <Grid item>
-                                <h1>ProjectName</h1>
-                                <Divider/>
+                                <Typography variant='h4' gutterBottom>ProjectName</Typography>
                             </Grid>
-                            <Grid item>
-                                <ToggleButtonGroup
-                                    value={view}
-                                    exclusive
-                                    onChange={(_event, newView) => setView(newView)}
-                                    aria-label="view selection"
-                                >
-                                    <ToggleButton value="textField" aria-label="TextField">
-                                        Text view
-                                    </ToggleButton>
-                                    <ToggleButton value="richTreeView" aria-label="RichTreeView">
-                                        Tree view
-                                    </ToggleButton>
-                                </ToggleButtonGroup>
-                            </Grid>
-                            <Grid item style={{flex: 1, maxHeight: '60vh', overflowY: 'auto'}}>
-                                <Grid container direction="column" spacing={1} justifyContent="flex-start"
-                                      style={{height: '100%'}}>
-                                    <Grid item>
-                                        {view === 'textField' && (
-                                            <TextField
-                                                id="AssuranceText"
-                                                multiline
-                                                fullWidth
-                                                minRows={15}
-                                                variant="outlined"
-                                                value={addHyphenToText(initialAssuranceText)}
-                                                onChange={(e) => setInitialAssuranceText(e.target.value)}
-                                                onKeyDown={handleTab}
-                                            />
-                                        )}
-                                        {view === 'richTreeView' && (
-                                            <div style={{maxHeight: '55vh', overflowY: 'auto'}}>
-                                                <RichTreeView
-                                                    items={richTree}
-                                                    slots={{
-                                                        expandIcon: FlagCircleIcon,
-                                                        collapseIcon: FlagCircleOutlined,
-                                                        endIcon: ArrowCircleLeftOutlined
-                                                    }}
-                                                />
+                            <Accordion disableGutters>
+                                <AccordionSummary expandIcon={<ExpandMore/>}>
+                                    Node selector
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <Grid container spacing={1} alignItems='center' justifyContent='center'>
+                                        <Grid item xs>
+                                            <div className="goalNode"
+                                                 style={{
+                                                     textAlign: 'center',
+                                                     cursor: 'pointer',
+                                                     userSelect: 'none',
+                                                 }}
+                                                 draggable='true'
+                                                 onDragStart={onDragStart("goal")}>
+                                                Goal
                                             </div>
-                                        )}
+                                        </Grid>
+                                        <Grid item xs>
+                                            <div className="contextNode"
+                                                 style={{
+                                                     textAlign: 'center',
+                                                     cursor: 'pointer',
+                                                     userSelect: 'none',
+                                            }}
+                                                 draggable='true'
+                                                 onDragStart={onDragStart('context')}>
+                                                Context
+                                            </div>
+                                        </Grid>
+                                        <Grid item xs>
+                                            <div className="strategyNodeBorder"
+                                                 style={{
+                                                     textAlign: 'center',
+                                                     cursor: 'pointer',
+                                                     userSelect: 'none',
+                                            }}
+                                                 draggable='true'
+                                                 onDragStart={onDragStart('strategy')}>
+                                                <div className="strategyNode">
+                                                    Strategy
+                                                </div>
+                                            </div>
+                                        </Grid>
+                                        <Grid item xs>
+                                            <div className="ajNodeBorder"
+                                                 style={{
+                                                     textAlign: 'center',
+                                                     cursor: 'pointer',
+                                                     userSelect: 'none',
+                                                 }}
+                                                 draggable='true'
+                                                 onDragStart={onDragStart('assumption')}>
+                                                <div className="ajNode">
+                                                    Assumption
+                                                </div>
+                                            </div>
+                                        </Grid>
+                                        <Grid item xs>
+                                            <div className="ajNodeBorder"
+                                                 style={{
+                                                     textAlign: 'center',
+                                                     cursor: 'pointer',
+                                                     userSelect: 'none',
+                                                 }}
+                                                 draggable='true'
+                                                 onDragStart={onDragStart('justification')}>
+                                                <div className="ajNode">
+                                                    Justification
+                                                </div>
+                                            </div>
+                                        </Grid>
+                                        <Grid item xs>
+                                            <div className="solutionNodeBorder"
+                                                 style={{
+                                                     width: '80px',
+                                                     height: '80px',
+                                                     left: '17%',
+                                                     textAlign: 'center',
+                                                     cursor: 'pointer',
+                                                     userSelect: 'none',
+                                            }}
+                                                 draggable='true'
+                                                 onDragStart={onDragStart('solution')}>
+                                                <div className="solutionNode" style={{width: '60px', height: '60px'}}>
+                                                    Solution
+                                                </div>
+                                            </div>
+                                        </Grid>
                                     </Grid>
-                                    <Grid item>
-                                        <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                </AccordionDetails>
+                            </Accordion>
+                            <Accordion defaultExpanded  disableGutters>
+                                <AccordionSummary expandIcon={<ExpandMore/>}>
+                                    Text editor
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <Grid container direction='column' spacing={2}>
+                                        <Grid item>
+                                            <ToggleButtonGroup
+                                                value={view}
+                                                exclusive
+                                                onChange={(_event, newView) => setView(newView)}
+                                                aria-label="view selection"
+                                            >
+                                                <ToggleButton value="textField" aria-label="TextField">
+                                                    Text view
+                                                </ToggleButton>
+                                                <ToggleButton value="richTreeView" aria-label="RichTreeView">
+                                                    Tree view
+                                                </ToggleButton>
+                                            </ToggleButtonGroup>
+                                        </Grid>
+                                        <Grid item style={{flex: 1}}>
+                                            <Grid container direction="column" spacing={1} justifyContent="flex-start">
+                                                <Grid item>
+                                                    {view === 'textField' && (
+                                                        <TextField
+                                                            id="AssuranceText"
+                                                            multiline
+                                                            fullWidth
+                                                            variant="outlined"
+                                                            value={addHyphenToText(initialAssuranceText)}
+                                                            onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                                            onKeyDown={handleTab}
+                                                        />
+                                                    )}
+                                                    {view === 'richTreeView' && (
+                                                        <div>
+                                                            <RichTreeView
+                                                                items={richTree}
+                                                                slots={{
+                                                                    expandIcon: FlagCircleIcon,
+                                                                    collapseIcon: FlagCircleOutlined,
+                                                                    endIcon: ArrowCircleLeftOutlined
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </Grid>
+                                            </Grid>
+                                        </Grid>
+                                        {/*<Grid item>*/}
+                                        {/*    <FormControl fullWidth>*/}
+                                        {/*        <InputLabel id="indentSelect">Indentation</InputLabel>*/}
+                                        {/*        <Select*/}
+                                        {/*            value={indent.toString()}*/}
+                                        {/*            label="Indent"*/}
+                                        {/*            onChange={handleChangeIndent}*/}
+                                        {/*        >*/}
+                                        {/*            <MenuItem value={2}>Two spaces</MenuItem>*/}
+                                        {/*            <MenuItem value={4}>Four spaces</MenuItem>*/}
+                                        {/*            <MenuItem value={8}>Tabulations</MenuItem>*/}
+                                        {/*        </Select>*/}
+                                        {/*    </FormControl>*/}
+                                        {/*</Grid>*/}
+                                        <Grid item>
+                                            <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                            <Button variant="outlined" onClick={debug}>Print</Button>
+                                        </Grid>
                                     </Grid>
-                                </Grid>
-                            </Grid>
-                            <Grid item>
-                                <FormControl fullWidth>
-                                    <InputLabel id="indentSelect">Indentation</InputLabel>
-                                    <Select
-                                        value={indent.toString()}
-                                        label="Indent"
-                                        onChange={handleChangeIndent}
-                                    >
-                                        <MenuItem value={2}>Two spaces</MenuItem>
-                                        <MenuItem value={4}>Four spaces</MenuItem>
-                                        <MenuItem value={8}>Tabulations</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
+                                </AccordionDetails>
+                            </Accordion>
                         </Grid>
                     </Grid>
                     <Grid item xs={12} md={8} style={{minHeight: '92vh'}}>
-                        <Grid container style={{minHeight: "inherit", position: 'relative', overflowX: 'hidden'}}>
+                        <Grid container
+                              style={{
+                                  minHeight: "inherit",
+                                  position: 'relative',
+                                  overflowX: 'hidden'
+                        }}
+                              onDrop={onDrop}
+                              onDragOver={onDragOver}
+                        >
                             <FormDialog/>
                             <ReactFlow
                                 nodes={nodes}
@@ -953,8 +1132,6 @@ function FlowComponent() {
                                 shapeGap={shapeGap}
                                 handleShapeGap={handleShapeGap}
                             />
-                            {/*<Button style={{position: 'absolute', top: '50%', right: '0px'}} onClick={handleOpenPanel}>Abrir*/}
-                            {/*    panel</Button>*/}
                             <IconButton style={{
                                 position: 'absolute',
                                 top: '50%',
