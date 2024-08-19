@@ -14,7 +14,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {debounce} from 'lodash';
+import {debounce, startsWith} from 'lodash';
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -426,7 +426,11 @@ function FlowComponent() {
                     }
                 }
             } else if (targetIsPane) {
-                openDialog();
+                if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J')) {
+                    // The dialog does not open if the node starts with 'C', 'A' o 'J'
+                } else {
+                    openDialog();
+                }
             }
         }, []
     );
