@@ -307,6 +307,7 @@ function FlowComponent() {
     const [shapeColor, setShapeColor] = useState('#777777');
     const [shapeGap, setShapeGap] = useState(28);
     const [edgeType, setEdgeType] = useState('step');
+    const [edgeTypeCopy, setEdgeTypeCopy] = useState('step');
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -577,8 +578,9 @@ function FlowComponent() {
             handleReloadButton();
             oneTime += 1;
         }
-        if (edgeType){
+        if (edgeTypeCopy !== edgeType){
             handleReloadButton();
+            setEdgeTypeCopy(edgeType);
         }
     }, [nodes.length, edges.length, edgeType]);
 
