@@ -402,6 +402,30 @@ function FlowComponent() {
         connectingNodeId.current = nodeId;
     }, []);
 
+    // Data to manage the current state of nodes and edges
+    // React manages two different states of nodes and edges for some reason.
+    const nodesRef = useRef(nodes);
+    const edgesRef = useRef(edges);
+
+    useEffect(() => {
+        nodesRef.current = nodes;
+        edgesRef.current = edges;
+    }, [nodes, edges]);
+
+    const hasParentNode = (nodeId: any, tree: TreeNode[]) => {
+        for (const node of tree) {
+            if (node.children.some(child => child.node.id === nodeId)) {
+                console.log(true);
+                return true;
+            }
+            if (hasParentNode(nodeId, node.children)) {
+                console.log(true);
+                return true;
+            }
+        }
+        return false;
+    };
+
     // Function to open a dialog on edge drop, if the connecting node is not itself.
     const onConnectEnd = useCallback(
         (event: any) => {
@@ -413,17 +437,25 @@ function FlowComponent() {
             if (targetNode) {
                 const targetNodeId = targetNode.getAttribute('data-id');
                 if (targetNodeId) {
-                    if (targetNodeId !== connectingNodeId.current) {
-                        const newEdge = {
-                            id: `edge-${connectingNodeId.current}-${targetNodeId}`,
-                            source: connectingNodeId.current,
-                            target: targetNodeId,
-                            animated: false,
-                            type: edgeType, // TODO 1
-                            markerEnd: arrowMarker,
-                            style: arrowFill
+                    if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J')) {
+                        // Don't connect if the connecting node is Context, Assumption or Justification.
+                    } else {
+                        // Verifica si el nodo destino ya tiene un nodo padre
+                        if (targetNodeId !== connectingNodeId.current) {
+                            const newTree = buildTree(nodesRef.current, edgesRef.current);
+                            if (!hasParentNode(targetNodeId, newTree)) {
+                                const newEdge = {
+                                    id: `edge-${connectingNodeId.current}-${targetNodeId}`,
+                                    source: connectingNodeId.current,
+                                    target: targetNodeId,
+                                    animated: false,
+                                    type: edgeType,
+                                    markerEnd: arrowMarker,
+                                    style: arrowFill
+                                }
+                                setEdges((eds) => addEdge(newEdge, eds));
+                            }
                         }
-                        setEdges((eds) => addEdge(newEdge, eds));
                     }
                 }
             } else if (targetIsPane) {
@@ -502,7 +534,7 @@ function FlowComponent() {
                 source: edgeSource,
                 target: edgeTarget,
                 animated: false,
-                type: edgeType, // TODO 2
+                type: edgeType,
                 markerEnd: arrowMarker,
                 style: arrowFill
             }
@@ -578,7 +610,7 @@ function FlowComponent() {
             handleReloadButton();
             oneTime += 1;
         }
-        if (edgeTypeCopy !== edgeType){
+        if (edgeTypeCopy !== edgeType) {
             handleReloadButton();
             setEdgeTypeCopy(edgeType);
         }
@@ -609,7 +641,7 @@ function FlowComponent() {
                     source: parentId,
                     target: node.node.id,
                     animated: animation,
-                    type: edgeType, // todo 3
+                    type: edgeType,
                     markerEnd: defaultArrow,
                     style: defaultFill,
                 });
@@ -878,8 +910,8 @@ function FlowComponent() {
     }, []);
 
     const debug = () => {
+        console.log(nodes);
         console.log(edges);
-        console.log(edgeType);
     }
 
     // HTML section
