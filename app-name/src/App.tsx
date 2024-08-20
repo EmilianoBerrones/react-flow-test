@@ -62,6 +62,8 @@ import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
 import {MuiColorInput} from "mui-color-input";
 
+import mammoth from 'mammoth';
+
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
     const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -397,6 +399,9 @@ function FlowComponent() {
 
     const [actualNode, setActualNode] = useState('');
     const [actualLetter, setActualLetter] = useState('');
+
+    const inputFileReftxt = useRef(null);
+
     const onDragStart = (data : any) => (event : any) => {
         event.dataTransfer.setData('application/reactflow', 'custom-node');
         event.dataTransfer.effectAllowed = 'move';
@@ -923,6 +928,41 @@ function FlowComponent() {
         console.log(nodes);
     }
 
+    const handleFileImport = async (event:any) => {
+        const file = event.target.files[0];
+        if (file) {
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension === 'txt') {
+                // Handle text files
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileContent = e.target.result;
+                    alert(`File content:\n${fileContent}`);
+                };
+                reader.readAsText(file);
+            } else if (fileExtension === 'docx') {
+                // Handle Word (.docx) files using mammoth
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    const text = result.value;
+                    alert(`File content:\n${text}`);
+                } catch (error) {
+                    alert('Error reading Word document.');
+                }
+            } else {
+                alert('Unsupported file type. Please upload a .txt or .docx file.');
+            }
+        }
+    };
+
+    // Function to trigger file input
+    const handleTxtImportButtonClick = () => {
+        if (inputFileRef.current) {
+            inputFileRef.current.click();
+        }
+    };
+
     // HTML section
     return (
         <>
@@ -953,6 +993,7 @@ function FlowComponent() {
                             <MenuIcon/>
                         </IconButton>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+
                         <Divider>
                             <Chip label="JSON Manager" size="small" />
                         </Divider>
@@ -967,6 +1008,21 @@ function FlowComponent() {
                                     ref={inputFileRef}
                                 />
                             </MenuItem>
+
+                            <Divider>
+                                <Chip label="Text Import" size="small" />
+                            </Divider>
+                            <MenuItem onClick={handleTxtImportButtonClick}>
+                                Import graphic from text file
+                                <input
+                                    type="file"
+                                    accept=".txt,.docx"
+                                    ref={inputFileRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleFileImport}
+                                />
+                            </MenuItem>
+
                             <Divider>
                                 <Chip label="Image Export" size="small" />
                             </Divider>

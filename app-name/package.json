@@ -20,11 +20,13 @@
     "downloadjs": "^1.4.7",
     "html-to-image": "^1.11.11",
     "lodash": "^4.17.21",
+    "mammoth": "^1.8.0",
     "mui-color-input": "^3.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.26.1",
-    "reactflow": "^11.11.4"
+    "reactflow": "^11.11.4",
+    "styled-components": "^6.1.12"
   },
   "license": "MIT",
   "devDependencies": {
