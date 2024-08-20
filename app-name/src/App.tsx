@@ -443,6 +443,12 @@ function FlowComponent() {
                         // Verifica si el nodo destino ya tiene un nodo padre
                         if (targetNodeId !== connectingNodeId.current) {
                             const newTree = buildTree(nodesRef.current, edgesRef.current);
+                            let defaultArrow: any = arrowMarker;
+                            let defaultFill = arrowFill;
+                            if (targetNodeId[0] === 'C' || targetNodeId[0] === 'A' || targetNodeId[0] === 'J') {
+                                defaultArrow = arrowMarkerEmpty;
+                                defaultFill = arrowFillEmpty;
+                            }
                             if (!hasParentNode(targetNodeId, newTree)) {
                                 const newEdge = {
                                     id: `edge-${connectingNodeId.current}-${targetNodeId}`,
@@ -450,8 +456,8 @@ function FlowComponent() {
                                     target: targetNodeId,
                                     animated: false,
                                     type: edgeType,
-                                    markerEnd: arrowMarker,
-                                    style: arrowFill
+                                    markerEnd: defaultArrow,
+                                    style: defaultFill,
                                 }
                                 setEdges((eds) => addEdge(newEdge, eds));
                             }
