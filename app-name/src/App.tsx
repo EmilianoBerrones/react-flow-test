@@ -963,6 +963,17 @@ function FlowComponent() {
         }
     };
 
+    const [projectMenuAnchorEl, setProjectMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const isProjectMenuOpen = Boolean(projectMenuAnchorEl);
+
+    const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setProjectMenuAnchorEl(event.currentTarget);
+    };
+
+    const handleProjectMenuClose = () => {
+        setProjectMenuAnchorEl(null);
+    };
+
     // HTML section
     return (
         <>
@@ -1030,9 +1041,18 @@ function FlowComponent() {
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
                         </Menu>
-                        <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
+                        <Button variant="text" color="primary" onClick={handleProjectMenuClick}>
                             ProjectName
-                        </Typography>
+                        </Button>
+                        <Menu
+                            anchorEl={projectMenuAnchorEl}
+                            open={isProjectMenuOpen}
+                            onClose={handleProjectMenuClose}
+                        >
+                            <MenuItem onClick={handleProjectMenuClose}>Option 1</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Option 2</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Option 3</MenuItem>
+                        </Menu>
                         <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
                             <TextField
                                 label={`Search by ${searchMode}`}
