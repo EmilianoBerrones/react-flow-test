@@ -203,6 +203,49 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
         }
     };
 
+    const handleId = () => {
+        const newId = prompt('Enter the new ID');
+        if (newId) {
+            data.label = data.label + " ";
+            const nodes = getNodes();
+            const edges = getEdges();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        id: newId,
+                        data: {
+                            label: node.data.label,
+                            id: newId,
+                        },
+                    };
+                }
+                return node;
+            });
+            console.log(newNodes);
+
+            // Actualiza las conexiones de edges si las hay
+            const newEdges = edges.map((edge) => {
+                if (edge.source === id) {
+                    return {
+                        ...edge,
+                        source: newId,
+                    };
+                }
+                if (edge.target === id) {
+                    return {
+                        ...edge,
+                        target: newId,
+                    };
+                }
+                return edge;
+            });
+
+            setNodes(newNodes);
+            setEdges(newEdges);
+        }
+    };
+
     const deleteNode = () => {
         const nodes = getNodes();
         const updatedNodes = nodes.filter((node) => node.id !== id);
@@ -231,10 +274,36 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Grid container>
-                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container direction="row">
+                    <Grid item>
+                        <Grid container direction='row' >
+                            <Grid item xs={12} textAlign='center'>
+                                Modify
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Divider></Divider>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Grid container direction='row'>
+                            <Grid item xs={12} textAlign='center'>
+                                Color
+                            </Grid>
+                            <Grid item xs={12} textAlign='center'>
+                                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Button variant="outlined" color='error' style={{height: '100%'}} onClick={deleteNode}>Delete</Button>
+                    </Grid>
                 </Grid>
             </NodeToolbar>
             <Handle type="target" position={Position.Top} style={{background: '#555'}}/>
@@ -284,6 +353,49 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
         }
     };
 
+    const handleId = () => {
+        const newId = prompt('Enter the new ID');
+        if (newId) {
+            data.label = data.label + " ";
+            const nodes = getNodes();
+            const edges = getEdges();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        id: newId,
+                        data: {
+                            label: node.data.label,
+                            id: newId,
+                        },
+                    };
+                }
+                return node;
+            });
+            console.log(newNodes);
+
+            // Actualiza las conexiones de edges si las hay
+            const newEdges = edges.map((edge) => {
+                if (edge.source === id) {
+                    return {
+                        ...edge,
+                        source: newId,
+                    };
+                }
+                if (edge.target === id) {
+                    return {
+                        ...edge,
+                        target: newId,
+                    };
+                }
+                return edge;
+            });
+
+            setNodes(newNodes);
+            setEdges(newEdges);
+        }
+    };
+
     const deleteNode = () => {
         const nodes = getNodes();
         const updatedNodes = nodes.filter((node) => node.id !== id);
@@ -312,10 +424,36 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Grid container>
-                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container direction="row">
+                    <Grid item>
+                        <Grid container direction='row' >
+                            <Grid item xs={12} textAlign='center'>
+                                Modify
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Divider></Divider>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Grid container direction='row'>
+                            <Grid item xs={12} textAlign='center'>
+                                Color
+                            </Grid>
+                            <Grid item xs={12} textAlign='center'>
+                                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Button variant="outlined" color='error' style={{height: '100%'}} onClick={deleteNode}>Delete</Button>
+                    </Grid>
                 </Grid>
             </NodeToolbar>
             <div className="strategyNodeBorder">
@@ -369,6 +507,49 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
         }
     };
 
+    const handleId = () => {
+        const newId = prompt('Enter the new ID');
+        if (newId) {
+            data.label = data.label + " ";
+            const nodes = getNodes();
+            const edges = getEdges();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        id: newId,
+                        data: {
+                            label: node.data.label,
+                            id: newId,
+                        },
+                    };
+                }
+                return node;
+            });
+            console.log(newNodes);
+
+            // Actualiza las conexiones de edges si las hay
+            const newEdges = edges.map((edge) => {
+                if (edge.source === id) {
+                    return {
+                        ...edge,
+                        source: newId,
+                    };
+                }
+                if (edge.target === id) {
+                    return {
+                        ...edge,
+                        target: newId,
+                    };
+                }
+                return edge;
+            });
+
+            setNodes(newNodes);
+            setEdges(newEdges);
+        }
+    };
+
     const deleteNode = () => {
         const nodes = getNodes();
         const updatedNodes = nodes.filter((node) => node.id !== id);
@@ -397,10 +578,36 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Grid container>
-                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container direction="row">
+                    <Grid item>
+                        <Grid container direction='row' >
+                            <Grid item xs={12} textAlign='center'>
+                                Modify
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Divider></Divider>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Grid container direction='row'>
+                            <Grid item xs={12} textAlign='center'>
+                                Color
+                            </Grid>
+                            <Grid item xs={12} textAlign='center'>
+                                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Button variant="outlined" color='error' style={{height: '100%'}} onClick={deleteNode}>Delete</Button>
+                    </Grid>
                 </Grid>
             </NodeToolbar>
             <div className="ajNodeBorder">
@@ -457,6 +664,49 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
         }
     };
 
+    const handleId = () => {
+        const newId = prompt('Enter the new ID');
+        if (newId) {
+            data.label = data.label + " ";
+            const nodes = getNodes();
+            const edges = getEdges();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        id: newId,
+                        data: {
+                            label: node.data.label,
+                            id: newId,
+                        },
+                    };
+                }
+                return node;
+            });
+            console.log(newNodes);
+
+            // Actualiza las conexiones de edges si las hay
+            const newEdges = edges.map((edge) => {
+                if (edge.source === id) {
+                    return {
+                        ...edge,
+                        source: newId,
+                    };
+                }
+                if (edge.target === id) {
+                    return {
+                        ...edge,
+                        target: newId,
+                    };
+                }
+                return edge;
+            });
+
+            setNodes(newNodes);
+            setEdges(newEdges);
+        }
+    };
+
     const deleteNode = () => {
         const nodes = getNodes();
         const updatedNodes = nodes.filter((node) => node.id !== id);
@@ -485,10 +735,36 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Grid container>
-                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container direction="row">
+                    <Grid item>
+                        <Grid container direction='row' >
+                            <Grid item xs={12} textAlign='center'>
+                                Modify
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Divider></Divider>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Grid container direction='row'>
+                            <Grid item xs={12} textAlign='center'>
+                                Color
+                            </Grid>
+                            <Grid item xs={12} textAlign='center'>
+                                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Button variant="outlined" color='error' style={{height: '100%'}} onClick={deleteNode}>Delete</Button>
+                    </Grid>
                 </Grid>
             </NodeToolbar>
             <div className="ajNodeBorder">
@@ -545,6 +821,49 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
         }
     };
 
+    const handleId = () => {
+        const newId = prompt('Enter the new ID');
+        if (newId) {
+            data.label = data.label + " ";
+            const nodes = getNodes();
+            const edges = getEdges();
+            const newNodes = nodes.map((node) => {
+                if (node.id === id) {
+                    return {
+                        ...node,
+                        id: newId,
+                        data: {
+                            label: node.data.label,
+                            id: newId,
+                        },
+                    };
+                }
+                return node;
+            });
+            console.log(newNodes);
+
+            // Actualiza las conexiones de edges si las hay
+            const newEdges = edges.map((edge) => {
+                if (edge.source === id) {
+                    return {
+                        ...edge,
+                        source: newId,
+                    };
+                }
+                if (edge.target === id) {
+                    return {
+                        ...edge,
+                        target: newId,
+                    };
+                }
+                return edge;
+            });
+
+            setNodes(newNodes);
+            setEdges(newEdges);
+        }
+    };
+
     const deleteNode = () => {
         const nodes = getNodes();
         const updatedNodes = nodes.filter((node) => node.id !== id);
@@ -573,10 +892,36 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 </div>
             )}
             <NodeToolbar>
-                <Grid container>
-                    <Button variant="outlined" onClick={handleLabel}>Edit</Button>
-                    <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
-                    <Button variant="outlined" onClick={deleteNode}>Delete</Button>
+                <Grid container direction="row">
+                    <Grid item>
+                        <Grid container direction='row' >
+                            <Grid item xs={12} textAlign='center'>
+                                Modify
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Divider></Divider>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Grid container direction='row'>
+                            <Grid item xs={12} textAlign='center'>
+                                Color
+                            </Grid>
+                            <Grid item xs={12} textAlign='center'>
+                                <MuiColorInput format="hex" value={backgroundColor} onChange={handleColorChange}></MuiColorInput>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item>
+                        <Button variant="outlined" color='error' style={{height: '100%'}} onClick={deleteNode}>Delete</Button>
+                    </Grid>
                 </Grid>
             </NodeToolbar>
             <div className="solutionNodeBorder">

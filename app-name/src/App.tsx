@@ -38,13 +38,10 @@ import {
     AppBar,
     Button, ButtonGroup,
     Divider,
-    FormControl,
     Grid,
     IconButton,
-    InputLabel,
     Menu,
     MenuItem,
-    Select,
     SelectChangeEvent, Slider, Switch,
     TextField,
     ToggleButton,
@@ -54,7 +51,6 @@ import {
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
-import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
 import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
@@ -1302,11 +1298,11 @@ function FlowComponent() {
                                         {/*        </Select>*/}
                                         {/*    </FormControl>*/}
                                         {/*</Grid>*/}
-                                        <Grid item>
-                                            <Button variant="outlined" onClick={handleReloadButton}>Reload
-                                                changes</Button>
-                                            <Button variant="outlined" onClick={debug}>Print</Button>
-                                        </Grid>
+                                        {/*<Grid item>*/}
+                                        {/*    <Button variant="outlined" onClick={handleReloadButton}>Reload*/}
+                                        {/*        changes</Button>*/}
+                                        {/*    <Button variant="outlined" onClick={debug}>Print</Button>*/}
+                                        {/*</Grid>*/}
                                     </Grid>
                                 </AccordionDetails>
                             </Accordion>
@@ -1317,7 +1313,8 @@ function FlowComponent() {
                               style={{
                                   minHeight: "inherit",
                                   position: 'relative',
-                                  overflowX: 'hidden'
+                                  overflowX: 'hidden',
+                                  overflowY: 'hidden',
                               }}
                               onDrop={onDrop}
                               onDragOver={onDragOver}
