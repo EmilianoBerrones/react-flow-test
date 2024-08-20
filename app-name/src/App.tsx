@@ -11,6 +11,15 @@ import {
     useReactFlow,
     useViewport,
 } from "reactflow";
+
+import {
+    BrowserRouter as Router,
+    Route,
+    Routes,
+    useNavigate
+} from 'react-router-dom';
+import Login from './Login';
+
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
@@ -45,6 +54,7 @@ import {
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
 import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
@@ -903,6 +913,12 @@ function FlowComponent() {
         setShapeGap(newValue as number);
     };
 
+    const navigate = useNavigate();
+
+    const handleAccountClick = () => {
+        navigate('/login'); // Navigates to the Login component
+    };
+
     const debug = () => {
         console.log(nodes);
     }
@@ -985,6 +1001,9 @@ function FlowComponent() {
                                     Text
                                 </ToggleButton>
                             </ToggleButtonGroup>
+                            <IconButton aria-label="AccountButton" sx={{ ml: 2 }} color="primary" onClick={handleAccountClick}>
+                                <AccountCircleIcon />
+                            </IconButton>
                         </div>
                     </Toolbar>
                 </AppBar>
@@ -1323,8 +1342,13 @@ const SidePanel = ({
 export default function App() {
     // Function to encapsule the HTML into a ReactFlow provider
     return (
-        <ReactFlowProvider>
-            <FlowComponent/>
-        </ReactFlowProvider>
+        <Router>
+            <ReactFlowProvider>
+                <Routes>
+                    <Route path="/" element={<FlowComponent />} />
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </ReactFlowProvider>
+        </Router>
     );
 }
