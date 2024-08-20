@@ -61,6 +61,11 @@ import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import {MuiColorInput} from "mui-color-input";
 
 import mammoth from 'mammoth';
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContentText from "@mui/material/DialogContentText";
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -380,8 +385,10 @@ function FlowComponent() {
     const [shapeGap, setShapeGap] = useState(28);
     const [edgeType, setEdgeType] = useState('step');
     const [edgeTypeCopy, setEdgeTypeCopy] = useState('step');
-
     const [showRuler, setShowRuler] = useState(true);
+    const [openTextDialog, setOpenTextDialog] = useState(false);
+    const [textDialogContent, setTextDialogContent] = useState("");
+    const [isTextDialogValid, setTextDialogValid] = useState(true);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -1018,7 +1025,8 @@ function FlowComponent() {
                     const arrayBuffer = await file.arrayBuffer();
                     const result = await mammoth.extractRawText({ arrayBuffer });
                     const text = result.value;
-                    alert(`File content:\n${text}`);
+                    setTextDialogContent(text);
+                    handleTextDialogOpen();  // todo first
                 } catch (error) {
                     alert('Error reading Word document.');
                 }
@@ -1034,6 +1042,40 @@ function FlowComponent() {
             inputFileRef.current.click();
         }
     };
+
+    const handleTextDialogOpen = () => {
+        setOpenTextDialog(true);
+    };
+
+    const handleTextDialogClose = () => {
+        setOpenTextDialog(false);
+    };
+
+    const handleTextDialogAccept = () => {
+        setInitialAssuranceText(textDialogContent);
+        handleTextDialogClose();
+    }
+
+    const validateTextFormat = (text: string) => {
+        const lines = text.split('\n');
+        const regex = /^- [A-Za-z0-9]+: .+$/;
+
+        for (const line of lines) {
+            if (!regex.test(line.trim())) {
+                setTextDialogValid(false);
+                return false; // Termina la validación si se encuentra una línea no válida
+            }
+        }
+        setTextDialogValid(true);
+        return true; // Todo el texto es válido
+    };
+
+    const handleTextDialog = (e: any) => {
+        const newText = e.target.value;
+        setTextDialogContent(newText);
+        validateTextFormat(newText); // Valida el nuevo texto cada vez que cambia
+    };
+
 
     // HTML section
     return (
@@ -1080,7 +1122,6 @@ function FlowComponent() {
                                     ref={inputFileRef}
                                 />
                             </MenuItem>
-
                             <Divider>
                                 <Chip label="Text Import" size="small" />
                             </Divider>
@@ -1321,7 +1362,36 @@ function FlowComponent() {
                         >
                             <FormDialog/>
                             <Ruler showRuler={showRuler} />
-
+                            <React.Fragment>
+                                <Dialog
+                                    fullScreen
+                                    open={openTextDialog}
+                                    keepMounted
+                                    onClose={handleTextDialogClose}
+                                >
+                                    <DialogTitle>Text file preview</DialogTitle>
+                                    <DialogContent>
+                                        <TextField
+                                            value={textDialogContent}
+                                            multiline
+                                            fullWidth
+                                            error={!isTextDialogValid}
+                                            helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]"
+                                            onChange={handleTextDialog}
+                                        />
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={handleTextDialogClose}>Cancel</Button>
+                                        <Button
+                                            onClick={handleTextDialogAccept}
+                                            autoFocus
+                                            disabled={!isTextDialogValid}
+                                        >
+                                            Accept
+                                        </Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
                             <ReactFlow
                                 nodes={nodes}
                                 nodeTypes={nodeTypes}
