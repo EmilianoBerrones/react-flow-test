@@ -10,7 +10,17 @@ import {
     useEdgesState,
     useNodesState,
     useReactFlow,
+    useViewport,
 } from "reactflow";
+
+import {
+    BrowserRouter as Router,
+    Route,
+    Routes,
+    useNavigate
+} from 'react-router-dom';
+import Login from './Login';
+
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
@@ -44,12 +54,17 @@ import {
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Chip from '@mui/material/Chip';
 import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import {MuiColorInput} from "mui-color-input";
+
+import mammoth from 'mammoth';
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -285,6 +300,67 @@ function textToTree(text: string): TreeNode[] {
     return assignUniqueIdsToTree(tree);
 }
 
+const Ruler = ({ showRuler }: { showRuler: boolean }) => {
+    const { x, y } = useViewport();
+    const rulerRef = useRef(null);
+
+    useEffect(() => {
+        const canvas: any = rulerRef.current;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const step = 100; // Fixed step size for ruler lines
+
+        ctx.clearRect(0, 0, width, height);
+
+        if (showRuler) {
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#000';
+            ctx.lineWidth = 1;
+
+            // Draw top ruler (x-axis)
+            for (let i = x % step; i < width; i += step) {
+                const position = Math.round(i - x); // Corrected to move in the same direction as canvas
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, 20);
+                ctx.stroke();
+                ctx.fillText(position, i + 2, 10); // Display the fixed position on the ruler
+            }
+
+            // Draw left ruler (y-axis)
+            for (let i = y % step; i < height; i += step) {
+                const position = Math.round(i - y); // Corrected to move in the same direction as canvas
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(20, i);
+                ctx.stroke();
+                ctx.fillText(position, 2, i + 10); // Display the fixed position on the ruler
+            }
+        }
+
+        return () => {
+            // Clear the canvas when the component is unmounted or re-rendered
+            ctx.clearRect(0, 0, width, height);
+        };
+    }, [x, y, showRuler]);
+
+    return (
+        <canvas
+            ref={rulerRef}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                pointerEvents: 'none',
+                zIndex: 1,
+                display: showRuler ? 'block' : 'none', // Toggle display based on state
+            }}
+        />
+    );
+};
 
 // Creation of initial Tree and initial Rich Tree to display them.
 let initialTree = buildTree(initialNodes, initialEdges);
@@ -308,6 +384,8 @@ function FlowComponent() {
     const [shapeGap, setShapeGap] = useState(28);
     const [edgeType, setEdgeType] = useState('step');
     const [edgeTypeCopy, setEdgeTypeCopy] = useState('step');
+
+    const [showRuler, setShowRuler] = useState(true);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -915,10 +993,51 @@ function FlowComponent() {
         };
     }, []);
 
+    const navigate = useNavigate();
+
+    const handleAccountClick = () => {
+        navigate('/login'); // Navigates to the Login component
+    };
+
     const debug = () => {
         console.log(nodes);
         console.log(edges);
     }
+
+    const handleFileImport = async (event:any) => {
+        const file = event.target.files[0];
+        if (file) {
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension === 'txt') {
+                // Handle text files
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileContent = e.target.result;
+                    alert(`File content:\n${fileContent}`);
+                };
+                reader.readAsText(file);
+            } else if (fileExtension === 'docx') {
+                // Handle Word (.docx) files using mammoth
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    const text = result.value;
+                    alert(`File content:\n${text}`);
+                } catch (error) {
+                    alert('Error reading Word document.');
+                }
+            } else {
+                alert('Unsupported file type. Please upload a .txt or .docx file.');
+            }
+        }
+    };
+
+    // Function to trigger file input
+    const handleTxtImportButtonClick = () => {
+        if (inputFileRef.current) {
+            inputFileRef.current.click();
+        }
+    };
 
     // HTML section
     return (
@@ -950,6 +1069,10 @@ function FlowComponent() {
                             <MenuIcon/>
                         </IconButton>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+
+                        <Divider>
+                            <Chip label="JSON Manager" size="small" />
+                        </Divider>
                             <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
                             <MenuItem onClick={handleImportButtonClick}>
                                 Import graphic from JSON
@@ -961,6 +1084,24 @@ function FlowComponent() {
                                     ref={inputFileRef}
                                 />
                             </MenuItem>
+
+                            <Divider>
+                                <Chip label="Text Import" size="small" />
+                            </Divider>
+                            <MenuItem onClick={handleTxtImportButtonClick}>
+                                Import graphic from text file
+                                <input
+                                    type="file"
+                                    accept=".txt,.docx"
+                                    ref={inputFileRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleFileImport}
+                                />
+                            </MenuItem>
+
+                            <Divider>
+                                <Chip label="Image Export" size="small" />
+                            </Divider>
                             <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
@@ -992,6 +1133,9 @@ function FlowComponent() {
                                     Text
                                 </ToggleButton>
                             </ToggleButtonGroup>
+                            <IconButton aria-label="AccountButton" sx={{ ml: 2 }} color="primary" onClick={handleAccountClick}>
+                                <AccountCircleIcon />
+                            </IconButton>
                         </div>
                     </Toolbar>
                 </AppBar>
@@ -1179,6 +1323,8 @@ function FlowComponent() {
                               onDragOver={onDragOver}
                         >
                             <FormDialog/>
+                            <Ruler showRuler={showRuler} />
+
                             <ReactFlow
                                 nodes={nodes}
                                 nodeTypes={nodeTypes}
@@ -1198,7 +1344,7 @@ function FlowComponent() {
                                     gap={shapeGap}
                                     style={{backgroundColor: backgroundPaneColor}}/>
                                 {showMiniMap && <MiniMap/>}
-                                <Controls/>
+                            <Controls style={{marginLeft:25}}/>
                             </ReactFlow>
                             <SidePanel
                                 isPanelOpen={isPanelOpen}
@@ -1211,6 +1357,8 @@ function FlowComponent() {
                                 shapeGap={shapeGap}
                                 handleShapeGap={handleShapeGap}
                                 handleEdgeTypeChange={handleEdgeTypeChange}
+                                showRuler={showRuler}  // Pass showRuler state
+                                toggleRuler={() => setShowRuler(!showRuler)}
                             />
                             <IconButton style={{
                                 position: 'absolute',
@@ -1240,6 +1388,8 @@ const SidePanel = ({
                        shapeGap,
                        handleShapeGap,
                        handleEdgeTypeChange,
+                       showRuler,
+                       toggleRuler
                    }
                        : {
     isPanelOpen: boolean;
@@ -1252,6 +1402,8 @@ const SidePanel = ({
     shapeGap: any;
     handleShapeGap: any;
     handleEdgeTypeChange: any;
+    showRuler: boolean;
+    toggleRuler: () => void;
 }) => {
     return (
         <div
@@ -1324,8 +1476,8 @@ const SidePanel = ({
                     <MuiColorInput format="hex" value={shapeColor} onChange={setShapeColor}></MuiColorInput>
                 </Grid>
                 <Grid item>
-                    Ruler
-                    <Switch defaultChecked/>
+                    <p>Ruler</p>
+                    <Switch checked={showRuler} onChange={toggleRuler} />
                 </Grid>
                 <Grid item>
                     <p>
@@ -1346,8 +1498,13 @@ const SidePanel = ({
 export default function App() {
     // Function to encapsule the HTML into a ReactFlow provider
     return (
-        <ReactFlowProvider>
-            <FlowComponent/>
-        </ReactFlowProvider>
+        <Router>
+            <ReactFlowProvider>
+                <Routes>
+                    <Route path="/" element={<FlowComponent />} />
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </ReactFlowProvider>
+        </Router>
     );
 }
