@@ -13,18 +13,13 @@ import {
     useViewport,
 } from "reactflow";
 
-import {
-    BrowserRouter as Router,
-    Route,
-    Routes,
-    useNavigate
-} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes, useNavigate} from 'react-router-dom';
 import Login from './Login';
 
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {debounce, startsWith} from 'lodash';
+import {startsWith} from 'lodash';
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -34,15 +29,22 @@ import {useDialog} from "./DialogContext";
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
-    Accordion, AccordionDetails, AccordionSummary,
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Alert,
     AppBar,
-    Button, ButtonGroup,
+    Button,
+    ButtonGroup,
     Divider,
     Grid,
     IconButton,
     Menu,
     MenuItem,
-    SelectChangeEvent, Slider, Switch,
+    SelectChangeEvent,
+    Slide,
+    Slider,
+    Switch,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
@@ -65,7 +67,6 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import DialogContentText from "@mui/material/DialogContentText";
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -301,8 +302,8 @@ function textToTree(text: string): TreeNode[] {
     return assignUniqueIdsToTree(tree);
 }
 
-const Ruler = ({ showRuler }: { showRuler: boolean }) => {
-    const { x, y } = useViewport();
+const Ruler = ({showRuler}: { showRuler: boolean }) => {
+    const {x, y} = useViewport();
     const rulerRef = useRef(null);
 
     useEffect(() => {
@@ -386,9 +387,14 @@ function FlowComponent() {
     const [edgeType, setEdgeType] = useState('step');
     const [edgeTypeCopy, setEdgeTypeCopy] = useState('step');
     const [showRuler, setShowRuler] = useState(true);
+
+    // Values for dialogs
     const [openTextDialog, setOpenTextDialog] = useState(false);
     const [textDialogContent, setTextDialogContent] = useState("");
     const [isTextDialogValid, setTextDialogValid] = useState(true);
+    const [addNodeDialog, setAddNodeDialog] = useState(true);
+    const [addNodeDialogText, setAddNodeDialogText] = useState("");
+
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -400,12 +406,49 @@ function FlowComponent() {
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
     const {openDialog, formData, setFormData, isOpen} = useDialog();
+    const [invalidConnectingNodeAlert, setInvalidConnectingNodeAlert] = useState(false); // type 1
+    const [nodeConnectOnItselfAlert, setNodeConnectOnItselfAlert] = useState(false); // type 2
+    const [connectionHasParentAlert, setConnectionHasParentAlert] = useState(false); // type 3
+    const [invalidNodeDropAlert, setInvalidNodeDropAlert] = useState(false); // type 4
+
 
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
 
     const [actualNode, setActualNode] = useState('');
     const [actualLetter, setActualLetter] = useState('');
+
+    const showInvalidConnectingNodeAlert = (type: string) => {
+        switch (type) {
+            // consult the types above for the specific alert
+            case 'type1':
+                setInvalidConnectingNodeAlert(true);
+                setTimeout(() => {
+                    setInvalidConnectingNodeAlert(false);
+                }, 3000);
+                break;
+            case 'type2':
+                setNodeConnectOnItselfAlert(true);
+                setTimeout(() => {
+                    setNodeConnectOnItselfAlert(false);
+                }, 3000);
+                break;
+            case 'type3':
+                setConnectionHasParentAlert(true);
+                setTimeout(() => {
+                    setConnectionHasParentAlert(false);
+                }, 3000);
+                break;
+            case 'type4':
+                setInvalidNodeDropAlert(true);
+                setTimeout(() => {
+                    setInvalidNodeDropAlert(false);
+                }, 3000);
+                break;
+            default:
+                break;
+        }
+    };
 
 
     const onDragStart = (data: any) => (event: any) => {
@@ -451,20 +494,22 @@ function FlowComponent() {
         };
         const targetIsPane = event.target.classList.contains('react-flow__pane');
         if (targetIsPane) {
-            const idPrompt = prompt('Enter the' + defineTypeOfNode(actualLetter) + ' node ID number: ');
-            if (idPrompt) {
-                const nodeId = actualLetter + idPrompt;
-                const newNode = {
-                    id: nodeId,
-                    data: {label: 'New label', id: nodeId},
-                    position: {x: position.x, y: position.y},
-                    type: actualNode,
-                }
-                const newNodes = nodes.concat(newNode);
-                setNodes(newNodes);
-            }
+            openAddNodeDialog();
+            // const idPrompt = prompt('Enter the ' + defineTypeOfNode(actualLetter) + ' node ID number: ');
+            // if (idPrompt) {
+            //     const nodeId = actualLetter + idPrompt;
+            //     const newNode = {
+            //         id: nodeId,
+            //         data: {label: 'New label', id: nodeId},
+            //         position: {x: position.x, y: position.y},
+            //         type: actualNode,
+            //     }
+            //     const newNodes = nodes.concat(newNode);
+            //     setNodes(newNodes);
+            // }
+        } else if (!targetIsPane) {
+            showInvalidConnectingNodeAlert('type4');
         }
-        setActualNode('');
     };
 
     const onDragOver = (event: any) => {
@@ -518,8 +563,9 @@ function FlowComponent() {
             if (targetNode) {
                 const targetNodeId = targetNode.getAttribute('data-id');
                 if (targetNodeId) {
-                    if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J')) {
-                        // Don't connect if the connecting node is Context, Assumption or Justification.
+                    if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J') || startsWith(connectingNodeId.current, 'Sn')) {
+                        // Don't connect if the connecting node is Context, Assumption, Justification or Solution.
+                        showInvalidConnectingNodeAlert('type1')
                     } else {
                         // Verifica si el nodo destino ya tiene un nodo padre
                         if (targetNodeId !== connectingNodeId.current) {
@@ -541,16 +587,23 @@ function FlowComponent() {
                                     style: defaultFill,
                                 }
                                 setEdges((eds) => addEdge(newEdge, eds));
+                            } else {
+                                showInvalidConnectingNodeAlert('type3');
                             }
+                        } else {
+                            showInvalidConnectingNodeAlert('type2');
                         }
                     }
                 }
             } else if (targetIsPane) {
-                if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J')) {
-                    // The dialog does not open if the node starts with 'C', 'A' o 'J'
+                if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J') || startsWith(connectingNodeId.current, 'Sn')) {
+                    // The dialog does not open if the node starts with 'C', 'A', 'J', or 'Sn'
+                    showInvalidConnectingNodeAlert('type1');
                 } else {
                     openDialog();
                 }
+            } else if (!targetIsPane) {
+                showInvalidConnectingNodeAlert('type4');
             }
         }, []
     );
@@ -636,7 +689,6 @@ function FlowComponent() {
             setFormData('');
         }
         if (copyOfText !== initialAssuranceText) {
-            debouncedHandleReloadButton();
             copyOfText = initialAssuranceText;
         }
         if (copyOfText === initialAssuranceText) {
@@ -653,11 +705,8 @@ function FlowComponent() {
                 }
             }
         }
-        return () => {
-            debouncedHandleReloadButton.cancel();
-        };
         // automate label change
-    }, [formData, isOpen, initialAssuranceText, nodes]);
+    }, [formData, isOpen, nodes]);
 
     // Function to detect when the nodes are going to be exported to an image format, and then export them
     useEffect(() => {
@@ -693,6 +742,8 @@ function FlowComponent() {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
+        const tree = buildTree(layoutedElements.nodes, layoutedElements.edges);
+        setInitialAssuranceText(treeToText(tree));
         if (oneTime < 2) {
             handleReloadButton();
             oneTime += 1;
@@ -807,11 +858,6 @@ function FlowComponent() {
         richTree = newTree.map(convertTreeNodeToDesiredNode);
     }
 
-    // Function to delay the reload button by 2500 ms
-    const debouncedHandleReloadButton = debounce(() => {
-        handleReloadButton();
-    }, 2500);
-
     // Alternate version to handle reload when scanning for new labels.
     const handleReloadAdvanced = (actualLabels: string[]) => {
         const newTree = buildTree(nodes, edges);
@@ -843,29 +889,6 @@ function FlowComponent() {
         }
         const spaces = ' '.repeat(spacesPerTab);
         return input.replace(/\t/g, spaces);
-    }
-
-    // Function that adds hyphens to a text so the text is properly formatted.
-    function addHyphenToText(texto: string): string {
-        const lineas = texto.split('\n');
-        const lineasConGuiones = lineas.map(linea => {
-            const indicePrimeraMayuscula = linea.search(/[A-Z]/);
-
-            if (indicePrimeraMayuscula !== -1) {
-                const antesPrimeraMayuscula = linea.slice(0, indicePrimeraMayuscula);
-                if (antesPrimeraMayuscula.includes("- ")) {
-                    return linea;
-                } else {
-                    // Insertar "- " justo antes de la primera mayúscula
-                    return antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
-                }
-            } else {
-                return linea;
-            }
-        });
-
-        // Unir las líneas de nuevo en un solo string
-        return lineasConGuiones.join('\n');
     }
 
     // Function to export to JSON
@@ -1007,7 +1030,7 @@ function FlowComponent() {
         console.log(edges);
     }
 
-    const handleFileImport = async (event:any) => {
+    const handleFileImport = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
             const fileExtension = file.name.split('.').pop().toLowerCase();
@@ -1023,10 +1046,10 @@ function FlowComponent() {
                 // Handle Word (.docx) files using mammoth
                 try {
                     const arrayBuffer = await file.arrayBuffer();
-                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    const result = await mammoth.extractRawText({arrayBuffer});
                     const text = result.value;
                     setTextDialogContent(text);
-                    handleTextDialogOpen();  // todo first
+                    handleTextDialogOpen();
                 } catch (error) {
                     alert('Error reading Word document.');
                 }
@@ -1063,18 +1086,81 @@ function FlowComponent() {
         for (const line of lines) {
             if (!regex.test(line.trim())) {
                 setTextDialogValid(false);
-                return false; // Termina la validación si se encuentra una línea no válida
+                return false;
             }
         }
         setTextDialogValid(true);
-        return true; // Todo el texto es válido
+        return true;
     };
+
+    function validateAssuranceText(): boolean {
+        const input = initialAssuranceText;
+        const lines = input.split('\n');
+        const indentationStack: { nodeId: string, isSnNode: boolean }[] = [];
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine === '') continue; // Saltar líneas vacías
+
+            const indentationLevel = (line.match(/^(\s*)/)?.[0].length || 0) / 2;
+            const nodeId = trimmedLine.replace(/^- /, '').split(':')[0].trim();
+
+            // Si el nivel de indentación es menor o igual que el stack, ajustar el stack
+            while (indentationStack.length > indentationLevel) {
+                indentationStack.pop();
+            }
+
+            // Si el nodo actual es un 'Sn', lo marcamos como tal
+            const isSnNode = nodeId.startsWith('Sn');
+
+            // Agregar el nodo actual al stack
+            indentationStack.push({nodeId, isSnNode});
+
+            // Si el nodo actual no es 'Sn', verificamos si el nodo padre es 'Sn'
+            if (!isSnNode && indentationStack.length > 1) {
+                const parent = indentationStack[indentationStack.length - 2];
+                if (parent.isSnNode) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function isAddNodeDialogNumber(): boolean {
+        const value = addNodeDialogText;
+        return !isNaN(Number(value)) && value.trim() !== '';
+    }
 
     const handleTextDialog = (e: any) => {
         const newText = e.target.value;
         setTextDialogContent(newText);
         validateTextFormat(newText); // Valida el nuevo texto cada vez que cambia
     };
+
+    const handleAddNodeDialogClose = () => {
+        setAddNodeDialog(false);
+    };
+
+    const handleAddNodeDialogAccept = () => {
+        setAddNodeDialog(false);
+        if (addNodeDialogText) {
+            const nodeId = actualLetter + addNodeDialogText;
+            const newNode = {
+                id: nodeId,
+                data: {label: 'New label', id: nodeId},
+                position: {x: 100, y: 100},
+                type: actualNode,
+            }
+            const newNodes = nodes.concat(newNode);
+            setNodes(newNodes);
+        }
+        setActualNode('');
+    };
+
+    const openAddNodeDialog = () => {
+        setAddNodeDialog(true);
+    }
 
 
     // HTML section
@@ -1108,9 +1194,9 @@ function FlowComponent() {
                         </IconButton>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
 
-                        <Divider>
-                            <Chip label="JSON Manager" size="small" />
-                        </Divider>
+                            <Divider>
+                                <Chip label="JSON Manager" size="small"/>
+                            </Divider>
                             <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
                             <MenuItem onClick={handleImportButtonClick}>
                                 Import graphic from JSON
@@ -1123,7 +1209,7 @@ function FlowComponent() {
                                 />
                             </MenuItem>
                             <Divider>
-                                <Chip label="Text Import" size="small" />
+                                <Chip label="Text Import" size="small"/>
                             </Divider>
                             <MenuItem onClick={handleTxtImportButtonClick}>
                                 Import graphic from text file
@@ -1131,13 +1217,13 @@ function FlowComponent() {
                                     type="file"
                                     accept=".txt,.docx"
                                     ref={inputFileRef}
-                                    style={{ display: 'none' }}
+                                    style={{display: 'none'}}
                                     onChange={handleFileImport}
                                 />
                             </MenuItem>
 
                             <Divider>
-                                <Chip label="Image Export" size="small" />
+                                <Chip label="Image Export" size="small"/>
                             </Divider>
                             <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
@@ -1170,8 +1256,9 @@ function FlowComponent() {
                                     Text
                                 </ToggleButton>
                             </ToggleButtonGroup>
-                            <IconButton aria-label="AccountButton" sx={{ ml: 2 }} color="primary" onClick={handleAccountClick}>
-                                <AccountCircleIcon />
+                            <IconButton aria-label="AccountButton" sx={{ml: 2}} color="primary"
+                                        onClick={handleAccountClick}>
+                                <AccountCircleIcon/>
                             </IconButton>
                         </div>
                     </Toolbar>
@@ -1305,7 +1392,9 @@ function FlowComponent() {
                                                             multiline
                                                             fullWidth
                                                             variant="outlined"
-                                                            value={addHyphenToText(initialAssuranceText)}
+                                                            error={!validateAssuranceText()}
+                                                            helperText={!validateAssuranceText() ? 'Follow the GSN rules when creating the assurance cases' : ''}
+                                                            value={initialAssuranceText}
                                                             onChange={(e) => setInitialAssuranceText(e.target.value)}
                                                             onKeyDown={handleTab}
                                                         />
@@ -1339,11 +1428,10 @@ function FlowComponent() {
                                         {/*        </Select>*/}
                                         {/*    </FormControl>*/}
                                         {/*</Grid>*/}
-                                        {/*<Grid item>*/}
-                                        {/*    <Button variant="outlined" onClick={handleReloadButton}>Reload*/}
-                                        {/*        changes</Button>*/}
-                                        {/*    <Button variant="outlined" onClick={debug}>Print</Button>*/}
-                                        {/*</Grid>*/}
+                                        <Grid item>
+                                            <Button variant="outlined" fullWidth disabled={!validateAssuranceText()}
+                                                    onClick={handleReloadButton}>Accept changes</Button>
+                                        </Grid>
                                     </Grid>
                                 </AccordionDetails>
                             </Accordion>
@@ -1361,7 +1449,7 @@ function FlowComponent() {
                               onDragOver={onDragOver}
                         >
                             <FormDialog/>
-                            <Ruler showRuler={showRuler} />
+                            <Ruler showRuler={showRuler}/>
                             <React.Fragment>
                                 <Dialog
                                     fullScreen
@@ -1392,6 +1480,38 @@ function FlowComponent() {
                                     </DialogActions>
                                 </Dialog>
                             </React.Fragment>
+                            <React.Fragment>
+                                <Dialog
+                                    open={addNodeDialog}
+                                    keepMounted
+                                >
+                                    <DialogTitle>Adding manual node</DialogTitle>
+                                    <DialogContent>
+                                        <Grid container spacing={2} alignItems='center'>
+                                            <Grid item xs={12}>
+                                                Enter the ID number of the Goal node:
+                                            </Grid>
+                                            <Grid item xs={1}>
+                                                G:
+                                            </Grid>
+                                            <Grid item xs>
+                                                <TextField label='Node ID number'
+                                                           error={!isAddNodeDialogNumber()}
+                                                           value={addNodeDialogText}
+                                                           helperText={!isAddNodeDialogNumber() ? 'Only numbers are allowed as node IDs' : ''}
+                                                           onChange={(e) => setAddNodeDialogText(e.target.value)}
+                                                ></TextField>
+                                            </Grid>
+                                        </Grid>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={handleAddNodeDialogClose}>Cancel</Button>
+                                        <Button onClick={handleAddNodeDialogAccept}
+                                                disabled={!isAddNodeDialogNumber()}
+                                        >Accept</Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
                             <ReactFlow
                                 nodes={nodes}
                                 nodeTypes={nodeTypes}
@@ -1411,7 +1531,7 @@ function FlowComponent() {
                                     gap={shapeGap}
                                     style={{backgroundColor: backgroundPaneColor}}/>
                                 {showMiniMap && <MiniMap/>}
-                            <Controls style={{marginLeft:25}}/>
+                                <Controls style={{marginLeft: 25}}/>
                             </ReactFlow>
                             <SidePanel
                                 isPanelOpen={isPanelOpen}
@@ -1436,6 +1556,51 @@ function FlowComponent() {
                             }} onClick={handleOpenPanel}>
                                 <ArrowBackIosRoundedIcon></ArrowBackIosRoundedIcon>
                             </IconButton>
+                            <Slide direction="up" in={invalidConnectingNodeAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '50%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: GSN does not allow nodes of type 'Context', 'Justification',
+                                    'Assumption' and 'Solution' to have children nodes.
+                                </Alert>
+                            </Slide>
+                            <Slide direction="up" in={nodeConnectOnItselfAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '58%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: Invalid node connection to itself.
+                                </Alert>
+                            </Slide>
+                            <Slide direction="up" in={connectionHasParentAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '55%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: Target node already has a parent node
+                                </Alert>
+                            </Slide>
+                            <Slide direction="up" in={invalidNodeDropAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '55%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: Nodes can only be dropped on the pane.
+                                </Alert>
+                            </Slide>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -1544,7 +1709,7 @@ const SidePanel = ({
                 </Grid>
                 <Grid item>
                     <p>Ruler</p>
-                    <Switch checked={showRuler} onChange={toggleRuler} />
+                    <Switch checked={showRuler} onChange={toggleRuler}/>
                 </Grid>
                 <Grid item>
                     <p>
@@ -1568,8 +1733,8 @@ export default function App() {
         <Router>
             <ReactFlowProvider>
                 <Routes>
-                    <Route path="/" element={<FlowComponent />} />
-                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<FlowComponent/>}/>
+                    <Route path="/login" element={<Login/>}/>
                 </Routes>
             </ReactFlowProvider>
         </Router>
