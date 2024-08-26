@@ -16,7 +16,8 @@ import {
     BrowserRouter as Router,
     Route,
     Routes,
-    useNavigate
+    useNavigate,
+    Navigate
 } from 'react-router-dom';
 import Login from './Login';
 
@@ -63,6 +64,27 @@ import MenuIcon from '@mui/icons-material/Menu';
 import {MuiColorInput} from "mui-color-input";
 
 import mammoth from 'mammoth';
+
+
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase'; // Assuming you have a firebase.js file exporting `auth`
+//FireBase imports
+
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCGK1BL0n4t_L_53iKZ40U1ozIKHf6-GaI",
+    authDomain: "yorkuassurance.firebaseapp.com",
+    projectId: "yorkuassurance",
+    storageBucket: "yorkuassurance.appspot.com",
+    messagingSenderId: "997144539474",
+    appId: "1:997144539474:web:ba786fe11fa7e50b530a8b",
+    measurementId: "G-2B5DVNB9HH"
+  };
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {

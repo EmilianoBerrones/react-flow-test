@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+
+// Firebase Resources
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "./firebase";
 
 const BackgroundBox = styled(Box)(({ theme }) => ({
     display: 'flex',
@@ -33,6 +38,38 @@ const ProjectName = styled(Typography)(({ theme }) => ({
 }));
 
 const LoginScreen: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const navigate = useNavigate(); // Initialize useNavigate
+
+    const handleSignUp = async () => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            console.log('User signed up:', userCredential.user);
+        } catch (error) {
+            console.error('Error signing up:', error.message);
+        }
+    };
+
+    const handleLogin = async () => {
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            console.log('User signed in:', userCredential.user);
+            navigate('/'); // Redirect to the main page after successful login
+        } catch (error) {
+            console.error('Error signing in:', error.message);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            console.log('User signed out');
+        } catch (error) {
+            console.error('Error signing out:', error.message);
+        }
+    };
+
     return (
         <BackgroundBox>
             <ProjectName variant="h4">
@@ -50,6 +87,8 @@ const LoginScreen: React.FC = () => {
                     variant="outlined"
                     fullWidth
                     margin="normal"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                 />
                 <TextField
                     label="Password"
@@ -57,14 +96,33 @@ const LoginScreen: React.FC = () => {
                     fullWidth
                     margin="normal"
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                 />
                 <Button
                     variant="contained"
                     color="primary"
                     fullWidth
                     sx={{ mt: 2 }}
+                    onClick={handleLogin}
                 >
                     Login
+                </Button>
+                <Button
+                    color="secondary"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={handleSignUp}
+                >
+                    Sign Up
+                </Button>
+                <Button
+                    color="secondary"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={handleLogout}
+                >
+                    Logout
                 </Button>
                 <Button
                     color="secondary"
