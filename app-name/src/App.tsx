@@ -511,49 +511,138 @@ function FlowComponent() {
     );
 
     // Function to handle node search by id
+    // Function to handle node search by id
+    // Function to handle node search by id
+    // Function to handle node search by id
     const handleSearch = (searchId: any) => {
-        setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.id === searchId) {
-                return {
-                    ...node,
-                    style: {
-                        ...node.style,
-                        border: '2px solid red',
-                    },
-                };
+        setNodes((prevNodes) => {
+            const searchedNodes = prevNodes.filter(node => node.data.id === searchId);
+
+            if (searchedNodes.length > 0) {
+                // Highlight the nodes
+                const updatedNodes = prevNodes.map(node => {
+                    if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: '7px solid black',
+                            },
+                        };
+                    } else {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: 'none',
+                            },
+                        };
+                    }
+                });
+
+                // Calculate the midpoint and zoom accordingly
+                const totalNodes = searchedNodes.length;
+                if (totalNodes === 1) {
+                    // Single node case: Zoom into the single node
+                    const node = searchedNodes[0];
+                    setTimeout(() => {
+                        fitView({ nodes: [node], padding: 5, duration: 800 });
+                    }, 100);
+                } else {
+                    // Multiple nodes case: Zoom into the midpoint of all nodes
+                    const midpoint = searchedNodes.reduce(
+                        (acc, node) => {
+                            acc.x += node.position.x;
+                            acc.y += node.position.y;
+                            return acc;
+                        },
+                        { x: 0, y: 0 }
+                    );
+                    midpoint.x /= totalNodes;
+                    midpoint.y /= totalNodes;
+
+                    setTimeout(() => {
+                        fitView({
+                            position: midpoint,
+                            zoom: 1, // You may need to adjust zoom depending on distance
+                            duration: 800,
+                        });
+                    }, 100);
+                }
+
+                return updatedNodes;
             }
-            return {
-                ...node,
-                style: {
-                    ...node.style,
-                    border: 'none',
-                },
-            };
-        }));
+
+            return prevNodes;
+        });
     };
 
-
-    // Function to handel node search by text
+    // Function to handle node search by text
     const handleSearchByText = (searchText: any) => {
-        setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.data.label.includes(searchText)) {
-                return {
-                    ...node,
-                    style: {
-                        ...node.style,
-                        border: '2px solid red',
-                    },
-                };
+        setNodes((prevNodes) => {
+            const searchedNodes = prevNodes.filter(node => node.data.label.includes(searchText));
+
+            if (searchedNodes.length > 0) {
+                // Highlight the nodes
+                const updatedNodes = prevNodes.map(node => {
+                    if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: '7px solid black',
+                            },
+                        };
+                    } else {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: 'none',
+                            },
+                        };
+                    }
+                });
+
+                // Calculate the midpoint and zoom accordingly
+                const totalNodes = searchedNodes.length;
+                if (totalNodes === 1) {
+                    // Single node case: Zoom into the single node
+                    const node = searchedNodes[0];
+                    setTimeout(() => {
+                        fitView({ nodes: [node], padding: 5, duration: 800 });
+                    }, 100);
+                } else {
+                    // Multiple nodes case: Zoom into the midpoint of all nodes
+                    const midpoint = searchedNodes.reduce(
+                        (acc, node) => {
+                            acc.x += node.position.x;
+                            acc.y += node.position.y;
+                            return acc;
+                        },
+                        { x: 0, y: 0 }
+                    );
+                    midpoint.x /= totalNodes;
+                    midpoint.y /= totalNodes;
+
+                    setTimeout(() => {
+                        fitView({
+                            position: midpoint,
+                            zoom: 1, // You may need to adjust zoom depending on distance
+                            duration: 800,
+                        });
+                    }, 100);
+                }
+
+                return updatedNodes;
             }
-            return {
-                ...node,
-                style: {
-                    ...node.style,
-                    border: 'none',
-                },
-            };
-        }));
+
+            return prevNodes;
+        });
     };
+
+
+
 
     // Function to synchronize the data between the graph, textview and treeview
     useEffect(() => {
@@ -1302,6 +1391,7 @@ function FlowComponent() {
                                 style={{minHeight: "inherit"}}
                                 onConnectStart={onConnectStart}
                                 onConnectEnd={onConnectEnd}
+                                minZoom={0.1}
                             >
                                 <Background
                                     variant={backgroundShapes}
