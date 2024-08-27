@@ -21,12 +21,20 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     let uninstantiated = false;
     let undeveloped = false;
+
+    let displayed = data.label;
+
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
+        displayed = displayed.replace('uninstantiated', '').trim();
     }
+
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
+        displayed = displayed.replace('undeveloped', '').trim();
     }
+
+    displayed = displayed.replace(/\s+/g, ' ').trim();
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -158,7 +166,7 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
             </NodeToolbar>
             <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
             <div><b>{data.id}</b></div>
-            <div>{data.label}</div>
+            <div>{displayed}</div>
             <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
         </div>
     );
@@ -171,12 +179,20 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     let uninstantiated = false;
     let undeveloped = false;
+
+    let displayed = data.label;
+
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
+        displayed = displayed.replace('uninstantiated', '').trim();
     }
+
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
+        displayed = displayed.replace('undeveloped', '').trim();
     }
+
+    displayed = displayed.replace(/\s+/g, ' ').trim();
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -308,7 +324,7 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
             </NodeToolbar>
             <Handle type="target" position={Position.Top} style={{background: '#555'}}/>
             <div><b>{data.id}</b></div>
-            <div>{data.label}</div>
+            <div>{displayed}</div>
             <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
         </div>
     );
@@ -321,12 +337,20 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     let uninstantiated = false;
     let undeveloped = false;
+
+    let displayed = data.label;
+
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
+        displayed = displayed.replace('uninstantiated', '').trim();
     }
+
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
+        displayed = displayed.replace('undeveloped', '').trim();
     }
+
+    displayed = displayed.replace(/\s+/g, ' ').trim();
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -460,7 +484,7 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 <div className="strategyNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
-                    <div>{data.label}</div>
+                    <div>{displayed}</div>
                     <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
                 </div>
             </div>
@@ -475,12 +499,20 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     let uninstantiated = false;
     let undeveloped = false;
+
+    let displayed = data.label;
+
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
+        displayed = displayed.replace('uninstantiated', '').trim();
     }
+
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
+        displayed = displayed.replace('undeveloped', '').trim();
     }
+
+    displayed = displayed.replace(/\s+/g, ' ').trim();
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -614,7 +646,7 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 <div className="ajNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
-                    <div>{data.label}</div>
+                    <div>{displayed}</div>
                     <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
                 </div>
             </div>
@@ -632,12 +664,20 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     let uninstantiated = false;
     let undeveloped = false;
+
+    let displayed = data.label;
+
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
+        displayed = displayed.replace('uninstantiated', '').trim();
     }
+
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
+        displayed = displayed.replace('undeveloped', '').trim();
     }
+
+    displayed = displayed.replace(/\s+/g, ' ').trim();
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -771,7 +811,7 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 <div className="ajNode" style={{backgroundColor}}>
                     <Handle type="target" style={{background: '#555'}} position={Position.Top}/>
                     <div><b>{data.id}</b></div>
-                    <div>{data.label}</div>
+                    <div>{displayed}</div>
                     <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
                 </div>
             </div>
@@ -789,12 +829,20 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     let uninstantiated = false;
     let undeveloped = false;
+
+    let displayed = data.label;
+
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
+        displayed = displayed.replace('uninstantiated', '').trim();
     }
+
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
+        displayed = displayed.replace('undeveloped', '').trim();
     }
+
+    displayed = displayed.replace(/\s+/g, ' ').trim();
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -931,7 +979,7 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                     <div style={{
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                    }}>{data.label}</div>
+                    }}>{displayed}</div>
                     <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
                 </div>
             </div>

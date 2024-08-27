@@ -392,7 +392,7 @@ function FlowComponent() {
     const [openTextDialog, setOpenTextDialog] = useState(false);
     const [textDialogContent, setTextDialogContent] = useState("");
     const [isTextDialogValid, setTextDialogValid] = useState(true);
-    const [addNodeDialog, setAddNodeDialog] = useState(true);
+    const [addNodeDialog, setAddNodeDialog] = useState(false);
     const [addNodeDialogText, setAddNodeDialogText] = useState("");
 
 
@@ -743,6 +743,7 @@ function FlowComponent() {
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
         const tree = buildTree(layoutedElements.nodes, layoutedElements.edges);
+        richTree = tree.map(convertTreeNodeToDesiredNode);
         setInitialAssuranceText(treeToText(tree));
         if (oneTime < 2) {
             handleReloadButton();
@@ -1270,7 +1271,7 @@ function FlowComponent() {
                             <Grid item>
                                 <Typography variant='h4' gutterBottom>ProjectName</Typography>
                             </Grid>
-                            <Accordion disableGutters>
+                            <Accordion>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Node selector
                                 </AccordionSummary>
@@ -1455,7 +1456,6 @@ function FlowComponent() {
                                     fullScreen
                                     open={openTextDialog}
                                     keepMounted
-                                    onClose={handleTextDialogClose}
                                 >
                                     <DialogTitle>Text file preview</DialogTitle>
                                     <DialogContent>
@@ -1489,10 +1489,10 @@ function FlowComponent() {
                                     <DialogContent>
                                         <Grid container spacing={2} alignItems='center'>
                                             <Grid item xs={12}>
-                                                Enter the ID number of the Goal node:
+                                                Enter the ID number of the {actualNode} node:
                                             </Grid>
                                             <Grid item xs={1}>
-                                                G:
+                                                {actualLetter} :
                                             </Grid>
                                             <Grid item xs>
                                                 <TextField label='Node ID number'
