@@ -55,7 +55,7 @@ import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
-import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
+import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined, InfoTwoTone} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -399,6 +399,7 @@ function FlowComponent() {
     const [isImportFromFileTextValid, setImportFromFileTextValid] = useState(true);
     const [addNodeDialog, setAddNodeDialog] = useState(false);
     const [addNodeDialogText, setAddNodeDialogText] = useState("");
+    const [importFromTextInfo, setImportFromTextInfo] = useState(false);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -1167,6 +1168,13 @@ function FlowComponent() {
         setAddNodeDialog(true);
     }
 
+    const handleImportFromTextInfoClose = () => {
+        setImportFromTextInfo(false);
+    }
+
+    const handleImportFromTextInfoOpen = () => {
+        setImportFromTextInfo(true);
+    }
 
     // HTML section
     return (
@@ -1218,15 +1226,23 @@ function FlowComponent() {
                             </Divider>
                             <MenuItem onClick={handleTxtImportButtonClick}>
                                 Import graphic from text file
+                                <IconButton
+                                    color="primary"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleImportFromTextInfoOpen();
+                                    }}
+                                >
+                                    <InfoTwoTone />
+                                </IconButton>
                                 <input
                                     type="file"
                                     accept=".txt,.docx"
                                     ref={inputFileRef}
-                                    style={{display: 'none'}}
+                                    style={{ display: 'none' }}
                                     onChange={handleFileImport}
                                 />
                             </MenuItem>
-
                             <Divider>
                                 <Chip label="Image Export" size="small"/>
                             </Divider>
@@ -1275,7 +1291,7 @@ function FlowComponent() {
                             <Grid item>
                                 <Typography variant='h4' gutterBottom>ProjectName</Typography>
                             </Grid>
-                            <Accordion>
+                            <Accordion style={{backgroundColor:  '#f4f6f7'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Node selector
                                 </AccordionSummary>
@@ -1367,7 +1383,7 @@ function FlowComponent() {
                                     </Grid>
                                 </AccordionDetails>
                             </Accordion>
-                            <Accordion defaultExpanded disableGutters>
+                            <Accordion defaultExpanded style={{backgroundColor: '#f4f6f7'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Text editor
                                 </AccordionSummary>
@@ -1514,6 +1530,29 @@ function FlowComponent() {
                                         <Button onClick={handleAddNodeDialogAccept}
                                                 disabled={!isAddNodeDialogNumber()}
                                         >Accept</Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
+                            <React.Fragment>
+                                <Dialog
+                                    open={importFromTextInfo}
+                                    keepMounted
+                                >
+                                    <DialogTitle>Import from text file</DialogTitle>
+                                    <DialogContent>
+                                        <Grid container>
+                                            <Grid item xs={2} alignSelf='center'>
+                                                <InfoTwoTone color="primary" sx={{fontSize: 50}}/>
+                                            </Grid>
+                                            <Grid item xs>
+                                                You can import the assurance cases from a text file, with extensions '.docx' or
+                                                '.txt'. Tabulations are deleted when importing txt and docx files. Make sure the
+                                                nodes' indentation are represented by spaces
+                                            </Grid>
+                                        </Grid>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={handleImportFromTextInfoClose}> Ok</Button>
                                     </DialogActions>
                                 </Dialog>
                             </React.Fragment>
