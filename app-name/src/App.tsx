@@ -105,6 +105,7 @@ interface Node {
     position: { x: number, y: number };
     data: { label: string, id: string };
     type?: string;
+    hidden?: boolean;
 }
 
 // Edge interface to work with the nodes from edges\index.ts
@@ -375,10 +376,14 @@ function FlowComponent() {
     const {fitView, getViewport, setViewport} = useReactFlow();
     const [showMiniMap, setShowMiniMap] = useState(true);
     const [exporting, setExporting] = useState('');
+    const inputFileRef = useRef<HTMLInputElement>(null);
+
+    // Values for searching nodes
     const [searchMode, setSearchMode] = useState('id');
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
-    const inputFileRef = useRef<HTMLInputElement>(null);
+
+    // Values for the side panel
     const [isPanelOpen, setPanelOpen] = useState(false);
     const [backgroundShapes, setBackgroundShapes] = useState(BackgroundVariant.Dots);
     const [backgroundPaneColor, setBackgroundPaneColor] = useState('#ffffff');
@@ -388,13 +393,12 @@ function FlowComponent() {
     const [edgeTypeCopy, setEdgeTypeCopy] = useState('step');
     const [showRuler, setShowRuler] = useState(true);
 
-    // Values for dialogs
-    const [openTextDialog, setOpenTextDialog] = useState(false);
-    const [textDialogContent, setTextDialogContent] = useState("");
-    const [isTextDialogValid, setTextDialogValid] = useState(true);
+    // Values for text dialogs
+    const [importFromFileDialog, setImportFromFileDialog] = useState(false);
+    const [importFromFileText, setImportFromFileText] = useState("");
+    const [isImportFromFileTextValid, setImportFromFileTextValid] = useState(true);
     const [addNodeDialog, setAddNodeDialog] = useState(false);
     const [addNodeDialogText, setAddNodeDialogText] = useState("");
-
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -405,18 +409,18 @@ function FlowComponent() {
 
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
+    const [actualNode, setActualNode] = useState('');
+    const [actualLetter, setActualLetter] = useState('');
     const {openDialog, formData, setFormData, isOpen} = useDialog();
+
+    // Alerts for invalid actions.
     const [invalidConnectingNodeAlert, setInvalidConnectingNodeAlert] = useState(false); // type 1
     const [nodeConnectOnItselfAlert, setNodeConnectOnItselfAlert] = useState(false); // type 2
     const [connectionHasParentAlert, setConnectionHasParentAlert] = useState(false); // type 3
     const [invalidNodeDropAlert, setInvalidNodeDropAlert] = useState(false); // type 4
 
-
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
-
-    const [actualNode, setActualNode] = useState('');
-    const [actualLetter, setActualLetter] = useState('');
 
     const showInvalidConnectingNodeAlert = (type: string) => {
         switch (type) {
@@ -487,26 +491,9 @@ function FlowComponent() {
 
     const onDrop = (event: any) => {
         event.preventDefault();
-        const reactFlowBounds = event.target.getBoundingClientRect();
-        const position = {
-            x: event.clientX - reactFlowBounds.left,
-            y: event.clientY - reactFlowBounds.top,
-        };
         const targetIsPane = event.target.classList.contains('react-flow__pane');
         if (targetIsPane) {
             openAddNodeDialog();
-            // const idPrompt = prompt('Enter the ' + defineTypeOfNode(actualLetter) + ' node ID number: ');
-            // if (idPrompt) {
-            //     const nodeId = actualLetter + idPrompt;
-            //     const newNode = {
-            //         id: nodeId,
-            //         data: {label: 'New label', id: nodeId},
-            //         position: {x: position.x, y: position.y},
-            //         type: actualNode,
-            //     }
-            //     const newNodes = nodes.concat(newNode);
-            //     setNodes(newNodes);
-            // }
         } else if (!targetIsPane) {
             showInvalidConnectingNodeAlert('type4');
         }
@@ -611,7 +598,7 @@ function FlowComponent() {
     // Function to handle node search by id
     const handleSearch = (searchId: any) => {
         setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.id === searchId) {
+            if (node.data.id === searchId) {
                 return {
                     ...node,
                     style: {
@@ -808,13 +795,13 @@ function FlowComponent() {
                     id: node.node.id,
                     data: node.node.data,
                     position: node.node.position,
-                    type: defineTypeOfNode(node.node.id)
+                    type: defineTypeOfNode(node.node.id),
+                    hidden: node.node.hidden,
                 },
                 ...createNodesFromTree(node.children)
             ]);
         };
 
-        // Layout them with Dagre before drawing them
         return createNodesFromTree(tree);
     }
 
@@ -842,10 +829,27 @@ function FlowComponent() {
 
     // Function to replace the previous tree with the new one given as parameter.
     function replaceTree(tree: TreeNode[]) {
+        function hideChildrenIfUndeveloped(node: TreeNode, ancestorHasUndeveloped: boolean = false) {
+            // Si algún ancestro tiene "undeveloped", este nodo se oculta
+            if (ancestorHasUndeveloped) {
+                node.node.hidden = true;
+            }
+
+            // Verificar si el nodo actual tiene "undeveloped" (no lo ocultamos, solo marcamos a sus hijos)
+            const currentHasUndeveloped = node.node.data.label.includes('undeveloped');
+
+            // Aplicar la función recursivamente a cada hijo, propagando el estado de ocultación solo si el nodo actual tiene "undeveloped"
+            node.children.forEach(child => hideChildrenIfUndeveloped(child, ancestorHasUndeveloped || currentHasUndeveloped));
+        }
+
+        // Aplicar la función a cada nodo en el árbol
+        tree.forEach(rootNode => hideChildrenIfUndeveloped(rootNode));
+
         clearNodes(); // Deletes al nodes
         clearEdges(); // Deletes all edges
         const newNodes = addNodesFromTree(tree); // Adds new nodes based on the new Tree
         const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
+
         // Layout them with Dagre before drawing them
         const layoutedElements = getLayoutedElements(newNodes, newEdges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
@@ -1049,7 +1053,7 @@ function FlowComponent() {
                     const arrayBuffer = await file.arrayBuffer();
                     const result = await mammoth.extractRawText({arrayBuffer});
                     const text = result.value;
-                    setTextDialogContent(text);
+                    setImportFromFileText(text);
                     handleTextDialogOpen();
                 } catch (error) {
                     alert('Error reading Word document.');
@@ -1068,15 +1072,15 @@ function FlowComponent() {
     };
 
     const handleTextDialogOpen = () => {
-        setOpenTextDialog(true);
+        setImportFromFileDialog(true);
     };
 
     const handleTextDialogClose = () => {
-        setOpenTextDialog(false);
+        setImportFromFileDialog(false);
     };
 
     const handleTextDialogAccept = () => {
-        setInitialAssuranceText(textDialogContent);
+        setInitialAssuranceText(importFromFileText);
         handleTextDialogClose();
     }
 
@@ -1086,11 +1090,11 @@ function FlowComponent() {
 
         for (const line of lines) {
             if (!regex.test(line.trim())) {
-                setTextDialogValid(false);
+                setImportFromFileTextValid(false);
                 return false;
             }
         }
-        setTextDialogValid(true);
+        setImportFromFileTextValid(true);
         return true;
     };
 
@@ -1135,7 +1139,7 @@ function FlowComponent() {
 
     const handleTextDialog = (e: any) => {
         const newText = e.target.value;
-        setTextDialogContent(newText);
+        setImportFromFileText(newText);
         validateTextFormat(newText); // Valida el nuevo texto cada vez que cambia
     };
 
@@ -1432,6 +1436,7 @@ function FlowComponent() {
                                         <Grid item>
                                             <Button variant="outlined" fullWidth disabled={!validateAssuranceText()}
                                                     onClick={handleReloadButton}>Accept changes</Button>
+                                            <Button variant="outlined" onClick={debug}>Print</Button>
                                         </Grid>
                                     </Grid>
                                 </AccordionDetails>
@@ -1454,16 +1459,16 @@ function FlowComponent() {
                             <React.Fragment>
                                 <Dialog
                                     fullScreen
-                                    open={openTextDialog}
+                                    open={importFromFileDialog}
                                     keepMounted
                                 >
                                     <DialogTitle>Text file preview</DialogTitle>
                                     <DialogContent>
                                         <TextField
-                                            value={textDialogContent}
+                                            value={importFromFileText}
                                             multiline
                                             fullWidth
-                                            error={!isTextDialogValid}
+                                            error={!isImportFromFileTextValid}
                                             helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]"
                                             onChange={handleTextDialog}
                                         />
@@ -1473,7 +1478,7 @@ function FlowComponent() {
                                         <Button
                                             onClick={handleTextDialogAccept}
                                             autoFocus
-                                            disabled={!isTextDialogValid}
+                                            disabled={!isImportFromFileTextValid}
                                         >
                                             Accept
                                         </Button>

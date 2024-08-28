@@ -26,12 +26,20 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
-        displayed = displayed.replace('uninstantiated', '').trim();
+        if (data.label.includes('and uninstantiated')) {
+            displayed = displayed.replace('and uninstantiated', '').trim();
+        } else {
+            displayed = displayed.replace('uninstantiated', '').trim();
+        }
     }
 
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
-        displayed = displayed.replace('undeveloped', '').trim();
+        if (data.label.includes('and undeveloped')) {
+            displayed = displayed.replace('and undeveloped', '').trim();
+        } else {
+            displayed = displayed.replace('undeveloped', '').trim();
+        }
     }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
@@ -184,12 +192,20 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
-        displayed = displayed.replace('uninstantiated', '').trim();
+        if (data.label.includes('and uninstantiated')) {
+            displayed = displayed.replace('and uninstantiated', '').trim();
+        } else {
+            displayed = displayed.replace('uninstantiated', '').trim();
+        }
     }
 
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
-        displayed = displayed.replace('undeveloped', '').trim();
+        if (data.label.includes('and undeveloped')) {
+            displayed = displayed.replace('and undeveloped', '').trim();
+        } else {
+            displayed = displayed.replace('undeveloped', '').trim();
+        }
     }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
@@ -342,12 +358,20 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
-        displayed = displayed.replace('uninstantiated', '').trim();
+        if (data.label.includes('and uninstantiated')) {
+            displayed = displayed.replace('and uninstantiated', '').trim();
+        } else {
+            displayed = displayed.replace('uninstantiated', '').trim();
+        }
     }
 
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
-        displayed = displayed.replace('undeveloped', '').trim();
+        if (data.label.includes('and undeveloped')) {
+            displayed = displayed.replace('and undeveloped', '').trim();
+        } else {
+            displayed = displayed.replace('undeveloped', '').trim();
+        }
     }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
@@ -504,12 +528,20 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
-        displayed = displayed.replace('uninstantiated', '').trim();
+        if (data.label.includes('and uninstantiated')) {
+            displayed = displayed.replace('and uninstantiated', '').trim();
+        } else {
+            displayed = displayed.replace('uninstantiated', '').trim();
+        }
     }
 
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
-        displayed = displayed.replace('undeveloped', '').trim();
+        if (data.label.includes('and undeveloped')) {
+            displayed = displayed.replace('and undeveloped', '').trim();
+        } else {
+            displayed = displayed.replace('undeveloped', '').trim();
+        }
     }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
@@ -669,12 +701,20 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
-        displayed = displayed.replace('uninstantiated', '').trim();
+        if (data.label.includes('and uninstantiated')) {
+            displayed = displayed.replace('and uninstantiated', '').trim();
+        } else {
+            displayed = displayed.replace('uninstantiated', '').trim();
+        }
     }
 
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
-        displayed = displayed.replace('undeveloped', '').trim();
+        if (data.label.includes('and undeveloped')) {
+            displayed = displayed.replace('and undeveloped', '').trim();
+        } else {
+            displayed = displayed.replace('undeveloped', '').trim();
+        }
     }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
@@ -834,12 +874,20 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
 
     if (data.label.includes('uninstantiated')) {
         uninstantiated = true;
-        displayed = displayed.replace('uninstantiated', '').trim();
+        if (data.label.includes('and uninstantiated')) {
+            displayed = displayed.replace('and uninstantiated', '').trim();
+        } else {
+            displayed = displayed.replace('uninstantiated', '').trim();
+        }
     }
 
     if (data.label.includes('undeveloped')) {
         undeveloped = true;
-        displayed = displayed.replace('undeveloped', '').trim();
+        if (data.label.includes('and undeveloped')) {
+            displayed = displayed.replace('and undeveloped', '').trim();
+        } else {
+            displayed = displayed.replace('undeveloped', '').trim();
+        }
     }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
