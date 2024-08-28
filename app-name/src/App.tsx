@@ -514,132 +514,160 @@ function FlowComponent() {
     // Function to handle node search by id
     // Function to handle node search by id
     // Function to handle node search by id
-    const handleSearch = (searchId: any) => {
-        setNodes((prevNodes) => {
-            const searchedNodes = prevNodes.filter(node => node.data.id === searchId);
+    // Function to handle node search by id
+const handleSearch = (searchId: any) => {
+    setNodes((prevNodes) => {
+        const searchedNodes = prevNodes.filter(node => node.data.id === searchId);
 
-            if (searchedNodes.length > 0) {
-                // Highlight the nodes
-                const updatedNodes = prevNodes.map(node => {
-                    if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
-                        return {
-                            ...node,
-                            style: {
-                                ...node.style,
-                                border: '7px solid black',
-                            },
-                        };
-                    } else {
-                        return {
-                            ...node,
-                            style: {
-                                ...node.style,
-                                border: 'none',
-                            },
-                        };
-                    }
-                });
-
-                // Calculate the midpoint and zoom accordingly
-                const totalNodes = searchedNodes.length;
-                if (totalNodes === 1) {
-                    // Single node case: Zoom into the single node
-                    const node = searchedNodes[0];
-                    setTimeout(() => {
-                        fitView({ nodes: [node], padding: 5, duration: 800 });
-                    }, 100);
-                } else {
-                    // Multiple nodes case: Zoom into the midpoint of all nodes
-                    const midpoint = searchedNodes.reduce(
-                        (acc, node) => {
-                            acc.x += node.position.x;
-                            acc.y += node.position.y;
-                            return acc;
+        if (searchedNodes.length > 0) {
+            // Highlight the nodes
+            const updatedNodes = prevNodes.map(node => {
+                if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: '7px solid black',
                         },
-                        { x: 0, y: 0 }
-                    );
-                    midpoint.x /= totalNodes;
-                    midpoint.y /= totalNodes;
-
-                    setTimeout(() => {
-                        fitView({
-                            position: midpoint,
-                            zoom: 1, // You may need to adjust zoom depending on distance
-                            duration: 800,
-                        });
-                    }, 100);
+                    };
+                } else {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
                 }
+            });
 
-                return updatedNodes;
+            // Calculate the midpoint and zoom accordingly
+            const totalNodes = searchedNodes.length;
+            if (totalNodes === 1) {
+                // Single node case: Zoom into the single node
+                const node = searchedNodes[0];
+                setTimeout(() => {
+                    fitView({ nodes: [node], padding: 5, duration: 800 });
+                }, 100);
+            } else {
+                // Multiple nodes case: Zoom into the midpoint of all nodes
+                const midpoint = searchedNodes.reduce(
+                    (acc, node) => {
+                        acc.x += node.position.x;
+                        acc.y += node.position.y;
+                        return acc;
+                    },
+                    { x: 0, y: 0 }
+                );
+                midpoint.x /= totalNodes;
+                midpoint.y /= totalNodes;
+
+                setTimeout(() => {
+                    fitView({
+                        position: midpoint,
+                        zoom: 1, // Adjust zoom depending on distance
+                        duration: 800,
+                    });
+                }, 100);
             }
 
-            return prevNodes;
-        });
-    };
-
-    // Function to handle node search by text
-    const handleSearchByText = (searchText: any) => {
-        setNodes((prevNodes) => {
-            const searchedNodes = prevNodes.filter(node => node.data.label.includes(searchText));
-
-            if (searchedNodes.length > 0) {
-                // Highlight the nodes
-                const updatedNodes = prevNodes.map(node => {
-                    if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
-                        return {
-                            ...node,
-                            style: {
-                                ...node.style,
-                                border: '7px solid black',
-                            },
-                        };
-                    } else {
-                        return {
-                            ...node,
-                            style: {
-                                ...node.style,
-                                border: 'none',
-                            },
-                        };
-                    }
-                });
-
-                // Calculate the midpoint and zoom accordingly
-                const totalNodes = searchedNodes.length;
-                if (totalNodes === 1) {
-                    // Single node case: Zoom into the single node
-                    const node = searchedNodes[0];
-                    setTimeout(() => {
-                        fitView({ nodes: [node], padding: 5, duration: 800 });
-                    }, 100);
-                } else {
-                    // Multiple nodes case: Zoom into the midpoint of all nodes
-                    const midpoint = searchedNodes.reduce(
-                        (acc, node) => {
-                            acc.x += node.position.x;
-                            acc.y += node.position.y;
-                            return acc;
+            // Revert the highlighting after a few seconds
+            setTimeout(() => {
+                setNodes((prevNodes) => prevNodes.map(node => {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
                         },
-                        { x: 0, y: 0 }
-                    );
-                    midpoint.x /= totalNodes;
-                    midpoint.y /= totalNodes;
+                    };
+                }));
+            }, 2000); // 2000ms = 2 seconds
 
-                    setTimeout(() => {
-                        fitView({
-                            position: midpoint,
-                            zoom: 1, // You may need to adjust zoom depending on distance
-                            duration: 800,
-                        });
-                    }, 100);
+            return updatedNodes;
+        }
+
+        return prevNodes;
+    });
+};
+
+// Function to handle node search by text
+const handleSearchByText = (searchText: any) => {
+    setNodes((prevNodes) => {
+        const searchedNodes = prevNodes.filter(node => node.data.label.includes(searchText));
+
+        if (searchedNodes.length > 0) {
+            // Highlight the nodes
+            const updatedNodes = prevNodes.map(node => {
+                if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: '7px solid black',
+                        },
+                    };
+                } else {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
                 }
+            });
 
-                return updatedNodes;
+            // Calculate the midpoint and zoom accordingly
+            const totalNodes = searchedNodes.length;
+            if (totalNodes === 1) {
+                // Single node case: Zoom into the single node
+                const node = searchedNodes[0];
+                setTimeout(() => {
+                    fitView({ nodes: [node], padding: 5, duration: 800 });
+                }, 100);
+            } else {
+                // Multiple nodes case: Zoom into the midpoint of all nodes
+                const midpoint = searchedNodes.reduce(
+                    (acc, node) => {
+                        acc.x += node.position.x;
+                        acc.y += node.position.y;
+                        return acc;
+                    },
+                    { x: 0, y: 0 }
+                );
+                midpoint.x /= totalNodes;
+                midpoint.y /= totalNodes;
+
+                setTimeout(() => {
+                    fitView({
+                        position: midpoint,
+                        zoom: 1, // Adjust zoom depending on distance
+                        duration: 800,
+                    });
+                }, 100);
             }
 
-            return prevNodes;
-        });
-    };
+            // Revert the highlighting after a few seconds
+            setTimeout(() => {
+                setNodes((prevNodes) => prevNodes.map(node => {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
+                }));
+            }, 2000); // 2000ms = 2 seconds
+
+            return updatedNodes;
+        }
+
+        return prevNodes;
+    });
+};
+
 
 
 
