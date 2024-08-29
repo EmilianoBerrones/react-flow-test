@@ -13,13 +13,19 @@ import {
     useViewport,
 } from "reactflow";
 
-import {BrowserRouter as Router, Route, Routes, useNavigate} from 'react-router-dom';
+import {
+    BrowserRouter as Router,
+    Route,
+    Routes,
+    useNavigate,
+    Navigate
+} from 'react-router-dom';
 import Login from './Login';
 
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {startsWith} from 'lodash';
+import {debounce, startsWith} from 'lodash';
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -41,7 +47,8 @@ import {
     IconButton,
     Menu,
     MenuItem,
-    SelectChangeEvent,
+    Select,
+    ChangeEvent,
     Slide,
     Slider,
     Switch,
@@ -67,6 +74,27 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+
+
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase'; // Assuming you have a firebase.js file exporting `auth`
+//FireBase imports
+
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCGK1BL0n4t_L_53iKZ40U1ozIKHf6-GaI",
+    authDomain: "yorkuassurance.firebaseapp.com",
+    projectId: "yorkuassurance",
+    storageBucket: "yorkuassurance.appspot.com",
+    messagingSenderId: "997144539474",
+    appId: "1:997144539474:web:ba786fe11fa7e50b530a8b",
+    measurementId: "G-2B5DVNB9HH"
+  };
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -597,49 +625,162 @@ function FlowComponent() {
     );
 
     // Function to handle node search by id
-    const handleSearch = (searchId: any) => {
-        setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.data.id === searchId) {
-                return {
-                    ...node,
-                    style: {
-                        ...node.style,
-                        border: '2px solid red',
+const handleSearch = (searchId: any) => {
+    setNodes((prevNodes) => {
+        const searchedNodes = prevNodes.filter(node => node.data.id === searchId);
+
+        if (searchedNodes.length > 0) {
+            // Highlight the nodes
+            const updatedNodes = prevNodes.map(node => {
+                if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: '7px solid black',
+                        },
+                    };
+                } else {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
+                }
+            });
+
+            // Calculate the midpoint and zoom accordingly
+            const totalNodes = searchedNodes.length;
+            if (totalNodes === 1) {
+                // Single node case: Zoom into the single node
+                const node = searchedNodes[0];
+                setTimeout(() => {
+                    fitView({ nodes: [node], padding: 5, duration: 800 });
+                }, 100);
+            } else {
+                // Multiple nodes case: Zoom into the midpoint of all nodes
+                const midpoint = searchedNodes.reduce(
+                    (acc, node) => {
+                        acc.x += node.position.x;
+                        acc.y += node.position.y;
+                        return acc;
                     },
-                };
+                    { x: 0, y: 0 }
+                );
+                midpoint.x /= totalNodes;
+                midpoint.y /= totalNodes;
+
+                setTimeout(() => {
+                    fitView({
+                        position: midpoint,
+                        zoom: 1, // Adjust zoom depending on distance
+                        duration: 800,
+                    });
+                }, 100);
             }
-            return {
-                ...node,
-                style: {
-                    ...node.style,
-                    border: 'none',
-                },
-            };
-        }));
-    };
+
+            // Revert the highlighting after a few seconds
+            setTimeout(() => {
+                setNodes((prevNodes) => prevNodes.map(node => {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
+                }));
+            }, 2000); // 2000ms = 2 seconds
+
+            return updatedNodes;
+        }
+
+        return prevNodes;
+    });
+};
+
+// Function to handle node search by text
+const handleSearchByText = (searchText: any) => {
+    setNodes((prevNodes) => {
+        const searchedNodes = prevNodes.filter(node => node.data.label.includes(searchText));
+
+        if (searchedNodes.length > 0) {
+            // Highlight the nodes
+            const updatedNodes = prevNodes.map(node => {
+                if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: '7px solid black',
+                        },
+                    };
+                } else {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
+                }
+            });
+
+            // Calculate the midpoint and zoom accordingly
+            const totalNodes = searchedNodes.length;
+            if (totalNodes === 1) {
+                // Single node case: Zoom into the single node
+                const node = searchedNodes[0];
+                setTimeout(() => {
+                    fitView({ nodes: [node], padding: 5, duration: 800 });
+                }, 100);
+            } else {
+                // Multiple nodes case: Zoom into the midpoint of all nodes
+                const midpoint = searchedNodes.reduce(
+                    (acc, node) => {
+                        acc.x += node.position.x;
+                        acc.y += node.position.y;
+                        return acc;
+                    },
+                    { x: 0, y: 0 }
+                );
+                midpoint.x /= totalNodes;
+                midpoint.y /= totalNodes;
+
+                setTimeout(() => {
+                    fitView({
+                        position: midpoint,
+                        zoom: 1, // Adjust zoom depending on distance
+                        duration: 800,
+                    });
+                }, 100);
+            }
+
+            // Revert the highlighting after a few seconds
+            setTimeout(() => {
+                setNodes((prevNodes) => prevNodes.map(node => {
+                    return {
+                        ...node,
+                        style: {
+                            ...node.style,
+                            border: 'none',
+                        },
+                    };
+                }));
+            }, 2000); // 2000ms = 2 seconds
+
+            return updatedNodes;
+        }
+
+        return prevNodes;
+    });
+};
 
 
-    // Function to handel node search by text
-    const handleSearchByText = (searchText: any) => {
-        setNodes((prevNodes) => prevNodes.map((node) => {
-            if (node.data.label.includes(searchText)) {
-                return {
-                    ...node,
-                    style: {
-                        ...node.style,
-                        border: '2px solid red',
-                    },
-                };
-            }
-            return {
-                ...node,
-                style: {
-                    ...node.style,
-                    border: 'none',
-                },
-            };
-        }));
-    };
+
+
 
     // Function to synchronize the data between the graph, textview and treeview
     useEffect(() => {
@@ -1074,6 +1215,17 @@ function FlowComponent() {
         }
     };
 
+    const [projectMenuAnchorEl, setProjectMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const isProjectMenuOpen = Boolean(projectMenuAnchorEl);
+
+    const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setProjectMenuAnchorEl(event.currentTarget);
+    };
+
+    const handleProjectMenuClose = () => {
+        setProjectMenuAnchorEl(null);
+    };
+
     const handleTextDialogOpen = () => {
         setImportFromFileDialog(true);
     };
@@ -1252,9 +1404,18 @@ function FlowComponent() {
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
                         </Menu>
-                        <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="primary">
+                        <Button variant="text" color="primary" onClick={handleProjectMenuClick}>
                             ProjectName
-                        </Typography>
+                        </Button>
+                        <Menu
+                            anchorEl={projectMenuAnchorEl}
+                            open={isProjectMenuOpen}
+                            onClose={handleProjectMenuClose}
+                        >
+                            <MenuItem onClick={handleProjectMenuClose}>Option 1</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Option 2</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Option 3</MenuItem>
+                        </Menu>
                         <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
                             <TextField
                                 label={`Search node by ${searchMode}`}
@@ -1573,6 +1734,7 @@ function FlowComponent() {
                                 style={{minHeight: "inherit"}}
                                 onConnectStart={onConnectStart}
                                 onConnectEnd={onConnectEnd}
+                                minZoom={0.1}
                             >
                                 <Background
                                     variant={backgroundShapes}
