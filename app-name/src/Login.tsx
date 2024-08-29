@@ -42,18 +42,23 @@ const LoginScreen: React.FC = () => {
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(''); // State for error message
     const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false); // State for Forgot Password dialog
+    const [signUpOpen, setSignUpOpen] = useState(false); // State for Sign Up dialog
+    const [signUpEmail, setSignUpEmail] = useState(''); // State for sign up email
+    const [signUpPassword, setSignUpPassword] = useState(''); // State for sign up password
+    const [signUpMessage, setSignUpMessage] = useState(''); // State for sign up response message
     const [resetEmail, setResetEmail] = useState(''); // State for reset email
     const [resetMessage, setResetMessage] = useState(''); // State for reset email response message
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleSignUp = async () => {
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword);
             console.log('User signed up:', userCredential.user);
+            setSignUpMessage('Account created successfully!');
             setErrorMessage(''); // Clear any existing error message
         } catch (error) {
             console.error('Error signing up:', error.message);
-            setErrorMessage('Error signing up. Please try again.');
+            setSignUpMessage('Error signing up. Please try again.');
         }
     };
 
@@ -126,7 +131,7 @@ const LoginScreen: React.FC = () => {
                     color="secondary"
                     fullWidth
                     sx={{ mt: 2 }}
-                    onClick={handleSignUp}
+                    onClick={() => setSignUpOpen(true)}
                 >
                     Sign Up
                 </Button>
@@ -140,6 +145,7 @@ const LoginScreen: React.FC = () => {
                 </Button>
             </LoginBox>
 
+            {/* Forgot Password Dialog */}
             <Dialog open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)}>
                 <DialogTitle>Reset Password</DialogTitle>
                 <DialogContent>
@@ -167,6 +173,48 @@ const LoginScreen: React.FC = () => {
                         Send Reset Link
                     </Button>
                     <Button onClick={() => setForgotPasswordOpen(false)} color="secondary">
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Sign Up Dialog */}
+            <Dialog open={signUpOpen} onClose={() => setSignUpOpen(false)}>
+                <DialogTitle>Create an Account</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter your email address and password to create a new account.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Email Address"
+                        type="email"
+                        fullWidth
+                        variant="outlined"
+                        value={signUpEmail}
+                        onChange={(e) => setSignUpEmail(e.target.value)}
+                    />
+                    <TextField
+                        margin="dense"
+                        label="Password"
+                        type="password"
+                        fullWidth
+                        variant="outlined"
+                        value={signUpPassword}
+                        onChange={(e) => setSignUpPassword(e.target.value)}
+                    />
+                    {signUpMessage && (
+                        <Typography variant="body2" color={signUpMessage.includes('successfully') ? 'primary' : 'error'} gutterBottom>
+                            {signUpMessage}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleSignUp} color="primary">
+                        Sign Up
+                    </Button>
+                    <Button onClick={() => setSignUpOpen(false)} color="secondary">
                         Cancel
                     </Button>
                 </DialogActions>
