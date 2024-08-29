@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box } from '@mui/material';
+import { TextField, Button, Typography, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 // Firebase Resources
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "./firebase";
 
 const BackgroundBox = styled(Box)(({ theme }) => ({
@@ -41,6 +41,9 @@ const LoginScreen: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(''); // State for error message
+    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false); // State for Forgot Password dialog
+    const [resetEmail, setResetEmail] = useState(''); // State for reset email
+    const [resetMessage, setResetMessage] = useState(''); // State for reset email response message
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleSignUp = async () => {
@@ -66,14 +69,15 @@ const LoginScreen: React.FC = () => {
         }
     };
 
-    //const handleLogout = async () => {
-        //try {
-            //await signOut(auth);
-            //console.log('User signed out');
-        //} catch (error) {
-            //console.error('Error signing out:', error.message);
-        //}
-    //};
+    const handleForgotPassword = async () => {
+        try {
+            await sendPasswordResetEmail(auth, resetEmail);
+            setResetMessage('Password reset email sent! Please check your inbox.');
+        } catch (error) {
+            console.error('Error sending password reset email:', error.message);
+            setResetMessage('Error sending reset email. Please try again.');
+        }
+    };
 
     return (
         <BackgroundBox>
@@ -130,10 +134,43 @@ const LoginScreen: React.FC = () => {
                     color="secondary"
                     variant="text"
                     size="small"
+                    onClick={() => setForgotPasswordOpen(true)}
                 >
                     Forgot Password?
                 </Button>
             </LoginBox>
+
+            <Dialog open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)}>
+                <DialogTitle>Reset Password</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter your email address to receive a link to reset your password.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Email Address"
+                        type="email"
+                        fullWidth
+                        variant="outlined"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                    />
+                    {resetMessage && (
+                        <Typography variant="body2" color={resetMessage.includes('sent') ? 'primary' : 'error'} gutterBottom>
+                            {resetMessage}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleForgotPassword} color="primary">
+                        Send Reset Link
+                    </Button>
+                    <Button onClick={() => setForgotPasswordOpen(false)} color="secondary">
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </BackgroundBox>
     );
 };
