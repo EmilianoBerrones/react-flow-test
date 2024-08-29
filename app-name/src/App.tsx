@@ -18,7 +18,6 @@ import {
     Route,
     Routes,
     useNavigate,
-    Navigate
 } from 'react-router-dom';
 import Login from './Login';
 
@@ -47,8 +46,7 @@ import {
     IconButton,
     Menu,
     MenuItem,
-    Select,
-    ChangeEvent,
+    SelectChangeEvent,
     Slide,
     Slider,
     Switch,
