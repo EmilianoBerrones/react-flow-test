@@ -1,4 +1,5 @@
 import {
+    addEdge,
     Background,
     BackgroundVariant,
     Controls,
@@ -17,14 +18,13 @@ import {
     Route,
     Routes,
     useNavigate,
-    Navigate
 } from 'react-router-dom';
 import Login from './Login';
 
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {debounce} from 'lodash';
+import {debounce, startsWith} from 'lodash';
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -34,18 +34,22 @@ import {useDialog} from "./DialogContext";
 import {initialNodes, nodeTypes} from "./nodes";
 import {edgeTypes, initialEdges} from "./edges";
 import {
-    Accordion, AccordionDetails, AccordionSummary,
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Alert,
     AppBar,
-    Button, ButtonGroup,
+    Button,
+    ButtonGroup,
     Divider,
-    FormControl,
     Grid,
     IconButton,
-    InputLabel,
     Menu,
     MenuItem,
-    Select,
-    SelectChangeEvent, Slider, Switch,
+    SelectChangeEvent,
+    Slide,
+    Slider,
+    Switch,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
@@ -54,16 +58,20 @@ import {
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
-import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
-import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined} from "@mui/icons-material";
+import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined, InfoTwoTone, Search} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import {MuiColorInput} from "mui-color-input";
 
 import mammoth from 'mammoth';
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
 
 import { onAuthStateChanged } from 'firebase/auth';
@@ -123,6 +131,7 @@ interface Node {
     position: { x: number, y: number };
     data: { label: string, id: string };
     type?: string;
+    hidden?: boolean;
 }
 
 // Edge interface to work with the nodes from edges\index.ts
@@ -320,8 +329,8 @@ function textToTree(text: string): TreeNode[] {
     return assignUniqueIdsToTree(tree);
 }
 
-const Ruler = ({ showRuler }: { showRuler: boolean }) => {
-    const { x, y } = useViewport();
+const Ruler = ({showRuler}: { showRuler: boolean }) => {
+    const {x, y} = useViewport();
     const rulerRef = useRef(null);
 
     useEffect(() => {
@@ -393,17 +402,30 @@ function FlowComponent() {
     const {fitView, getViewport, setViewport} = useReactFlow();
     const [showMiniMap, setShowMiniMap] = useState(true);
     const [exporting, setExporting] = useState('');
+    const inputFileRef = useRef<HTMLInputElement>(null);
+
+    // Values for searching nodes
     const [searchMode, setSearchMode] = useState('id');
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
-    const inputFileRef = useRef<HTMLInputElement>(null);
+
+    // Values for the side panel
     const [isPanelOpen, setPanelOpen] = useState(false);
     const [backgroundShapes, setBackgroundShapes] = useState(BackgroundVariant.Dots);
     const [backgroundPaneColor, setBackgroundPaneColor] = useState('#ffffff');
     const [shapeColor, setShapeColor] = useState('#777777');
-    const [shapeGap, setShapeGap] = useState(28)
-
+    const [shapeGap, setShapeGap] = useState(28);
+    const [edgeType, setEdgeType] = useState('step');
+    const [edgeTypeCopy, setEdgeTypeCopy] = useState('step');
     const [showRuler, setShowRuler] = useState(true);
+
+    // Values for text dialogs
+    const [importFromFileDialog, setImportFromFileDialog] = useState(false);
+    const [importFromFileText, setImportFromFileText] = useState("");
+    const [isImportFromFileTextValid, setImportFromFileTextValid] = useState(true);
+    const [addNodeDialog, setAddNodeDialog] = useState(false);
+    const [addNodeDialogText, setAddNodeDialogText] = useState("");
+    const [importFromTextInfo, setImportFromTextInfo] = useState(false);
 
     // Values for the nodes and their functionality
     const [indent, setIndent] = useState(defaultIndent);
@@ -414,20 +436,56 @@ function FlowComponent() {
 
     // Parameters to create nodes on edge drop
     const connectingNodeId = useRef(null);
+    const [actualNode, setActualNode] = useState('');
+    const [actualLetter, setActualLetter] = useState('');
     const {openDialog, formData, setFormData, isOpen} = useDialog();
+
+    // Alerts for invalid actions.
+    const [invalidConnectingNodeAlert, setInvalidConnectingNodeAlert] = useState(false); // type 1
+    const [nodeConnectOnItselfAlert, setNodeConnectOnItselfAlert] = useState(false); // type 2
+    const [connectionHasParentAlert, setConnectionHasParentAlert] = useState(false); // type 3
+    const [invalidNodeDropAlert, setInvalidNodeDropAlert] = useState(false); // type 4
 
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
 
-    const [actualNode, setActualNode] = useState('');
-    const [actualLetter, setActualLetter] = useState('');
+    const showInvalidConnectingNodeAlert = (type: string) => {
+        switch (type) {
+            // consult the types above for the specific alert
+            case 'type1':
+                setInvalidConnectingNodeAlert(true);
+                setTimeout(() => {
+                    setInvalidConnectingNodeAlert(false);
+                }, 3000);
+                break;
+            case 'type2':
+                setNodeConnectOnItselfAlert(true);
+                setTimeout(() => {
+                    setNodeConnectOnItselfAlert(false);
+                }, 3000);
+                break;
+            case 'type3':
+                setConnectionHasParentAlert(true);
+                setTimeout(() => {
+                    setConnectionHasParentAlert(false);
+                }, 3000);
+                break;
+            case 'type4':
+                setInvalidNodeDropAlert(true);
+                setTimeout(() => {
+                    setInvalidNodeDropAlert(false);
+                }, 3000);
+                break;
+            default:
+                break;
+        }
+    };
 
-    const inputFileReftxt = useRef(null);
 
-    const onDragStart = (data : any) => (event : any) => {
+    const onDragStart = (data: any) => (event: any) => {
         event.dataTransfer.setData('application/reactflow', 'custom-node');
         event.dataTransfer.effectAllowed = 'move';
-        switch (data){
+        switch (data) {
             case 'goal':
                 setActualNode('goal');
                 setActualLetter('G')
@@ -458,32 +516,17 @@ function FlowComponent() {
         }
     };
 
-    const onDrop = (event : any) => {
+    const onDrop = (event: any) => {
         event.preventDefault();
-        const reactFlowBounds = event.target.getBoundingClientRect();
-        const position = {
-            x: event.clientX - reactFlowBounds.left,
-            y: event.clientY - reactFlowBounds.top,
-        };
         const targetIsPane = event.target.classList.contains('react-flow__pane');
         if (targetIsPane) {
-            const idPrompt = prompt('Enter the'+ defineTypeOfNode(actualLetter) +' node ID number: ');
-            if (idPrompt){
-                const nodeId = actualLetter + idPrompt;
-                const newNode = {
-                    id: nodeId,
-                    data: {label: 'New label', id: nodeId},
-                    position: {x: position.x, y: position.y},
-                    type: actualNode,
-                }
-                const newNodes = nodes.concat(newNode);
-                setNodes(newNodes);
-            }
+            openAddNodeDialog();
+        } else if (!targetIsPane) {
+            showInvalidConnectingNodeAlert('type4');
         }
-        setActualNode('');
     };
 
-    const onDragOver = (event : any) => {
+    const onDragOver = (event: any) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     };
@@ -499,21 +542,86 @@ function FlowComponent() {
         connectingNodeId.current = nodeId;
     }, []);
 
+    // Data to manage the current state of nodes and edges
+    // React manages two different states of nodes and edges for some reason.
+    const nodesRef = useRef(nodes);
+    const edgesRef = useRef(edges);
+
+    useEffect(() => {
+        nodesRef.current = nodes;
+        edgesRef.current = edges;
+    }, [nodes, edges]);
+
+    const hasParentNode = (nodeId: any, tree: TreeNode[]) => {
+        for (const node of tree) {
+            if (node.children.some(child => child.node.id === nodeId)) {
+                console.log(true);
+                return true;
+            }
+            if (hasParentNode(nodeId, node.children)) {
+                console.log(true);
+                return true;
+            }
+        }
+        return false;
+    };
+
     // Function to open a dialog on edge drop, if the connecting node is not itself.
     const onConnectEnd = useCallback(
         (event: any) => {
             if (!connectingNodeId.current) return;
             const targetIsPane = event.target.classList.contains('react-flow__pane');
-            if (targetIsPane) {
-                openDialog();
+            const elements = document.elementsFromPoint(event.clientX, event.clientY);
+            const targetNode = elements.find((el) => el.classList.contains('react-flow__node'));
+
+            if (targetNode) {
+                const targetNodeId = targetNode.getAttribute('data-id');
+                if (targetNodeId) {
+                    if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J') || startsWith(connectingNodeId.current, 'Sn')) {
+                        // Don't connect if the connecting node is Context, Assumption, Justification or Solution.
+                        showInvalidConnectingNodeAlert('type1')
+                    } else {
+                        // Verifica si el nodo destino ya tiene un nodo padre
+                        if (targetNodeId !== connectingNodeId.current) {
+                            const newTree = buildTree(nodesRef.current, edgesRef.current);
+                            let defaultArrow: any = arrowMarker;
+                            let defaultFill = arrowFill;
+                            if (targetNodeId[0] === 'C' || targetNodeId[0] === 'A' || targetNodeId[0] === 'J') {
+                                defaultArrow = arrowMarkerEmpty;
+                                defaultFill = arrowFillEmpty;
+                            }
+                            if (!hasParentNode(targetNodeId, newTree)) {
+                                const newEdge = {
+                                    id: `edge-${connectingNodeId.current}-${targetNodeId}`,
+                                    source: connectingNodeId.current,
+                                    target: targetNodeId,
+                                    animated: false,
+                                    type: edgeType,
+                                    markerEnd: defaultArrow,
+                                    style: defaultFill,
+                                }
+                                setEdges((eds) => addEdge(newEdge, eds));
+                            } else {
+                                showInvalidConnectingNodeAlert('type3');
+                            }
+                        } else {
+                            showInvalidConnectingNodeAlert('type2');
+                        }
+                    }
+                }
+            } else if (targetIsPane) {
+                if (startsWith(connectingNodeId.current, 'C') || startsWith(connectingNodeId.current, 'A') || startsWith(connectingNodeId.current, 'J') || startsWith(connectingNodeId.current, 'Sn')) {
+                    // The dialog does not open if the node starts with 'C', 'A', 'J', or 'Sn'
+                    showInvalidConnectingNodeAlert('type1');
+                } else {
+                    openDialog();
+                }
+            } else if (!targetIsPane) {
+                showInvalidConnectingNodeAlert('type4');
             }
         }, []
     );
 
-    // Function to handle node search by id
-    // Function to handle node search by id
-    // Function to handle node search by id
-    // Function to handle node search by id
     // Function to handle node search by id
 const handleSearch = (searchId: any) => {
     setNodes((prevNodes) => {
@@ -693,7 +801,7 @@ const handleSearchByText = (searchText: any) => {
                 source: edgeSource,
                 target: edgeTarget,
                 animated: false,
-                type: 'step',
+                type: edgeType,
                 markerEnd: arrowMarker,
                 style: arrowFill
             }
@@ -708,7 +816,6 @@ const handleSearchByText = (searchText: any) => {
             setFormData('');
         }
         if (copyOfText !== initialAssuranceText) {
-            debouncedHandleReloadButton();
             copyOfText = initialAssuranceText;
         }
         if (copyOfText === initialAssuranceText) {
@@ -725,11 +832,8 @@ const handleSearchByText = (searchText: any) => {
                 }
             }
         }
-        return () => {
-            debouncedHandleReloadButton.cancel();
-        };
         // automate label change
-    }, [formData, isOpen, initialAssuranceText, nodes]);
+    }, [formData, isOpen, nodes]);
 
     // Function to detect when the nodes are going to be exported to an image format, and then export them
     useEffect(() => {
@@ -765,11 +869,18 @@ const handleSearchByText = (searchText: any) => {
         const layoutedElements = getLayoutedElements(nodes, edges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
-        if (oneTime < 2){
+        const tree = buildTree(layoutedElements.nodes, layoutedElements.edges);
+        richTree = tree.map(convertTreeNodeToDesiredNode);
+        setInitialAssuranceText(treeToText(tree));
+        if (oneTime < 2) {
             handleReloadButton();
-            oneTime +=1;
+            oneTime += 1;
         }
-    }, [nodes.length, edges.length]);
+        if (edgeTypeCopy !== edgeType) {
+            handleReloadButton();
+            setEdgeTypeCopy(edgeType);
+        }
+    }, [nodes.length, edges.length, edgeType]);
 
     // Functions to clear the nodes and edges so they can be redrawn.
     const clearNodes = () => {
@@ -796,7 +907,7 @@ const handleSearchByText = (searchText: any) => {
                     source: parentId,
                     target: node.node.id,
                     animated: animation,
-                    type: 'step',
+                    type: edgeType,
                     markerEnd: defaultArrow,
                     style: defaultFill,
                 });
@@ -824,13 +935,13 @@ const handleSearchByText = (searchText: any) => {
                     id: node.node.id,
                     data: node.node.data,
                     position: node.node.position,
-                    type: defineTypeOfNode(node.node.id)
+                    type: defineTypeOfNode(node.node.id),
+                    hidden: node.node.hidden,
                 },
                 ...createNodesFromTree(node.children)
             ]);
         };
 
-        // Layout them with Dagre before drawing them
         return createNodesFromTree(tree);
     }
 
@@ -858,10 +969,29 @@ const handleSearchByText = (searchText: any) => {
 
     // Function to replace the previous tree with the new one given as parameter.
     function replaceTree(tree: TreeNode[]) {
+        function hideChildrenIfUndeveloped(node: TreeNode, ancestorHasUndeveloped: boolean = false) {
+            // Si algún ancestro tiene "undeveloped", este nodo se oculta
+            if (ancestorHasUndeveloped) {
+                node.node.hidden = true;
+            } else {
+                node.node.hidden = false;
+            }
+
+            // Verificar si el nodo actual tiene "undeveloped" (no lo ocultamos, solo marcamos a sus hijos)
+            const currentHasUndeveloped = node.node.data.label.includes('undeveloped');
+
+            // Aplicar la función recursivamente a cada hijo, propagando el estado de ocultación solo si el nodo actual tiene "undeveloped"
+            node.children.forEach(child => hideChildrenIfUndeveloped(child, ancestorHasUndeveloped || currentHasUndeveloped));
+        }
+
+        // Aplicar la función a cada nodo en el árbol
+        tree.forEach(rootNode => hideChildrenIfUndeveloped(rootNode));
+
         clearNodes(); // Deletes al nodes
         clearEdges(); // Deletes all edges
         const newNodes = addNodesFromTree(tree); // Adds new nodes based on the new Tree
         const newEdges = addEdgesFromTree(tree); // Adds new edges based on the new Tree
+
         // Layout them with Dagre before drawing them
         const layoutedElements = getLayoutedElements(newNodes, newEdges, {direction: 'TB'});
         setNodes([...layoutedElements.nodes]);
@@ -874,11 +1004,6 @@ const handleSearchByText = (searchText: any) => {
         replaceTree(newTree);
         richTree = newTree.map(convertTreeNodeToDesiredNode);
     }
-
-    // Function to delay the reload button by 2500 ms
-    const debouncedHandleReloadButton = debounce(() => {
-        handleReloadButton();
-    }, 2500);
 
     // Alternate version to handle reload when scanning for new labels.
     const handleReloadAdvanced = (actualLabels: string[]) => {
@@ -911,29 +1036,6 @@ const handleSearchByText = (searchText: any) => {
         }
         const spaces = ' '.repeat(spacesPerTab);
         return input.replace(/\t/g, spaces);
-    }
-
-    // Function that adds hyphens to a text so the text is properly formatted.
-    function addHyphenToText(texto: string): string {
-        const lineas = texto.split('\n');
-        const lineasConGuiones = lineas.map(linea => {
-            const indicePrimeraMayuscula = linea.search(/[A-Z]/);
-
-            if (indicePrimeraMayuscula !== -1) {
-                const antesPrimeraMayuscula = linea.slice(0, indicePrimeraMayuscula);
-                if (antesPrimeraMayuscula.includes("- ")) {
-                    return linea;
-                } else {
-                    // Insertar "- " justo antes de la primera mayúscula
-                    return antesPrimeraMayuscula + "- " + linea.slice(indicePrimeraMayuscula);
-                }
-            } else {
-                return linea;
-            }
-        });
-
-        // Unir las líneas de nuevo en un solo string
-        return lineasConGuiones.join('\n');
     }
 
     // Function to export to JSON
@@ -1057,6 +1159,13 @@ const handleSearchByText = (searchText: any) => {
         setShapeGap(newValue as number);
     };
 
+    const handleEdgeTypeChange = useCallback((data: string) => {
+        return () => {
+            console.log(data);
+            setEdgeType(data);
+        };
+    }, []);
+
     const navigate = useNavigate();
 
     const handleAccountClick = () => {
@@ -1065,9 +1174,10 @@ const handleSearchByText = (searchText: any) => {
 
     const debug = () => {
         console.log(nodes);
+        console.log(edges);
     }
 
-    const handleFileImport = async (event:any) => {
+    const handleFileImport = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
             const fileExtension = file.name.split('.').pop().toLowerCase();
@@ -1083,9 +1193,10 @@ const handleSearchByText = (searchText: any) => {
                 // Handle Word (.docx) files using mammoth
                 try {
                     const arrayBuffer = await file.arrayBuffer();
-                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    const result = await mammoth.extractRawText({arrayBuffer});
                     const text = result.value;
-                    alert(`File content:\n${text}`);
+                    setImportFromFileText(text);
+                    handleTextDialogOpen();
                 } catch (error) {
                     alert('Error reading Word document.');
                 }
@@ -1112,6 +1223,110 @@ const handleSearchByText = (searchText: any) => {
     const handleProjectMenuClose = () => {
         setProjectMenuAnchorEl(null);
     };
+
+    const handleTextDialogOpen = () => {
+        setImportFromFileDialog(true);
+    };
+
+    const handleTextDialogClose = () => {
+        setImportFromFileDialog(false);
+    };
+
+    const handleTextDialogAccept = () => {
+        setInitialAssuranceText(importFromFileText);
+        handleTextDialogClose();
+    }
+
+    const validateTextFormat = (text: string) => {
+        const lines = text.split('\n');
+        const regex = /^- [A-Za-z0-9]+: .+$/;
+
+        for (const line of lines) {
+            if (!regex.test(line.trim())) {
+                setImportFromFileTextValid(false);
+                return false;
+            }
+        }
+        setImportFromFileTextValid(true);
+        return true;
+    };
+
+    function validateAssuranceText(): boolean {
+        const input = initialAssuranceText;
+        const lines = input.split('\n');
+        const indentationStack: { nodeId: string, isSnNode: boolean }[] = [];
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine === '') continue; // Saltar líneas vacías
+
+            const indentationLevel = (line.match(/^(\s*)/)?.[0].length || 0) / 2;
+            const nodeId = trimmedLine.replace(/^- /, '').split(':')[0].trim();
+
+            // Si el nivel de indentación es menor o igual que el stack, ajustar el stack
+            while (indentationStack.length > indentationLevel) {
+                indentationStack.pop();
+            }
+
+            // Si el nodo actual es un 'Sn', lo marcamos como tal
+            const isSnNode = nodeId.startsWith('Sn');
+
+            // Agregar el nodo actual al stack
+            indentationStack.push({nodeId, isSnNode});
+
+            // Si el nodo actual no es 'Sn', verificamos si el nodo padre es 'Sn'
+            if (!isSnNode && indentationStack.length > 1) {
+                const parent = indentationStack[indentationStack.length - 2];
+                if (parent.isSnNode) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function isAddNodeDialogNumber(): boolean {
+        const value = addNodeDialogText;
+        return !isNaN(Number(value)) && value.trim() !== '';
+    }
+
+    const handleTextDialog = (e: any) => {
+        const newText = e.target.value;
+        setImportFromFileText(newText);
+        validateTextFormat(newText); // Valida el nuevo texto cada vez que cambia
+    };
+
+    const handleAddNodeDialogClose = () => {
+        setAddNodeDialog(false);
+    };
+
+    const handleAddNodeDialogAccept = () => {
+        setAddNodeDialog(false);
+        if (addNodeDialogText) {
+            const nodeId = actualLetter + addNodeDialogText;
+            const newNode = {
+                id: nodeId,
+                data: {label: 'New label', id: nodeId},
+                position: {x: 100, y: 100},
+                type: actualNode,
+            }
+            const newNodes = nodes.concat(newNode);
+            setNodes(newNodes);
+        }
+        setActualNode('');
+    };
+
+    const openAddNodeDialog = () => {
+        setAddNodeDialog(true);
+    }
+
+    const handleImportFromTextInfoClose = () => {
+        setImportFromTextInfo(false);
+    }
+
+    const handleImportFromTextInfoOpen = () => {
+        setImportFromTextInfo(true);
+    }
 
     // HTML section
     return (
@@ -1144,9 +1359,9 @@ const handleSearchByText = (searchText: any) => {
                         </IconButton>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
 
-                        <Divider>
-                            <Chip label="JSON Manager" size="small" />
-                        </Divider>
+                            <Divider>
+                                <Chip label="JSON Manager" size="small"/>
+                            </Divider>
                             <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
                             <MenuItem onClick={handleImportButtonClick}>
                                 Import graphic from JSON
@@ -1158,12 +1373,20 @@ const handleSearchByText = (searchText: any) => {
                                     ref={inputFileRef}
                                 />
                             </MenuItem>
-
                             <Divider>
-                                <Chip label="Text Import" size="small" />
+                                <Chip label="Text Import" size="small"/>
                             </Divider>
                             <MenuItem onClick={handleTxtImportButtonClick}>
                                 Import graphic from text file
+                                <IconButton
+                                    color="primary"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleImportFromTextInfoOpen();
+                                    }}
+                                >
+                                    <InfoTwoTone />
+                                </IconButton>
                                 <input
                                     type="file"
                                     accept=".txt,.docx"
@@ -1172,9 +1395,8 @@ const handleSearchByText = (searchText: any) => {
                                     onChange={handleFileImport}
                                 />
                             </MenuItem>
-
                             <Divider>
-                                <Chip label="Image Export" size="small" />
+                                <Chip label="Image Export" size="small"/>
                             </Divider>
                             <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
@@ -1194,17 +1416,20 @@ const handleSearchByText = (searchText: any) => {
                         </Menu>
                         <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
                             <TextField
-                                label={`Search by ${searchMode}`}
+                                label={`Search node by ${searchMode}`}
                                 variant="outlined"
                                 sx={{height: '36px', flexGrow: 1, maxWidth: '300px', marginRight: '8px'}}
                                 size="small"
                                 value={searchValue}
                                 onChange={handleSearchChange}
                             />
-                            <Button variant="contained" color="primary" onClick={handleSearchSubmit}>Search</Button>
+                            <IconButton color="primary" size="large" onClick={handleSearchSubmit}>
+                                <Search/>
+                            </IconButton>
                             <ToggleButtonGroup
                                 value={searchMode}
                                 exclusive
+                                color="primary"
                                 onChange={handleSearchModeChange}
                                 aria-label="search mode"
                                 sx={{marginLeft: '8px'}}
@@ -1216,8 +1441,9 @@ const handleSearchByText = (searchText: any) => {
                                     Text
                                 </ToggleButton>
                             </ToggleButtonGroup>
-                            <IconButton aria-label="AccountButton" sx={{ ml: 2 }} color="primary" onClick={handleAccountClick}>
-                                <AccountCircleIcon />
+                            <IconButton aria-label="AccountButton" sx={{ml: 2}} color="primary"
+                                        onClick={handleAccountClick}>
+                                <AccountCircleIcon/>
                             </IconButton>
                         </div>
                     </Toolbar>
@@ -1229,7 +1455,7 @@ const handleSearchByText = (searchText: any) => {
                             <Grid item>
                                 <Typography variant='h4' gutterBottom>ProjectName</Typography>
                             </Grid>
-                            <Accordion disableGutters>
+                            <Accordion style={{backgroundColor:  '#f0f3f4'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Node selector
                                 </AccordionSummary>
@@ -1253,7 +1479,7 @@ const handleSearchByText = (searchText: any) => {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
-                                            }}
+                                                 }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('context')}>
                                                 Context
@@ -1265,7 +1491,7 @@ const handleSearchByText = (searchText: any) => {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
-                                            }}
+                                                 }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('strategy')}>
                                                 <div className="strategyNode">
@@ -1310,7 +1536,7 @@ const handleSearchByText = (searchText: any) => {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
-                                            }}
+                                                 }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('solution')}>
                                                 <div className="solutionNode" style={{width: '60px', height: '60px'}}>
@@ -1321,7 +1547,7 @@ const handleSearchByText = (searchText: any) => {
                                     </Grid>
                                 </AccordionDetails>
                             </Accordion>
-                            <Accordion defaultExpanded  disableGutters>
+                            <Accordion defaultExpanded style={{backgroundColor: '#f0f3f4'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Text editor
                                 </AccordionSummary>
@@ -1351,7 +1577,9 @@ const handleSearchByText = (searchText: any) => {
                                                             multiline
                                                             fullWidth
                                                             variant="outlined"
-                                                            value={addHyphenToText(initialAssuranceText)}
+                                                            error={!validateAssuranceText()}
+                                                            helperText={!validateAssuranceText() ? 'Follow the GSN rules when creating the assurance cases' : ''}
+                                                            value={initialAssuranceText}
                                                             onChange={(e) => setInitialAssuranceText(e.target.value)}
                                                             onKeyDown={handleTab}
                                                         />
@@ -1386,7 +1614,8 @@ const handleSearchByText = (searchText: any) => {
                                         {/*    </FormControl>*/}
                                         {/*</Grid>*/}
                                         <Grid item>
-                                            <Button variant="outlined" onClick={handleReloadButton}>Reload changes</Button>
+                                            <Button variant="outlined" fullWidth disabled={!validateAssuranceText()}
+                                                    onClick={handleReloadButton}>Accept changes</Button>
                                             <Button variant="outlined" onClick={debug}>Print</Button>
                                         </Grid>
                                     </Grid>
@@ -1399,14 +1628,98 @@ const handleSearchByText = (searchText: any) => {
                               style={{
                                   minHeight: "inherit",
                                   position: 'relative',
-                                  overflowX: 'hidden'
-                        }}
+                                  overflowX: 'hidden',
+                                  overflowY: 'hidden',
+                              }}
                               onDrop={onDrop}
                               onDragOver={onDragOver}
                         >
                             <FormDialog/>
-                            <Ruler showRuler={showRuler} />
-
+                            <Ruler showRuler={showRuler}/>
+                            <React.Fragment>
+                                <Dialog
+                                    fullScreen
+                                    open={importFromFileDialog}
+                                    keepMounted
+                                >
+                                    <DialogTitle>Text file preview</DialogTitle>
+                                    <DialogContent>
+                                        <TextField
+                                            value={importFromFileText}
+                                            multiline
+                                            fullWidth
+                                            error={!isImportFromFileTextValid}
+                                            helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]"
+                                            onChange={handleTextDialog}
+                                        />
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={handleTextDialogClose}>Cancel</Button>
+                                        <Button
+                                            onClick={handleTextDialogAccept}
+                                            autoFocus
+                                            disabled={!isImportFromFileTextValid}
+                                        >
+                                            Accept
+                                        </Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
+                            <React.Fragment>
+                                <Dialog
+                                    open={addNodeDialog}
+                                    keepMounted
+                                >
+                                    <DialogTitle>Adding manual node</DialogTitle>
+                                    <DialogContent>
+                                        <Grid container spacing={2} alignItems='center'>
+                                            <Grid item xs={12}>
+                                                Enter the ID number of the {actualNode} node:
+                                            </Grid>
+                                            <Grid item xs={1}>
+                                                {actualLetter} :
+                                            </Grid>
+                                            <Grid item xs>
+                                                <TextField label='Node ID number'
+                                                           error={!isAddNodeDialogNumber()}
+                                                           value={addNodeDialogText}
+                                                           helperText={!isAddNodeDialogNumber() ? 'Only numbers are allowed as node IDs' : ''}
+                                                           onChange={(e) => setAddNodeDialogText(e.target.value)}
+                                                ></TextField>
+                                            </Grid>
+                                        </Grid>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={handleAddNodeDialogClose}>Cancel</Button>
+                                        <Button onClick={handleAddNodeDialogAccept}
+                                                disabled={!isAddNodeDialogNumber()}
+                                        >Accept</Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
+                            <React.Fragment>
+                                <Dialog
+                                    open={importFromTextInfo}
+                                    keepMounted
+                                >
+                                    <DialogTitle>Import from text file</DialogTitle>
+                                    <DialogContent>
+                                        <Grid container>
+                                            <Grid item xs={2} alignSelf='center'>
+                                                <InfoTwoTone color="primary" sx={{fontSize: 50}}/>
+                                            </Grid>
+                                            <Grid item xs>
+                                                You can import the assurance cases from a text file, with extensions '.docx' or
+                                                '.txt'. Tabulations are deleted when importing txt and docx files. Make sure the
+                                                nodes' indentation are represented by spaces
+                                            </Grid>
+                                        </Grid>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button onClick={handleImportFromTextInfoClose}> Ok</Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
                             <ReactFlow
                                 nodes={nodes}
                                 nodeTypes={nodeTypes}
@@ -1427,7 +1740,7 @@ const handleSearchByText = (searchText: any) => {
                                     gap={shapeGap}
                                     style={{backgroundColor: backgroundPaneColor}}/>
                                 {showMiniMap && <MiniMap/>}
-                            <Controls style={{marginLeft:25}}/>
+                                <Controls style={{marginLeft: 25}}/>
                             </ReactFlow>
                             <SidePanel
                                 isPanelOpen={isPanelOpen}
@@ -1439,6 +1752,7 @@ const handleSearchByText = (searchText: any) => {
                                 setShapeColor={setShapeColor}
                                 shapeGap={shapeGap}
                                 handleShapeGap={handleShapeGap}
+                                handleEdgeTypeChange={handleEdgeTypeChange}
                                 showRuler={showRuler}  // Pass showRuler state
                                 toggleRuler={() => setShowRuler(!showRuler)}
                             />
@@ -1451,6 +1765,51 @@ const handleSearchByText = (searchText: any) => {
                             }} onClick={handleOpenPanel}>
                                 <ArrowBackIosRoundedIcon></ArrowBackIosRoundedIcon>
                             </IconButton>
+                            <Slide direction="up" in={invalidConnectingNodeAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '50%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: GSN does not allow nodes of type 'Context', 'Justification',
+                                    'Assumption' and 'Solution' to have children nodes.
+                                </Alert>
+                            </Slide>
+                            <Slide direction="up" in={nodeConnectOnItselfAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '58%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: Invalid node connection to itself.
+                                </Alert>
+                            </Slide>
+                            <Slide direction="up" in={connectionHasParentAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '55%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: Target node already has a parent node
+                                </Alert>
+                            </Slide>
+                            <Slide direction="up" in={invalidNodeDropAlert} mountOnEnter unmountOnExit>
+                                <Alert severity="error"
+                                       style={{
+                                           position: 'absolute',
+                                           bottom: '5%',
+                                           right: '55%',
+                                           maxWidth: '40%',
+                                       }}>
+                                    Warning: Nodes can only be dropped on the pane.
+                                </Alert>
+                            </Slide>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -1460,21 +1819,22 @@ const handleSearchByText = (searchText: any) => {
 }
 
 const SidePanel = ({
-                        isPanelOpen,
-                        handleClosePanel,
-                        setNewBackgroundShape,
-                        backgroundPaneColor,
-                        setBackgroundPaneColor,
-                        shapeColor,
-                        setShapeColor,
-                        shapeGap,
-                        handleShapeGap,
-                        showRuler, // Add showRuler prop
-                        toggleRuler // Add toggleRuler prop
-                       }
+                       isPanelOpen,
+                       handleClosePanel,
+                       setNewBackgroundShape,
+                       backgroundPaneColor,
+                       setBackgroundPaneColor,
+                       shapeColor,
+                       setShapeColor,
+                       shapeGap,
+                       handleShapeGap,
+                       handleEdgeTypeChange,
+                       showRuler,
+                       toggleRuler
+                   }
                        : {
     isPanelOpen: boolean;
-    handleClosePanel: () => void ;
+    handleClosePanel: () => void;
     setNewBackgroundShape: any;
     backgroundPaneColor: any;
     setBackgroundPaneColor: any;
@@ -1482,6 +1842,7 @@ const SidePanel = ({
     setShapeColor: any;
     shapeGap: any;
     handleShapeGap: any;
+    handleEdgeTypeChange: any;
     showRuler: boolean;
     toggleRuler: () => void;
 }) => {
@@ -1521,6 +1882,25 @@ const SidePanel = ({
                     </ButtonGroup>
                 </Grid>
                 <Grid item>
+                    <p>Connection style</p>
+                </Grid>
+                <Grid item alignSelf='center'>
+                    <ButtonGroup variant='text'>
+                        <Button onClick={handleEdgeTypeChange('straight')}>
+                            Straight
+                        </Button>
+                        <Button onClick={handleEdgeTypeChange('step')}>
+                            Step
+                        </Button>
+                        <Button onClick={handleEdgeTypeChange('smoothstep')}>
+                            Smooth
+                        </Button>
+                        <Button onClick={handleEdgeTypeChange('simplebezier')}>
+                            Bezier
+                        </Button>
+                    </ButtonGroup>
+                </Grid>
+                <Grid item>
                     Grid size
                     <Slider
                         value={shapeGap}
@@ -1538,13 +1918,14 @@ const SidePanel = ({
                 </Grid>
                 <Grid item>
                     <p>Ruler</p>
-                    <Switch checked={showRuler} onChange={toggleRuler} />
+                    <Switch checked={showRuler} onChange={toggleRuler}/>
                 </Grid>
                 <Grid item>
                     <p>
                         Background color
                     </p>
-                    <MuiColorInput format="hex" value={backgroundPaneColor} onChange={setBackgroundPaneColor}></MuiColorInput>
+                    <MuiColorInput format="hex" value={backgroundPaneColor}
+                                   onChange={setBackgroundPaneColor}></MuiColorInput>
                 </Grid>
                 <Grid item alignSelf='center'>
                     <Button variant='text' onClick={handleClosePanel}>Close</Button>
@@ -1561,8 +1942,8 @@ export default function App() {
         <Router>
             <ReactFlowProvider>
                 <Routes>
-                    <Route path="/" element={<FlowComponent />} />
-                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<FlowComponent/>}/>
+                    <Route path="/login" element={<Login/>}/>
                 </Routes>
             </ReactFlowProvider>
         </Router>
