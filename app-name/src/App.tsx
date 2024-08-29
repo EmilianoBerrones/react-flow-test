@@ -55,7 +55,7 @@ import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
-import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined, InfoTwoTone} from "@mui/icons-material";
+import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined, InfoTwoTone, Search} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -834,6 +834,8 @@ function FlowComponent() {
             // Si algún ancestro tiene "undeveloped", este nodo se oculta
             if (ancestorHasUndeveloped) {
                 node.node.hidden = true;
+            } else {
+                node.node.hidden = false;
             }
 
             // Verificar si el nodo actual tiene "undeveloped" (no lo ocultamos, solo marcamos a sus hijos)
@@ -1255,17 +1257,20 @@ function FlowComponent() {
                         </Typography>
                         <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
                             <TextField
-                                label={`Search by ${searchMode}`}
+                                label={`Search node by ${searchMode}`}
                                 variant="outlined"
                                 sx={{height: '36px', flexGrow: 1, maxWidth: '300px', marginRight: '8px'}}
                                 size="small"
                                 value={searchValue}
                                 onChange={handleSearchChange}
                             />
-                            <Button variant="contained" color="primary" onClick={handleSearchSubmit}>Search</Button>
+                            <IconButton color="primary" size="large" onClick={handleSearchSubmit}>
+                                <Search/>
+                            </IconButton>
                             <ToggleButtonGroup
                                 value={searchMode}
                                 exclusive
+                                color="primary"
                                 onChange={handleSearchModeChange}
                                 aria-label="search mode"
                                 sx={{marginLeft: '8px'}}
@@ -1291,7 +1296,7 @@ function FlowComponent() {
                             <Grid item>
                                 <Typography variant='h4' gutterBottom>ProjectName</Typography>
                             </Grid>
-                            <Accordion style={{backgroundColor:  '#f4f6f7'}}>
+                            <Accordion style={{backgroundColor:  '#f0f3f4'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Node selector
                                 </AccordionSummary>
@@ -1383,7 +1388,7 @@ function FlowComponent() {
                                     </Grid>
                                 </AccordionDetails>
                             </Accordion>
-                            <Accordion defaultExpanded style={{backgroundColor: '#f4f6f7'}}>
+                            <Accordion defaultExpanded style={{backgroundColor: '#f0f3f4'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Text editor
                                 </AccordionSummary>
