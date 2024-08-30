@@ -24,7 +24,7 @@ import Login from './Login';
 import Dagre from '@dagrejs/dagre'
 
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {debounce, startsWith} from 'lodash';
+import {startsWith} from 'lodash';
 
 import "reactflow/dist/style.css";
 import "./updatenode.css";
@@ -46,7 +46,6 @@ import {
     IconButton,
     Menu,
     MenuItem,
-    SelectChangeEvent,
     Slide,
     Slider,
     Switch,
@@ -74,25 +73,25 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 
 
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase'; // Assuming you have a firebase.js file exporting `auth`
+// import { onAuthStateChanged } from 'firebase/auth';
+// import { auth } from './firebase'; // Assuming you have a firebase.js file exporting `auth`
 //FireBase imports
 
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+// import { initializeApp } from "firebase/app";
+// import { getAnalytics } from "firebase/analytics";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyCGK1BL0n4t_L_53iKZ40U1ozIKHf6-GaI",
-    authDomain: "yorkuassurance.firebaseapp.com",
-    projectId: "yorkuassurance",
-    storageBucket: "yorkuassurance.appspot.com",
-    messagingSenderId: "997144539474",
-    appId: "1:997144539474:web:ba786fe11fa7e50b530a8b",
-    measurementId: "G-2B5DVNB9HH"
-  };
+// const firebaseConfig = {
+//     apiKey: "AIzaSyCGK1BL0n4t_L_53iKZ40U1ozIKHf6-GaI",
+//     authDomain: "yorkuassurance.firebaseapp.com",
+//     projectId: "yorkuassurance",
+//     storageBucket: "yorkuassurance.appspot.com",
+//     messagingSenderId: "997144539474",
+//     appId: "1:997144539474:web:ba786fe11fa7e50b530a8b",
+//     measurementId: "G-2B5DVNB9HH"
+//   };
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -392,6 +391,7 @@ const Ruler = ({showRuler}: { showRuler: boolean }) => {
 };
 
 // Creation of initial Tree and initial Rich Tree to display them.
+// @ts-ignore
 let initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 let copyOfText = treeToText(initialTree);
@@ -428,7 +428,7 @@ function FlowComponent() {
     const [importFromTextInfo, setImportFromTextInfo] = useState(false);
 
     // Values for the nodes and their functionality
-    const [indent, setIndent] = useState(defaultIndent);
+    // const [indent, setIndent] = useState(defaultIndent);
     const [view, setView] = useState('textField'); // Estado para manejar la vista actual
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const labels = useRef<string[]>(nodes.map(node => node.data.label));
@@ -583,6 +583,7 @@ function FlowComponent() {
                     } else {
                         // Verifica si el nodo destino ya tiene un nodo padre
                         if (targetNodeId !== connectingNodeId.current) {
+                            // @ts-ignore
                             const newTree = buildTree(nodesRef.current, edgesRef.current);
                             let defaultArrow: any = arrowMarker;
                             let defaultFill = arrowFill;
@@ -672,6 +673,7 @@ const handleSearch = (searchId: any) => {
 
                 setTimeout(() => {
                     fitView({
+                        // @ts-ignore
                         position: midpoint,
                         zoom: 1, // Adjust zoom depending on distance
                         duration: 800,
@@ -749,6 +751,7 @@ const handleSearchByText = (searchText: any) => {
 
                 setTimeout(() => {
                     fitView({
+                        // @ts-ignore
                         position: midpoint,
                         zoom: 1, // Adjust zoom depending on distance
                         duration: 800,
@@ -806,7 +809,9 @@ const handleSearchByText = (searchText: any) => {
                 style: arrowFill
             }
             const newNodes = nodes.concat(newNode);
+            // @ts-ignore
             const newEdges = edges.concat(newEdge);
+            // @ts-ignore
             const newTree = buildTree(newNodes, newEdges);
             const uniqueTree = assignUniqueIdsToTree(newTree);
             replaceTree(uniqueTree);
@@ -1007,6 +1012,7 @@ const handleSearchByText = (searchText: any) => {
 
     // Alternate version to handle reload when scanning for new labels.
     const handleReloadAdvanced = (actualLabels: string[]) => {
+        // @ts-ignore
         const newTree = buildTree(nodes, edges);
         const uniqueTree = assignUniqueIdsToTree(newTree);
         replaceTree(uniqueTree);
@@ -1117,9 +1123,9 @@ const handleSearchByText = (searchText: any) => {
     };
 
     // Function to handle the indentation change
-    const handleChangeIndent = (event: SelectChangeEvent) => {
-        setIndent(parseInt(event.target.value));
-    }
+    // const handleChangeIndent = (event: SelectChangeEvent) => {
+    //     setIndent(parseInt(event.target.value));
+    // }
 
     // Function to handle the searching mode
     const handleSearchModeChange = (_event: any, newSearchMode: any) => {
@@ -1172,11 +1178,6 @@ const handleSearchByText = (searchText: any) => {
         navigate('/login'); // Navigates to the Login component
     };
 
-    const debug = () => {
-        console.log(nodes);
-        console.log(edges);
-    }
-
     const handleFileImport = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
@@ -1185,6 +1186,7 @@ const handleSearchByText = (searchText: any) => {
                 // Handle text files
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    // @ts-ignore
                     const fileContent = e.target.result;
                     alert(`File content:\n${fileContent}`);
                 };
@@ -1616,7 +1618,6 @@ const handleSearchByText = (searchText: any) => {
                                         <Grid item>
                                             <Button variant="outlined" fullWidth disabled={!validateAssuranceText()}
                                                     onClick={handleReloadButton}>Accept changes</Button>
-                                            <Button variant="outlined" onClick={debug}>Print</Button>
                                         </Grid>
                                     </Grid>
                                 </AccordionDetails>
