@@ -30,7 +30,7 @@ const LoginBox = styled(Box)(({ theme }) => ({
     textAlign: 'center',
 }));
 
-const ProjectName = styled(Typography)(({ theme }) => ({
+const ToolName = styled(Typography)(({ theme }) => ({
     position: 'absolute',
     top: theme.spacing(2),
     left: theme.spacing(2),
@@ -69,21 +69,12 @@ const LoginScreen: React.FC = () => {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            console.log('User signed out');
-        } catch (error) {
-            // @ts-ignore
-            console.error('Error signing out:', error.message);
-        }
-    };
 
     return (
         <BackgroundBox>
-            <ProjectName variant="h4">
-                ProjectName
-            </ProjectName>
+            <ToolName variant="h4">
+                ToolName
+            </ToolName>
             <LoginBox>
                 <Typography variant="h4" gutterBottom>
                     Welcome Back
@@ -132,16 +123,8 @@ const LoginScreen: React.FC = () => {
                 </Button>
                 <Button
                     color="secondary"
-                    fullWidth
-                    sx={{ mt: 2 }}
-                    onClick={handleLogout}
-                >
-                    Logout
-                </Button>
-                <Button
-                    color="secondary"
-                    fullWidth
-                    sx={{ mt: 2 }}
+                    variant="text"
+                    size="small"
                 >
                     Forgot Password?
                 </Button>
