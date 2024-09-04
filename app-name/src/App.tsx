@@ -624,163 +624,160 @@ function FlowComponent() {
     );
 
     // Function to handle node search by id
-const handleSearch = (searchId: any) => {
-    setNodes((prevNodes) => {
-        const searchedNodes = prevNodes.filter(node => node.data.id === searchId);
+    const handleSearch = (searchId: any) => {
+        setNodes((prevNodes) => {
+            const searchedNodes = prevNodes.filter(node => node.data.id === searchId);
 
-        if (searchedNodes.length > 0) {
-            // Highlight the nodes
-            const updatedNodes = prevNodes.map(node => {
-                if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
-                    return {
-                        ...node,
-                        style: {
-                            ...node.style,
-                            border: '7px solid black',
-                        },
-                    };
+            if (searchedNodes.length > 0) {
+                // Highlight the nodes
+                const updatedNodes = prevNodes.map(node => {
+                    if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: '7px solid black',
+                            },
+                        };
+                    } else {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: 'none',
+                            },
+                        };
+                    }
+                });
+
+                // Calculate the midpoint and zoom accordingly
+                const totalNodes = searchedNodes.length;
+                if (totalNodes === 1) {
+                    // Single node case: Zoom into the single node
+                    const node = searchedNodes[0];
+                    setTimeout(() => {
+                        fitView({nodes: [node], padding: 5, duration: 800});
+                    }, 100);
                 } else {
-                    return {
-                        ...node,
-                        style: {
-                            ...node.style,
-                            border: 'none',
+                    // Multiple nodes case: Zoom into the midpoint of all nodes
+                    const midpoint = searchedNodes.reduce(
+                        (acc, node) => {
+                            acc.x += node.position.x;
+                            acc.y += node.position.y;
+                            return acc;
                         },
-                    };
+                        {x: 0, y: 0}
+                    );
+                    midpoint.x /= totalNodes;
+                    midpoint.y /= totalNodes;
+
+                    setTimeout(() => {
+                        fitView({
+                            // @ts-ignore
+                            position: midpoint,
+                            zoom: 1, // Adjust zoom depending on distance
+                            duration: 800,
+                        });
+                    }, 100);
                 }
-            });
 
-            // Calculate the midpoint and zoom accordingly
-            const totalNodes = searchedNodes.length;
-            if (totalNodes === 1) {
-                // Single node case: Zoom into the single node
-                const node = searchedNodes[0];
+                // Revert the highlighting after a few seconds
                 setTimeout(() => {
-                    fitView({ nodes: [node], padding: 5, duration: 800 });
-                }, 100);
-            } else {
-                // Multiple nodes case: Zoom into the midpoint of all nodes
-                const midpoint = searchedNodes.reduce(
-                    (acc, node) => {
-                        acc.x += node.position.x;
-                        acc.y += node.position.y;
-                        return acc;
-                    },
-                    { x: 0, y: 0 }
-                );
-                midpoint.x /= totalNodes;
-                midpoint.y /= totalNodes;
+                    setNodes((prevNodes) => prevNodes.map(node => {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: 'none',
+                            },
+                        };
+                    }));
+                }, 2000); // 2000ms = 2 seconds
 
-                setTimeout(() => {
-                    fitView({
-                        // @ts-ignore
-                        position: midpoint,
-                        zoom: 1, // Adjust zoom depending on distance
-                        duration: 800,
-                    });
-                }, 100);
+                return updatedNodes;
             }
 
-            // Revert the highlighting after a few seconds
-            setTimeout(() => {
-                setNodes((prevNodes) => prevNodes.map(node => {
-                    return {
-                        ...node,
-                        style: {
-                            ...node.style,
-                            border: 'none',
-                        },
-                    };
-                }));
-            }, 2000); // 2000ms = 2 seconds
-
-            return updatedNodes;
-        }
-
-        return prevNodes;
-    });
-};
+            return prevNodes;
+        });
+    };
 
 // Function to handle node search by text
-const handleSearchByText = (searchText: any) => {
-    setNodes((prevNodes) => {
-        const searchedNodes = prevNodes.filter(node => node.data.label.includes(searchText));
+    const handleSearchByText = (searchText: any) => {
+        setNodes((prevNodes) => {
+            const searchedNodes = prevNodes.filter(node => node.data.label.includes(searchText));
 
-        if (searchedNodes.length > 0) {
-            // Highlight the nodes
-            const updatedNodes = prevNodes.map(node => {
-                if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
-                    return {
-                        ...node,
-                        style: {
-                            ...node.style,
-                            border: '7px solid black',
-                        },
-                    };
+            if (searchedNodes.length > 0) {
+                // Highlight the nodes
+                const updatedNodes = prevNodes.map(node => {
+                    if (searchedNodes.some(searchedNode => searchedNode.id === node.id)) {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: '7px solid black',
+                            },
+                        };
+                    } else {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: 'none',
+                            },
+                        };
+                    }
+                });
+
+                // Calculate the midpoint and zoom accordingly
+                const totalNodes = searchedNodes.length;
+                if (totalNodes === 1) {
+                    // Single node case: Zoom into the single node
+                    const node = searchedNodes[0];
+                    setTimeout(() => {
+                        fitView({nodes: [node], padding: 5, duration: 800});
+                    }, 100);
                 } else {
-                    return {
-                        ...node,
-                        style: {
-                            ...node.style,
-                            border: 'none',
+                    // Multiple nodes case: Zoom into the midpoint of all nodes
+                    const midpoint = searchedNodes.reduce(
+                        (acc, node) => {
+                            acc.x += node.position.x;
+                            acc.y += node.position.y;
+                            return acc;
                         },
-                    };
+                        {x: 0, y: 0}
+                    );
+                    midpoint.x /= totalNodes;
+                    midpoint.y /= totalNodes;
+
+                    setTimeout(() => {
+                        fitView({
+                            // @ts-ignore
+                            position: midpoint,
+                            zoom: 1, // Adjust zoom depending on distance
+                            duration: 800,
+                        });
+                    }, 100);
                 }
-            });
 
-            // Calculate the midpoint and zoom accordingly
-            const totalNodes = searchedNodes.length;
-            if (totalNodes === 1) {
-                // Single node case: Zoom into the single node
-                const node = searchedNodes[0];
+                // Revert the highlighting after a few seconds
                 setTimeout(() => {
-                    fitView({ nodes: [node], padding: 5, duration: 800 });
-                }, 100);
-            } else {
-                // Multiple nodes case: Zoom into the midpoint of all nodes
-                const midpoint = searchedNodes.reduce(
-                    (acc, node) => {
-                        acc.x += node.position.x;
-                        acc.y += node.position.y;
-                        return acc;
-                    },
-                    { x: 0, y: 0 }
-                );
-                midpoint.x /= totalNodes;
-                midpoint.y /= totalNodes;
+                    setNodes((prevNodes) => prevNodes.map(node => {
+                        return {
+                            ...node,
+                            style: {
+                                ...node.style,
+                                border: 'none',
+                            },
+                        };
+                    }));
+                }, 2000); // 2000ms = 2 seconds
 
-                setTimeout(() => {
-                    fitView({
-                        // @ts-ignore
-                        position: midpoint,
-                        zoom: 1, // Adjust zoom depending on distance
-                        duration: 800,
-                    });
-                }, 100);
+                return updatedNodes;
             }
 
-            // Revert the highlighting after a few seconds
-            setTimeout(() => {
-                setNodes((prevNodes) => prevNodes.map(node => {
-                    return {
-                        ...node,
-                        style: {
-                            ...node.style,
-                            border: 'none',
-                        },
-                    };
-                }));
-            }, 2000); // 2000ms = 2 seconds
-
-            return updatedNodes;
-        }
-
-        return prevNodes;
-    });
-};
-
-
-
+            return prevNodes;
+        });
+    };
 
 
     // Function to synchronize the data between the graph, textview and treeview
@@ -822,6 +819,7 @@ const handleSearchByText = (searchText: any) => {
         }
         if (copyOfText !== initialAssuranceText) {
             copyOfText = initialAssuranceText;
+            handleReloadButton();
         }
         if (copyOfText === initialAssuranceText) {
             const actualLabels = nodes.map(node => node.data.label);
@@ -1241,7 +1239,7 @@ const handleSearchByText = (searchText: any) => {
 
     const validateTextFormat = (text: string) => {
         const lines = text.split('\n');
-        const regex = /^- [A-Za-z0-9]+: .+$/;
+        const regex = /^- [A-Za-z0-9_]+: .+$/;
 
         for (const line of lines) {
             if (!regex.test(line.trim())) {
@@ -1330,6 +1328,28 @@ const handleSearchByText = (searchText: any) => {
         setImportFromTextInfo(true);
     }
 
+    // const formatText = () => {
+    //     const input = importFromFileText;
+    //     // Dividimos el string en líneas
+    //     const lines = input.trim().split('\n');
+    //
+    //     // Creamos un arreglo para las líneas formateadas
+    //     const formattedLines: string[] = [];
+    //
+    //     // Recorremos cada línea para procesarlas
+    //     lines.forEach((line) => {
+    //         // Eliminamos espacios innecesarios y ajustamos la línea
+    //         const trimmedLine = line.trim();
+    //         const indentLevel = line.match(/^\s*/)?.[0].length || 0;
+    //
+    //         // Agregamos la línea con su nivel de indentación original
+    //         formattedLines.push(' '.repeat(indentLevel) + trimmedLine);
+    //     });
+    //
+    //     // Unimos las líneas formateadas con un salto de línea
+    //     return formattedLines.join('\n');
+    // }
+
     // HTML section
     return (
         <>
@@ -1387,13 +1407,13 @@ const handleSearchByText = (searchText: any) => {
                                         handleImportFromTextInfoOpen();
                                     }}
                                 >
-                                    <InfoTwoTone />
+                                    <InfoTwoTone/>
                                 </IconButton>
                                 <input
                                     type="file"
                                     accept=".txt,.docx"
                                     ref={inputFileRef}
-                                    style={{ display: 'none' }}
+                                    style={{display: 'none'}}
                                     onChange={handleFileImport}
                                 />
                             </MenuItem>
@@ -1457,7 +1477,7 @@ const handleSearchByText = (searchText: any) => {
                             <Grid item>
                                 <Typography variant='h4' gutterBottom>ProjectName</Typography>
                             </Grid>
-                            <Accordion style={{backgroundColor:  '#f0f3f4'}}>
+                            <Accordion style={{backgroundColor: '#f0f3f4'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
                                     Node selector
                                 </AccordionSummary>
@@ -1650,9 +1670,10 @@ const handleSearchByText = (searchText: any) => {
                                             multiline
                                             fullWidth
                                             error={!isImportFromFileTextValid}
-                                            helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]"
+                                            helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]['undeveloped and uninstantiated']. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: 'G0_1'"
                                             onChange={handleTextDialog}
                                         />
+                                        {/*<Button onClick={formatText} fullWidth>Format text</Button>*/}
                                     </DialogContent>
                                     <DialogActions>
                                         <Button onClick={handleTextDialogClose}>Cancel</Button>
@@ -1710,8 +1731,10 @@ const handleSearchByText = (searchText: any) => {
                                                 <InfoTwoTone color="primary" sx={{fontSize: 50}}/>
                                             </Grid>
                                             <Grid item xs>
-                                                You can import the assurance cases from a text file, with extensions '.docx' or
-                                                '.txt'. Tabulations are deleted when importing txt and docx files. Make sure the
+                                                You can import the assurance cases from a text file, with extensions
+                                                '.docx' or
+                                                '.txt'. Tabulations are deleted when importing txt and docx files. Make
+                                                sure the
                                                 nodes' indentation are represented by spaces
                                             </Grid>
                                         </Grid>

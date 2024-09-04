@@ -19,32 +19,37 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
 
+    const cleanLabel = (label: string, terms: string[]): string => {
+        const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
+        return label.replace(regex, '').trim();
+    };
+
     let uninstantiated = false;
     let undeveloped = false;
 
     let displayed = data.label;
 
-    if (data.label.includes('uninstantiated')) {
+    if (/uninstantiated/i.test(displayed)) {
         uninstantiated = true;
-        if (data.label.includes('and uninstantiated')) {
-            displayed = displayed.replace('and uninstantiated', '').trim();
-        } else {
-            displayed = displayed.replace('uninstantiated', '').trim();
-        }
     }
 
-    if (data.label.includes('undeveloped')) {
+    if (/undeveloped/i.test(displayed)) {
         undeveloped = true;
-        if (data.label.includes('and undeveloped')) {
-            displayed = displayed.replace('and undeveloped', '').trim();
-        } else {
-            displayed = displayed.replace('undeveloped', '').trim();
-        }
     }
 
-    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
+    displayed = cleanLabel(displayed, ['undeveloped', 'uninstantiated']);
+
+    if (uninstantiated) {
+        displayed = displayed.replace(/(?:and\s)?uninstantiated/i, '').trim();
+    }
+
+    if (undeveloped) {
+        displayed = displayed.replace(/(?:and\s)?undeveloped/i, '').trim();
+    }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
+
+    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -228,32 +233,37 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
 
+    const cleanLabel = (label: string, terms: string[]): string => {
+        const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
+        return label.replace(regex, '').trim();
+    };
+
     let uninstantiated = false;
     let undeveloped = false;
 
     let displayed = data.label;
 
-    if (data.label.includes('uninstantiated')) {
+    if (/uninstantiated/i.test(displayed)) {
         uninstantiated = true;
-        if (data.label.includes('and uninstantiated')) {
-            displayed = displayed.replace('and uninstantiated', '').trim();
-        } else {
-            displayed = displayed.replace('uninstantiated', '').trim();
-        }
     }
 
-    if (data.label.includes('undeveloped')) {
+    if (/undeveloped/i.test(displayed)) {
         undeveloped = true;
-        if (data.label.includes('and undeveloped')) {
-            displayed = displayed.replace('and undeveloped', '').trim();
-        } else {
-            displayed = displayed.replace('undeveloped', '').trim();
-        }
     }
 
-    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
+    displayed = cleanLabel(displayed, ['undeveloped', 'uninstantiated']);
+
+    if (uninstantiated) {
+        displayed = displayed.replace(/(?:and\s)?uninstantiated/i, '').trim();
+    }
+
+    if (undeveloped) {
+        displayed = displayed.replace(/(?:and\s)?undeveloped/i, '').trim();
+    }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
+
+    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -436,32 +446,37 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
 
+    const cleanLabel = (label: string, terms: string[]): string => {
+        const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
+        return label.replace(regex, '').trim();
+    };
+
     let uninstantiated = false;
     let undeveloped = false;
 
     let displayed = data.label;
 
-    if (data.label.includes('uninstantiated')) {
+    if (/uninstantiated/i.test(displayed)) {
         uninstantiated = true;
-        if (data.label.includes('and uninstantiated')) {
-            displayed = displayed.replace('and uninstantiated', '').trim();
-        } else {
-            displayed = displayed.replace('uninstantiated', '').trim();
-        }
     }
 
-    if (data.label.includes('undeveloped')) {
+    if (/undeveloped/i.test(displayed)) {
         undeveloped = true;
-        if (data.label.includes('and undeveloped')) {
-            displayed = displayed.replace('and undeveloped', '').trim();
-        } else {
-            displayed = displayed.replace('undeveloped', '').trim();
-        }
     }
 
-    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
+    displayed = cleanLabel(displayed, ['undeveloped', 'uninstantiated']);
+
+    if (uninstantiated) {
+        displayed = displayed.replace(/(?:and\s)?uninstantiated/i, '').trim();
+    }
+
+    if (undeveloped) {
+        displayed = displayed.replace(/(?:and\s)?undeveloped/i, '').trim();
+    }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
+
+    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -648,32 +663,37 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
 
+    const cleanLabel = (label: string, terms: string[]): string => {
+        const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
+        return label.replace(regex, '').trim();
+    };
+
     let uninstantiated = false;
     let undeveloped = false;
 
     let displayed = data.label;
 
-    if (data.label.includes('uninstantiated')) {
+    if (/uninstantiated/i.test(displayed)) {
         uninstantiated = true;
-        if (data.label.includes('and uninstantiated')) {
-            displayed = displayed.replace('and uninstantiated', '').trim();
-        } else {
-            displayed = displayed.replace('uninstantiated', '').trim();
-        }
     }
 
-    if (data.label.includes('undeveloped')) {
+    if (/undeveloped/i.test(displayed)) {
         undeveloped = true;
-        if (data.label.includes('and undeveloped')) {
-            displayed = displayed.replace('and undeveloped', '').trim();
-        } else {
-            displayed = displayed.replace('undeveloped', '').trim();
-        }
     }
 
-    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
+    displayed = cleanLabel(displayed, ['undeveloped', 'uninstantiated']);
+
+    if (uninstantiated) {
+        displayed = displayed.replace(/(?:and\s)?uninstantiated/i, '').trim();
+    }
+
+    if (undeveloped) {
+        displayed = displayed.replace(/(?:and\s)?undeveloped/i, '').trim();
+    }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
+
+    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -863,32 +883,37 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
 
+    const cleanLabel = (label: string, terms: string[]): string => {
+        const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
+        return label.replace(regex, '').trim();
+    };
+
     let uninstantiated = false;
     let undeveloped = false;
 
     let displayed = data.label;
 
-    if (data.label.includes('uninstantiated')) {
+    if (/uninstantiated/i.test(displayed)) {
         uninstantiated = true;
-        if (data.label.includes('and uninstantiated')) {
-            displayed = displayed.replace('and uninstantiated', '').trim();
-        } else {
-            displayed = displayed.replace('uninstantiated', '').trim();
-        }
     }
 
-    if (data.label.includes('undeveloped')) {
+    if (/undeveloped/i.test(displayed)) {
         undeveloped = true;
-        if (data.label.includes('and undeveloped')) {
-            displayed = displayed.replace('and undeveloped', '').trim();
-        } else {
-            displayed = displayed.replace('undeveloped', '').trim();
-        }
     }
 
-    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
+    displayed = cleanLabel(displayed, ['undeveloped', 'uninstantiated']);
+
+    if (uninstantiated) {
+        displayed = displayed.replace(/(?:and\s)?uninstantiated/i, '').trim();
+    }
+
+    if (undeveloped) {
+        displayed = displayed.replace(/(?:and\s)?undeveloped/i, '').trim();
+    }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
+
+    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
@@ -1078,32 +1103,37 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
 
+    const cleanLabel = (label: string, terms: string[]): string => {
+        const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
+        return label.replace(regex, '').trim();
+    };
+
     let uninstantiated = false;
     let undeveloped = false;
 
     let displayed = data.label;
 
-    if (data.label.includes('uninstantiated')) {
+    if (/uninstantiated/i.test(displayed)) {
         uninstantiated = true;
-        if (data.label.includes('and uninstantiated')) {
-            displayed = displayed.replace('and uninstantiated', '').trim();
-        } else {
-            displayed = displayed.replace('uninstantiated', '').trim();
-        }
     }
 
-    if (data.label.includes('undeveloped')) {
+    if (/undeveloped/i.test(displayed)) {
         undeveloped = true;
-        if (data.label.includes('and undeveloped')) {
-            displayed = displayed.replace('and undeveloped', '').trim();
-        } else {
-            displayed = displayed.replace('undeveloped', '').trim();
-        }
     }
 
-    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
+    displayed = cleanLabel(displayed, ['undeveloped', 'uninstantiated']);
+
+    if (uninstantiated) {
+        displayed = displayed.replace(/(?:and\s)?uninstantiated/i, '').trim();
+    }
+
+    if (undeveloped) {
+        displayed = displayed.replace(/(?:and\s)?undeveloped/i, '').trim();
+    }
 
     displayed = displayed.replace(/\s+/g, ' ').trim();
+
+    const [isUndeveloped, setIsUndeveloped] = useState(undeveloped);
 
     const handleColorChange = (newValue: React.SetStateAction<string>) => {
         setBackgroundColor(newValue);
