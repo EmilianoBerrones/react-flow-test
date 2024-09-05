@@ -972,23 +972,32 @@ function FlowComponent() {
 
     // Function to replace the previous tree with the new one given as parameter.
     function replaceTree(tree: TreeNode[]) {
-        function hideChildrenIfUndeveloped(node: TreeNode, ancestorHasUndeveloped: boolean = false) {
-            // Si algún ancestro tiene "undeveloped", este nodo se oculta
-            if (ancestorHasUndeveloped) {
-                node.node.hidden = true;
-            } else {
-                node.node.hidden = false;
-            }
+        function hideChildrenIfUndeveloped(
+            node: TreeNode,
+            ancestorHasUndeveloped: boolean = false
+        ) {
+            // Oculta el nodo actual si algún ancestro tiene "undeveloped"
+            node.node.hidden = ancestorHasUndeveloped;
 
-            // Verificar si el nodo actual tiene "undeveloped" (no lo ocultamos, solo marcamos a sus hijos)
+            // Verifica si el nodo actual tiene "undeveloped"
             const currentHasUndeveloped = node.node.data.label.includes('undeveloped');
 
-            // Aplicar la función recursivamente a cada hijo, propagando el estado de ocultación solo si el nodo actual tiene "undeveloped"
-            node.children.forEach(child => hideChildrenIfUndeveloped(child, ancestorHasUndeveloped || currentHasUndeveloped));
+            // Aplica la función recursivamente a los hijos
+            node.children.forEach(child => {
+                // Determina si el hijo inmediato debe ser ocultado
+                const isImmediateChildToHide = currentHasUndeveloped && !/^[CAJ]/.test(child.node.id);
+
+                // Propaga el estado de ocultación solo si es un ancestro o el hijo inmediato debe ser ocultado
+                hideChildrenIfUndeveloped(
+                    child,
+                    ancestorHasUndeveloped || isImmediateChildToHide
+                );
+            });
         }
 
-        // Aplicar la función a cada nodo en el árbol
+        // Aplica la función a cada nodo raíz en el árbol
         tree.forEach(rootNode => hideChildrenIfUndeveloped(rootNode));
+
 
         clearNodes(); // Deletes al nodes
         clearEdges(); // Deletes all edges
