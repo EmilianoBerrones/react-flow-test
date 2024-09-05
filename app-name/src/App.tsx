@@ -1337,27 +1337,35 @@ function FlowComponent() {
         setImportFromTextInfo(true);
     }
 
-    // const formatText = () => {
-    //     const input = importFromFileText;
-    //     // Dividimos el string en líneas
-    //     const lines = input.trim().split('\n');
-    //
-    //     // Creamos un arreglo para las líneas formateadas
-    //     const formattedLines: string[] = [];
-    //
-    //     // Recorremos cada línea para procesarlas
-    //     lines.forEach((line) => {
-    //         // Eliminamos espacios innecesarios y ajustamos la línea
-    //         const trimmedLine = line.trim();
-    //         const indentLevel = line.match(/^\s*/)?.[0].length || 0;
-    //
-    //         // Agregamos la línea con su nivel de indentación original
-    //         formattedLines.push(' '.repeat(indentLevel) + trimmedLine);
-    //     });
-    //
-    //     // Unimos las líneas formateadas con un salto de línea
-    //     return formattedLines.join('\n');
-    // }
+    const formatText = () => {
+        let input = importFromFileText;
+
+        // Reemplazar puntos decimales por guiones bajos en los identificadores
+        input = input.replace(/(\d+)\.(\d+)/g, '$1_$2');
+
+        // Dividimos el string en líneas
+        const lines = input.trim().split('\n');
+
+        // Creamos un arreglo para las líneas formateadas
+        const formattedLines: string[] = [];
+
+        // Recorremos cada línea para procesarlas
+        lines.forEach((line) => {
+            // Eliminamos espacios innecesarios y ajustamos la línea
+            const trimmedLine = line.trim();
+
+            // Verificamos que la línea no esté vacía
+            if (trimmedLine !== '') {
+                const indentLevel = line.match(/^\s*/)?.[0].length || 0;
+
+                // Agregamos la línea con su nivel de indentación original
+                formattedLines.push(' '.repeat(indentLevel) + trimmedLine);
+            }
+        });
+
+        // Unimos las líneas formateadas con un salto de línea
+        setImportFromFileText(formattedLines.join('\n'));
+    };
 
     // HTML section
     return (
@@ -1682,7 +1690,7 @@ function FlowComponent() {
                                             helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]['undeveloped and uninstantiated']. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: 'G0_1'"
                                             onChange={handleTextDialog}
                                         />
-                                        {/*<Button onClick={formatText} fullWidth>Format text</Button>*/}
+                                        <Button onClick={formatText} fullWidth>Format text</Button>
                                     </DialogContent>
                                     <DialogActions>
                                         <Button onClick={handleTextDialogClose}>Cancel</Button>
