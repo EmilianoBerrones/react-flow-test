@@ -4,12 +4,8 @@ import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 // Firebase Resources
-<<<<<<< HEAD
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-=======
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 // @ts-ignore
->>>>>>> main
 import { auth } from "./firebase";
 
 const BackgroundBox = styled(Box)(({ }) => ({
@@ -81,18 +77,16 @@ const LoginScreen: React.FC = () => {
         }
     };
 
-<<<<<<< HEAD
     const handleForgotPassword = async () => {
         try {
             await sendPasswordResetEmail(auth, resetEmail);
             setResetMessage('Password reset email sent! Please check your inbox.');
         } catch (error) {
+            // @ts-ignore
             console.error('Error sending password reset email:', error.message);
             setResetMessage('Error sending reset email. Please try again.');
         }
     };
-=======
->>>>>>> main
 
     return (
         <BackgroundBox>
