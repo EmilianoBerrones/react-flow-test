@@ -4,10 +4,15 @@ import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 // Firebase Resources
+<<<<<<< HEAD
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+=======
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+// @ts-ignore
+>>>>>>> main
 import { auth } from "./firebase";
 
-const BackgroundBox = styled(Box)(({ theme }) => ({
+const BackgroundBox = styled(Box)(({ }) => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -57,6 +62,7 @@ const LoginScreen: React.FC = () => {
             setSignUpMessage('Account created successfully!');
             setErrorMessage(''); // Clear any existing error message
         } catch (error) {
+            // @ts-ignore
             console.error('Error signing up:', error.message);
             setSignUpMessage('Error signing up. Please try again.');
         }
@@ -69,11 +75,13 @@ const LoginScreen: React.FC = () => {
             setErrorMessage(''); // Clear any existing error message
             navigate('/'); // Redirect to the main page after successful login
         } catch (error) {
+            // @ts-ignore
             console.error('Error signing in:', error.message);
             setErrorMessage('Incorrect email or password. Please try again or sign up.');
         }
     };
 
+<<<<<<< HEAD
     const handleForgotPassword = async () => {
         try {
             await sendPasswordResetEmail(auth, resetEmail);
@@ -83,6 +91,8 @@ const LoginScreen: React.FC = () => {
             setResetMessage('Error sending reset email. Please try again.');
         }
     };
+=======
+>>>>>>> main
 
     return (
         <BackgroundBox>
