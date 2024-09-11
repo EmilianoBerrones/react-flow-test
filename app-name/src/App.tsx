@@ -72,7 +72,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 
-
 // import { onAuthStateChanged } from 'firebase/auth';
 // import { auth } from './firebase'; // Assuming you have a firebase.js file exporting `auth`
 //FireBase imports
@@ -1983,8 +1982,8 @@ export default function App() {
         <Router>
             <ReactFlowProvider>
                 <Routes>
-                    <Route path="/" element={<FlowComponent/>}/>
-                    <Route path="/login" element={<Login/>}/>
+                    <Route path="/" element={<FlowComponent />} />
+                    <Route path="/login" element={<Login />} />
                 </Routes>
             </ReactFlowProvider>
         </Router>
