@@ -20,6 +20,7 @@ import {
     useNavigate,
 } from 'react-router-dom';
 import Login from './Login';
+import LLMMenu from "./LLMMenu.tsx";
 
 import Dagre from '@dagrejs/dagre'
 
@@ -1985,6 +1986,7 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<FlowComponent/>}/>
                     <Route path="/login" element={<Login/>}/>
+                    <Route path="/menu" element={<LLMMenu/>}/>
                 </Routes>
             </ReactFlowProvider>
         </Router>
