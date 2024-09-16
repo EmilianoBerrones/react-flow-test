@@ -13,7 +13,7 @@ import {
     useViewport,
 } from "reactflow";
 
-import {BrowserRouter as Router, Route, Routes, useNavigate,} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import Login from './Login';
 import LLMMenu from "./LLMMenu.tsx";
 
@@ -34,12 +34,12 @@ import {
     AccordionDetails,
     AccordionSummary,
     Alert,
-    AppBar,
+    AppBar, Avatar,
     Button,
     ButtonGroup,
     Divider,
     Grid,
-    IconButton,
+    IconButton, ListItemIcon,
     Menu,
     MenuItem,
     Slide,
@@ -48,7 +48,7 @@ import {
     TextField,
     ToggleButton,
     ToggleButtonGroup,
-    Toolbar,
+    Toolbar, Tooltip,
     Typography
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
@@ -59,7 +59,7 @@ import {
     ArrowCircleLeftOutlined, CloseFullscreenRounded,
     ExpandMore,
     FlagCircleOutlined,
-    InfoTwoTone,
+    InfoTwoTone, Logout,
     OpenInFullRounded,
     Search
 } from "@mui/icons-material";
@@ -74,8 +74,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import {Simulate} from "react-dom/test-utils";
-import input = Simulate.input;
+// import {Simulate} from "react-dom/test-utils";
+// import input = Simulate.input;
 
 
 // import { onAuthStateChanged } from 'firebase/auth';
@@ -454,6 +454,16 @@ function FlowComponent() {
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
     const [isValidAssuranceText, setIsValidAssuranceText] = useState(true); // Estado para validar el texto
+
+    const [anchorLogin, setAnchorLogin] = React.useState<null | HTMLElement>(null);
+    const openLogin = Boolean(anchorLogin);
+
+    const handleLoginClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorLogin(event.currentTarget);
+    };
+    const handleLoginClose = () => {
+        setAnchorLogin(null);
+    };
 
     const showInvalidConnectingNodeAlert = (type: string) => {
         switch (type) {
@@ -1180,10 +1190,10 @@ function FlowComponent() {
         };
     }, []);
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     const handleAccountClick = () => {
-        navigate('/login'); // Navigates to the Login component
+        // code.
     };
 
     const handleFileImport = async (event: any) => {
@@ -1502,10 +1512,69 @@ function FlowComponent() {
                                     Text
                                 </ToggleButton>
                             </ToggleButtonGroup>
-                            <IconButton aria-label="AccountButton" sx={{ml: 2}} color="primary"
-                                        onClick={handleAccountClick}>
-                                <AccountCircleIcon/>
-                            </IconButton>
+                            <Tooltip title="Account settings">
+                                <IconButton
+                                    onClick={handleLoginClick}
+                                    size="small"
+                                    sx={{ ml: 2 }}
+                                    aria-controls={openLogin ? 'account-menu' : undefined}
+                                    aria-haspopup="true"
+                                    aria-expanded={openLogin ? 'true' : undefined}
+                                >
+                                    <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+                                </IconButton>
+                            </Tooltip>
+                            <Menu
+                                anchorEl={anchorLogin}
+                                id="account-menu"
+                                open={openLogin}
+                                onClose={handleLoginClose}
+                                onClick={handleLoginClose}
+                                slotProps={{
+                                    paper: {
+                                        elevation: 0,
+                                        sx: {
+                                            overflow: 'visible',
+                                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                                            mt: 1.5,
+                                            '& .MuiAvatar-root': {
+                                                width: 32,
+                                                height: 32,
+                                                ml: -0.5,
+                                                mr: 1,
+                                            },
+                                            '&::before': {
+                                                content: '""',
+                                                display: 'block',
+                                                position: 'absolute',
+                                                top: 0,
+                                                right: 14,
+                                                width: 10,
+                                                height: 10,
+                                                bgcolor: 'background.paper',
+                                                transform: 'translateY(-50%) rotate(45deg)',
+                                                zIndex: 0,
+                                            },
+                                        },
+                                    },
+                                }}
+                                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                            >
+                                <MenuItem onClick={handleLoginClose}>
+                                    <Avatar /> Profile
+                                </MenuItem>
+                                <MenuItem onClick={handleLoginClose}>
+                                    <Avatar /> My account
+                                </MenuItem>
+                                <Divider />
+                                <MenuItem onClick={handleLoginClose}>
+                                    <ListItemIcon>
+                                        <Logout fontSize="small" />
+                                    </ListItemIcon>
+                                    Logout
+                                </MenuItem>
+                            </Menu>
                         </div>
                     </Toolbar>
                 </AppBar>
