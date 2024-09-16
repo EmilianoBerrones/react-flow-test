@@ -13,12 +13,7 @@ import {
     useViewport,
 } from "reactflow";
 
-import {
-    BrowserRouter as Router,
-    Route,
-    Routes,
-    useNavigate,
-} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes, useNavigate,} from 'react-router-dom';
 import Login from './Login';
 import LLMMenu from "./LLMMenu.tsx";
 
@@ -60,7 +55,14 @@ import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
-import {ArrowCircleLeftOutlined, ExpandMore, FlagCircleOutlined, InfoTwoTone, Search} from "@mui/icons-material";
+import {
+    ArrowCircleLeftOutlined, CloseFullscreenRounded,
+    ExpandMore,
+    FlagCircleOutlined,
+    InfoTwoTone,
+    OpenInFullRounded,
+    Search
+} from "@mui/icons-material";
 import * as htmlToImage from 'html-to-image';
 import download from 'downloadjs';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -72,6 +74,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import {Simulate} from "react-dom/test-utils";
+import input = Simulate.input;
 
 
 // import { onAuthStateChanged } from 'firebase/auth';
@@ -427,9 +431,9 @@ function FlowComponent() {
     const [addNodeDialog, setAddNodeDialog] = useState(false);
     const [addNodeDialogText, setAddNodeDialogText] = useState("");
     const [importFromTextInfo, setImportFromTextInfo] = useState(false);
+    const [fullScreenInitialTextDialog, setFullScreenInitialTextDialog] = useState(false);
 
     // Values for the nodes and their functionality
-    // const [indent, setIndent] = useState(defaultIndent);
     const [view, setView] = useState('textField'); // Estado para manejar la vista actual
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const labels = useRef<string[]>(nodes.map(node => node.data.label));
@@ -449,6 +453,7 @@ function FlowComponent() {
 
     // Creation of initial assurance case text
     const [initialAssuranceText, setInitialAssuranceText] = useState(treeToText(initialTree));
+    const [isValidAssuranceText, setIsValidAssuranceText] = useState(true); // Estado para validar el texto
 
     const showInvalidConnectingNodeAlert = (type: string) => {
         switch (type) {
@@ -1130,11 +1135,6 @@ function FlowComponent() {
         setExporting(format);
     };
 
-    // Function to handle the indentation change
-    // const handleChangeIndent = (event: SelectChangeEvent) => {
-    //     setIndent(parseInt(event.target.value));
-    // }
-
     // Function to handle the searching mode
     const handleSearchModeChange = (_event: any, newSearchMode: any) => {
         if (newSearchMode !== null) {
@@ -1247,22 +1247,19 @@ function FlowComponent() {
         handleTextDialogClose();
     }
 
-    const validateTextFormat = (text: string) => {
-        const lines = text.split('\n');
+    function validateSpacingFormat(input: string): boolean {
+        const lines = input.split('\n');
         const regex = /^- [A-Za-z0-9_]+: .+$/;
 
         for (const line of lines) {
             if (!regex.test(line.trim())) {
-                setImportFromFileTextValid(false);
                 return false;
             }
         }
-        setImportFromFileTextValid(true);
         return true;
-    };
+    }
 
-    function validateAssuranceText(): boolean {
-        const input = initialAssuranceText;
+    function validateStructureFormat(input: string): boolean {
         const lines = input.split('\n');
         const indentationStack: { nodeId: string, isSnNode: boolean }[] = [];
 
@@ -1295,16 +1292,27 @@ function FlowComponent() {
         return true;
     }
 
+    const validateInitialAssuranceText = (text: string) => {
+        const isValid = validateStructureFormat(text) && validateSpacingFormat(text);
+        setIsValidAssuranceText(isValid); // Actualiza el estado con el resultado
+        return isValid;
+    };
+
+    const validateInputText = (text: string): boolean => {
+        return validateStructureFormat(text) && validateSpacingFormat(text);
+    };
+
     function isAddNodeDialogNumber(): boolean {
         const value = addNodeDialogText;
         return !isNaN(Number(value)) && value.trim() !== '';
     }
 
-    const handleTextDialog = (e: any) => {
+    const handleTextDialog = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newText = e.target.value;
         setImportFromFileText(newText);
-        validateTextFormat(newText); // Valida el nuevo texto cada vez que cambia
+        setImportFromFileTextValid(validateInputText(newText)); // Valida el texto y actualiza el estado de validación
     };
+
 
     const handleAddNodeDialogClose = () => {
         setAddNodeDialog(false);
@@ -1338,9 +1346,7 @@ function FlowComponent() {
         setImportFromTextInfo(true);
     }
 
-    const formatText = () => {
-        let input = importFromFileText;
-
+    function formatText(input: string): string {
         // Reemplazar puntos decimales por guiones bajos en los identificadores
         input = input.replace(/(\d+)\.(\d+)/g, '$1_$2');
 
@@ -1364,9 +1370,24 @@ function FlowComponent() {
             }
         });
 
-        // Unimos las líneas formateadas con un salto de línea
-        setImportFromFileText(formattedLines.join('\n'));
+        return (formattedLines.join('\n'));
+    }
+
+    const formatInputText = () => {
+        setImportFromFileText(formatText(importFromFileText));
     };
+
+    const formatInitialText = () => {
+        setInitialAssuranceText(formatText(initialAssuranceText));
+    }
+
+    const handleCloseInitialDialog = () => {
+        setFullScreenInitialTextDialog(false);
+    }
+
+    const handleOpenInitialDialog = () => {
+        setFullScreenInitialTextDialog(true);
+    }
 
     // HTML section
     return (
@@ -1545,10 +1566,12 @@ function FlowComponent() {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
+                                                     maxWidth: '15vh',
+                                                     maxHeight: '10vh',
                                                  }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('assumption')}>
-                                                <div className="ajNode">
+                                                <div className="ajNode" style={{padding: '20px'}}>
                                                     Assumption
                                                 </div>
                                             </div>
@@ -1559,10 +1582,12 @@ function FlowComponent() {
                                                      textAlign: 'center',
                                                      cursor: 'pointer',
                                                      userSelect: 'none',
+                                                     maxWidth: '15vh',
+                                                     maxHeight: '10vh',
                                                  }}
                                                  draggable='true'
                                                  onDragStart={onDragStart('justification')}>
-                                                <div className="ajNode">
+                                                <div className="ajNode" style={{padding: '20px'}}>
                                                     Justification
                                                 </div>
                                             </div>
@@ -1617,12 +1642,17 @@ function FlowComponent() {
                                                             multiline
                                                             fullWidth
                                                             variant="outlined"
-                                                            error={!validateAssuranceText()}
-                                                            helperText={!validateAssuranceText() ? 'Follow the GSN rules when creating the assurance cases' : ''}
+                                                            error={!isValidAssuranceText}
+                                                            helperText={!isValidAssuranceText ? 'Follow the GSN rules when creating the assurance cases' : ''}
                                                             value={initialAssuranceText}
-                                                            onChange={(e) => setInitialAssuranceText(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const newText = e.target.value;
+                                                                setInitialAssuranceText(newText);
+                                                                validateInitialAssuranceText(newText); // Valida cada vez que cambia el texto
+                                                            }}
                                                             onKeyDown={handleTab}
                                                         />
+
                                                     )}
                                                     {view === 'richTreeView' && (
                                                         <div>
@@ -1639,23 +1669,19 @@ function FlowComponent() {
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                        {/*<Grid item>*/}
-                                        {/*    <FormControl fullWidth>*/}
-                                        {/*        <InputLabel id="indentSelect">Indentation</InputLabel>*/}
-                                        {/*        <Select*/}
-                                        {/*            value={indent.toString()}*/}
-                                        {/*            label="Indent"*/}
-                                        {/*            onChange={handleChangeIndent}*/}
-                                        {/*        >*/}
-                                        {/*            <MenuItem value={2}>Two spaces</MenuItem>*/}
-                                        {/*            <MenuItem value={4}>Four spaces</MenuItem>*/}
-                                        {/*            <MenuItem value={8}>Tabulations</MenuItem>*/}
-                                        {/*        </Select>*/}
-                                        {/*    </FormControl>*/}
-                                        {/*</Grid>*/}
                                         <Grid item>
-                                            <Button variant="outlined" fullWidth disabled={!validateAssuranceText()}
-                                                    onClick={handleReloadButton}>Accept changes</Button>
+                                            <Grid container>
+                                                <Grid item xs>
+                                                    <Button variant="outlined" fullWidth
+                                                            disabled={!isValidAssuranceText}
+                                                            onClick={handleReloadButton}>Accept changes</Button>
+                                                </Grid>
+                                                <Grid item xs={1}>
+                                                    <IconButton color="primary" onClick={handleOpenInitialDialog}>
+                                                        <OpenInFullRounded/>
+                                                    </IconButton>
+                                                </Grid>
+                                            </Grid>
                                         </Grid>
                                     </Grid>
                                 </AccordionDetails>
@@ -1688,20 +1714,49 @@ function FlowComponent() {
                                             multiline
                                             fullWidth
                                             error={!isImportFromFileTextValid}
-                                            helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]['undeveloped and uninstantiated']. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: 'G0_1'"
-                                            onChange={handleTextDialog}
+                                            helperText={!isImportFromFileTextValid ? 'Each line must have the required format: ["- "][Node ID][": "][Node text]["undeveloped and uninstantiated"]. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: "G0_1"' : ''}
+                                            onChange={handleTextDialog} // Usando la nueva función handleTextDialog
                                         />
-                                        <Button onClick={formatText} fullWidth>Format text</Button>
+                                        <Button onClick={formatInputText} fullWidth>Format text</Button>
                                     </DialogContent>
                                     <DialogActions>
                                         <Button onClick={handleTextDialogClose}>Cancel</Button>
                                         <Button
                                             onClick={handleTextDialogAccept}
                                             autoFocus
-                                            disabled={!isImportFromFileTextValid}
+                                            disabled={!isImportFromFileTextValid} // Deshabilita el botón si el texto no es válido
                                         >
                                             Accept
                                         </Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </React.Fragment>
+                            <React.Fragment>
+                                <Dialog
+                                    open={fullScreenInitialTextDialog}
+                                    fullScreen
+                                    keepMounted
+                                >
+                                    <DialogTitle>Assurance Cases text</DialogTitle>
+                                    <DialogContent>
+                                        <TextField
+                                            value={initialAssuranceText}
+                                            onChange={(e) => {
+                                                const newText = e.target.value;
+                                                setInitialAssuranceText(newText);
+                                                validateInitialAssuranceText(newText); // Valida cada vez que cambia el texto
+                                            }}
+                                            multiline
+                                            fullWidth
+                                            error={!isValidAssuranceText}
+                                            helperText="Each line must have the required format: ['- '][Node ID][': '][Node text]['undeveloped and uninstantiated']. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: 'G0_1'"
+                                        />
+                                        <Button fullWidth onClick={formatInitialText}>Format text</Button>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <IconButton onClick={handleCloseInitialDialog} color="primary">
+                                            <CloseFullscreenRounded/>
+                                        </IconButton>
                                     </DialogActions>
                                 </Dialog>
                             </React.Fragment>
