@@ -2,8 +2,12 @@
 import React, {useState} from 'react';
 import {Handle, NodeToolbar, Position, useReactFlow} from 'reactflow';
 import './customNodeDesign.css';
-import {Button, Checkbox, Divider, Grid} from "@mui/material";
+import {Button, Checkbox, Divider, Grid, TextField} from "@mui/material";
 import {MuiColorInput} from "mui-color-input";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
 
 interface CustomNodeProps {
@@ -18,6 +22,10 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
+    const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false); // Estado para abrir/cerrar el dialog
+    const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
+    const [newLabel, setNewLabel] = useState(data.label); // Estado para almacenar el nuevo labe
+    const [newId, setNewId] = useState(data.id);
 
     const cleanLabel = (label: string, terms: string[]): string => {
         const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
@@ -55,10 +63,25 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
         setBackgroundColor(newValue);
     }
 
-    const handleLabel = () => {
-        const newLabel = prompt('Enter the new label');
-        if (newLabel) {
-            data.label = newLabel;
+    const handleOpenLabelDialog = () => {
+        setIsLabelDialogOpen(true); // Abre el diálogo
+    };
+
+    const handleCloseLabelDialog = () => {
+        setIsLabelDialogOpen(false); // Cierra el diálogo sin hacer cambios
+    };
+
+    const handleOpenIdDialog = () => {
+        setIsIdDialogOpen(true);
+    };
+
+    const handleCloseIdDialog = () => {
+        setIsIdDialogOpen(false);
+    }
+
+    const handleAcceptLabelDialog = () => {
+        if (newLabel.trim() !== '') {
+            data.label = newLabel; // Actualiza el label del nodo
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -72,13 +95,14 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            setNodes(newNodes);
+            setNodes(newNodes); // Actualiza los nodos
         }
+        setIsLabelDialogOpen(false); // Cierra el diálogo después de aceptar
     };
 
-    const handleId = () => {
-        const newId = prompt('Enter the new ID');
-        if (newId) {
+    const handleAcceptIdDialog = () => {
+        if (newId.trim() !== ''){
+            data.label = data.label + " ";
             data.label = data.label + " ";
             const nodes = getNodes();
             const edges = getEdges();
@@ -95,7 +119,6 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            console.log(newNodes);
 
             // Actualiza las conexiones de edges si las hay
             const newEdges = edges.map((edge) => {
@@ -117,7 +140,7 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
             setNodes(newNodes);
             setEdges(newEdges);
         }
-    };
+    }
 
     const deleteNode = () => {
         const nodes = getNodes();
@@ -182,10 +205,10 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
                                 <Divider></Divider>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenIdDialog}>ID</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenLabelDialog}>Label</Button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -224,6 +247,54 @@ export const GoalNode: React.FC<CustomNodeProps> = ({data, id}) => {
             <div><b>{data.id}</b></div>
             <div>{displayed}</div>
             <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
+            <React.Fragment>
+                <Dialog open={isLabelDialogOpen} onClose={handleCloseLabelDialog}>
+                    <DialogTitle>Modify label</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new label
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newLabel}
+                                    onChange={(e) => setNewLabel(e.target.value)} // Actualiza el nuevo label
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseLabelDialog}>Close</Button>
+                        <Button onClick={handleAcceptLabelDialog} disabled={newLabel.trim() === ''}>Accept</Button> {/* Deshabilitar si el label está vacío */}
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <React.Fragment>
+                <Dialog open={isIdDialogOpen} onClose={handleCloseIdDialog}>
+                    <DialogTitle>Modify ID</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new id
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newId}
+                                    helperText="Example: 'G1'. It is case sensitive, and changes in the letter will be reflected in the type of node."
+                                    onChange={(e) => setNewId(e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseIdDialog}>Close</Button>
+                        <Button onClick={handleAcceptIdDialog} disabled={newId.trim() === ''}>Accept</Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+
         </div>
     );
 };
@@ -232,6 +303,10 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
+    const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false); // Estado para abrir/cerrar el dialog
+    const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
+    const [newLabel, setNewLabel] = useState(data.label); // Estado para almacenar el nuevo labe
+    const [newId, setNewId] = useState(data.id);
 
     const cleanLabel = (label: string, terms: string[]): string => {
         const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
@@ -269,10 +344,25 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
         setBackgroundColor(newValue);
     }
 
-    const handleLabel = () => {
-        const newLabel = prompt('Enter the new label');
-        if (newLabel) {
-            data.label = newLabel;
+    const handleOpenLabelDialog = () => {
+        setIsLabelDialogOpen(true); // Abre el diálogo
+    };
+
+    const handleCloseLabelDialog = () => {
+        setIsLabelDialogOpen(false); // Cierra el diálogo sin hacer cambios
+    };
+
+    const handleOpenIdDialog = () => {
+        setIsIdDialogOpen(true);
+    };
+
+    const handleCloseIdDialog = () => {
+        setIsIdDialogOpen(false);
+    }
+
+    const handleAcceptLabelDialog = () => {
+        if (newLabel.trim() !== '') {
+            data.label = newLabel; // Actualiza el label del nodo
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -286,13 +376,14 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            setNodes(newNodes);
+            setNodes(newNodes); // Actualiza los nodos
         }
+        setIsLabelDialogOpen(false); // Cierra el diálogo después de aceptar
     };
 
-    const handleId = () => {
-        const newId = prompt('Enter the new ID');
-        if (newId) {
+    const handleAcceptIdDialog = () => {
+        if (newId.trim() !== ''){
+            data.label = data.label + " ";
             data.label = data.label + " ";
             const nodes = getNodes();
             const edges = getEdges();
@@ -309,7 +400,6 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            console.log(newNodes);
 
             // Actualiza las conexiones de edges si las hay
             const newEdges = edges.map((edge) => {
@@ -331,7 +421,7 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
             setNodes(newNodes);
             setEdges(newEdges);
         }
-    };
+    }
 
     const deleteNode = () => {
         const nodes = getNodes();
@@ -395,10 +485,10 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
                                 <Divider></Divider>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenIdDialog}>ID</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenLabelDialog}>Label</Button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -437,6 +527,53 @@ export const ContextNode: React.FC<CustomNodeProps> = ({data, id}) => {
             <div><b>{data.id}</b></div>
             <div>{displayed}</div>
             <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
+            <React.Fragment>
+                <Dialog open={isLabelDialogOpen} onClose={handleCloseLabelDialog}>
+                    <DialogTitle>Modify label</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new label
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newLabel}
+                                    onChange={(e) => setNewLabel(e.target.value)} // Actualiza el nuevo label
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseLabelDialog}>Close</Button>
+                        <Button onClick={handleAcceptLabelDialog} disabled={newLabel.trim() === ''}>Accept</Button> {/* Deshabilitar si el label está vacío */}
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <React.Fragment>
+                <Dialog open={isIdDialogOpen} onClose={handleCloseIdDialog}>
+                    <DialogTitle>Modify ID</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new id
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newId}
+                                    helperText="Example: 'C1'. It is case sensitive, and changes in the letter will be reflected in the type of node."
+                                    onChange={(e) => setNewId(e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseIdDialog}>Close</Button>
+                        <Button onClick={handleAcceptIdDialog} disabled={newId.trim() === ''}>Accept</Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
         </div>
     );
 };
@@ -445,6 +582,10 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
+    const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false); // Estado para abrir/cerrar el dialog
+    const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
+    const [newLabel, setNewLabel] = useState(data.label); // Estado para almacenar el nuevo labe
+    const [newId, setNewId] = useState(data.id);
 
     const cleanLabel = (label: string, terms: string[]): string => {
         const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
@@ -482,10 +623,25 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
         setBackgroundColor(newValue);
     }
 
-    const handleLabel = () => {
-        const newLabel = prompt('Enter the new label');
-        if (newLabel) {
-            data.label = newLabel;
+    const handleOpenLabelDialog = () => {
+        setIsLabelDialogOpen(true); // Abre el diálogo
+    };
+
+    const handleCloseLabelDialog = () => {
+        setIsLabelDialogOpen(false); // Cierra el diálogo sin hacer cambios
+    };
+
+    const handleOpenIdDialog = () => {
+        setIsIdDialogOpen(true);
+    };
+
+    const handleCloseIdDialog = () => {
+        setIsIdDialogOpen(false);
+    }
+
+    const handleAcceptLabelDialog = () => {
+        if (newLabel.trim() !== '') {
+            data.label = newLabel; // Actualiza el label del nodo
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -499,13 +655,14 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            setNodes(newNodes);
+            setNodes(newNodes); // Actualiza los nodos
         }
+        setIsLabelDialogOpen(false); // Cierra el diálogo después de aceptar
     };
 
-    const handleId = () => {
-        const newId = prompt('Enter the new ID');
-        if (newId) {
+    const handleAcceptIdDialog = () => {
+        if (newId.trim() !== ''){
+            data.label = data.label + " ";
             data.label = data.label + " ";
             const nodes = getNodes();
             const edges = getEdges();
@@ -522,7 +679,6 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            console.log(newNodes);
 
             // Actualiza las conexiones de edges si las hay
             const newEdges = edges.map((edge) => {
@@ -544,7 +700,7 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
             setNodes(newNodes);
             setEdges(newEdges);
         }
-    };
+    }
 
     const deleteNode = () => {
         const nodes = getNodes();
@@ -608,10 +764,10 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                                 <Divider></Divider>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenIdDialog}>ID</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenLabelDialog}>Label</Button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -654,6 +810,53 @@ export const StrategyNode: React.FC<CustomNodeProps> = ({data, id}) => {
                     <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
                 </div>
             </div>
+            <React.Fragment>
+                <Dialog open={isLabelDialogOpen} onClose={handleCloseLabelDialog}>
+                    <DialogTitle>Modify label</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new label
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newLabel}
+                                    onChange={(e) => setNewLabel(e.target.value)} // Actualiza el nuevo label
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseLabelDialog}>Close</Button>
+                        <Button onClick={handleAcceptLabelDialog} disabled={newLabel.trim() === ''}>Accept</Button> {/* Deshabilitar si el label está vacío */}
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <React.Fragment>
+                <Dialog open={isIdDialogOpen} onClose={handleCloseIdDialog}>
+                    <DialogTitle>Modify ID</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new id
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newId}
+                                    helperText="Example: 'S1'. It is case sensitive, and changes in the letter will be reflected in the type of node."
+                                    onChange={(e) => setNewId(e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseIdDialog}>Close</Button>
+                        <Button onClick={handleAcceptIdDialog} disabled={newId.trim() === ''}>Accept</Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
         </div>
     );
 };
@@ -662,6 +865,10 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
+    const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false); // Estado para abrir/cerrar el dialog
+    const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
+    const [newLabel, setNewLabel] = useState(data.label); // Estado para almacenar el nuevo labe
+    const [newId, setNewId] = useState(data.id);
 
     const cleanLabel = (label: string, terms: string[]): string => {
         const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
@@ -699,10 +906,25 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
         setBackgroundColor(newValue);
     }
 
-    const handleLabel = () => {
-        const newLabel = prompt('Enter the new label');
-        if (newLabel) {
-            data.label = newLabel;
+    const handleOpenLabelDialog = () => {
+        setIsLabelDialogOpen(true); // Abre el diálogo
+    };
+
+    const handleCloseLabelDialog = () => {
+        setIsLabelDialogOpen(false); // Cierra el diálogo sin hacer cambios
+    };
+
+    const handleOpenIdDialog = () => {
+        setIsIdDialogOpen(true);
+    };
+
+    const handleCloseIdDialog = () => {
+        setIsIdDialogOpen(false);
+    }
+
+    const handleAcceptLabelDialog = () => {
+        if (newLabel.trim() !== '') {
+            data.label = newLabel; // Actualiza el label del nodo
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -716,13 +938,14 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            setNodes(newNodes);
+            setNodes(newNodes); // Actualiza los nodos
         }
+        setIsLabelDialogOpen(false); // Cierra el diálogo después de aceptar
     };
 
-    const handleId = () => {
-        const newId = prompt('Enter the new ID');
-        if (newId) {
+    const handleAcceptIdDialog = () => {
+        if (newId.trim() !== ''){
+            data.label = data.label + " ";
             data.label = data.label + " ";
             const nodes = getNodes();
             const edges = getEdges();
@@ -739,7 +962,6 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            console.log(newNodes);
 
             // Actualiza las conexiones de edges si las hay
             const newEdges = edges.map((edge) => {
@@ -761,7 +983,7 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
             setNodes(newNodes);
             setEdges(newEdges);
         }
-    };
+    }
 
     const deleteNode = () => {
         const nodes = getNodes();
@@ -825,10 +1047,10 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                                 <Divider></Divider>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenIdDialog}>ID</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenLabelDialog}>Label</Button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -874,6 +1096,53 @@ export const AssumptionNode: React.FC<CustomNodeProps> = ({data, id}) => {
             <div className="ajLetter">
                 A
             </div>
+            <React.Fragment>
+                <Dialog open={isLabelDialogOpen} onClose={handleCloseLabelDialog}>
+                    <DialogTitle>Modify label</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new label
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newLabel}
+                                    onChange={(e) => setNewLabel(e.target.value)} // Actualiza el nuevo label
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseLabelDialog}>Close</Button>
+                        <Button onClick={handleAcceptLabelDialog} disabled={newLabel.trim() === ''}>Accept</Button> {/* Deshabilitar si el label está vacío */}
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <React.Fragment>
+                <Dialog open={isIdDialogOpen} onClose={handleCloseIdDialog}>
+                    <DialogTitle>Modify ID</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new id
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newId}
+                                    helperText="Example: 'A1'. It is case sensitive, and changes in the letter will be reflected in the type of node."
+                                    onChange={(e) => setNewId(e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseIdDialog}>Close</Button>
+                        <Button onClick={handleAcceptIdDialog} disabled={newId.trim() === ''}>Accept</Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
         </div>
     );
 };
@@ -882,6 +1151,10 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
+    const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false); // Estado para abrir/cerrar el dialog
+    const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
+    const [newLabel, setNewLabel] = useState(data.label); // Estado para almacenar el nuevo labe
+    const [newId, setNewId] = useState(data.id);
 
     const cleanLabel = (label: string, terms: string[]): string => {
         const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
@@ -919,10 +1192,25 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
         setBackgroundColor(newValue);
     }
 
-    const handleLabel = () => {
-        const newLabel = prompt('Enter the new label');
-        if (newLabel) {
-            data.label = newLabel;
+    const handleOpenLabelDialog = () => {
+        setIsLabelDialogOpen(true); // Abre el diálogo
+    };
+
+    const handleCloseLabelDialog = () => {
+        setIsLabelDialogOpen(false); // Cierra el diálogo sin hacer cambios
+    };
+
+    const handleOpenIdDialog = () => {
+        setIsIdDialogOpen(true);
+    };
+
+    const handleCloseIdDialog = () => {
+        setIsIdDialogOpen(false);
+    }
+
+    const handleAcceptLabelDialog = () => {
+        if (newLabel.trim() !== '') {
+            data.label = newLabel; // Actualiza el label del nodo
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -936,13 +1224,14 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            setNodes(newNodes);
+            setNodes(newNodes); // Actualiza los nodos
         }
+        setIsLabelDialogOpen(false); // Cierra el diálogo después de aceptar
     };
 
-    const handleId = () => {
-        const newId = prompt('Enter the new ID');
-        if (newId) {
+    const handleAcceptIdDialog = () => {
+        if (newId.trim() !== ''){
+            data.label = data.label + " ";
             data.label = data.label + " ";
             const nodes = getNodes();
             const edges = getEdges();
@@ -959,7 +1248,6 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            console.log(newNodes);
 
             // Actualiza las conexiones de edges si las hay
             const newEdges = edges.map((edge) => {
@@ -981,7 +1269,7 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
             setNodes(newNodes);
             setEdges(newEdges);
         }
-    };
+    }
 
     const deleteNode = () => {
         const nodes = getNodes();
@@ -1045,10 +1333,10 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
                                 <Divider></Divider>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenIdDialog}>ID</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenLabelDialog}>Label</Button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -1094,6 +1382,53 @@ export const JustificationNode: React.FC<CustomNodeProps> = ({data, id}) => {
             <div className='ajLetter'>
                 J
             </div>
+            <React.Fragment>
+                <Dialog open={isLabelDialogOpen} onClose={handleCloseLabelDialog}>
+                    <DialogTitle>Modify label</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new label
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newLabel}
+                                    onChange={(e) => setNewLabel(e.target.value)} // Actualiza el nuevo label
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseLabelDialog}>Close</Button>
+                        <Button onClick={handleAcceptLabelDialog} disabled={newLabel.trim() === ''}>Accept</Button> {/* Deshabilitar si el label está vacío */}
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <React.Fragment>
+                <Dialog open={isIdDialogOpen} onClose={handleCloseIdDialog}>
+                    <DialogTitle>Modify ID</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new id
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newId}
+                                    helperText="Example: 'J1'. It is case sensitive, and changes in the letter will be reflected in the type of node."
+                                    onChange={(e) => setNewId(e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseIdDialog}>Close</Button>
+                        <Button onClick={handleAcceptIdDialog} disabled={newId.trim() === ''}>Accept</Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
         </div>
     );
 };
@@ -1102,6 +1437,10 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
     const [backgroundColor, setBackgroundColor] = React.useState('#faefb6')
     const {setNodes, getNodes} = useReactFlow();
     const {setEdges, getEdges} = useReactFlow();
+    const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false); // Estado para abrir/cerrar el dialog
+    const [isIdDialogOpen, setIsIdDialogOpen] = useState(false);
+    const [newLabel, setNewLabel] = useState(data.label); // Estado para almacenar el nuevo labe
+    const [newId, setNewId] = useState(data.id);
 
     const cleanLabel = (label: string, terms: string[]): string => {
         const regex = new RegExp(`\\(([^()]*(${terms.join('|')})[^()]*)\\)`, 'gi');
@@ -1139,10 +1478,25 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
         setBackgroundColor(newValue);
     }
 
-    const handleLabel = () => {
-        const newLabel = prompt('Enter the new label');
-        if (newLabel) {
-            data.label = newLabel;
+    const handleOpenLabelDialog = () => {
+        setIsLabelDialogOpen(true); // Abre el diálogo
+    };
+
+    const handleCloseLabelDialog = () => {
+        setIsLabelDialogOpen(false); // Cierra el diálogo sin hacer cambios
+    };
+
+    const handleOpenIdDialog = () => {
+        setIsIdDialogOpen(true);
+    };
+
+    const handleCloseIdDialog = () => {
+        setIsIdDialogOpen(false);
+    }
+
+    const handleAcceptLabelDialog = () => {
+        if (newLabel.trim() !== '') {
+            data.label = newLabel; // Actualiza el label del nodo
             const nodes = getNodes();
             const newNodes = nodes.map((node) => {
                 if (node.id === id) {
@@ -1156,13 +1510,14 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            setNodes(newNodes);
+            setNodes(newNodes); // Actualiza los nodos
         }
+        setIsLabelDialogOpen(false); // Cierra el diálogo después de aceptar
     };
 
-    const handleId = () => {
-        const newId = prompt('Enter the new ID');
-        if (newId) {
+    const handleAcceptIdDialog = () => {
+        if (newId.trim() !== ''){
+            data.label = data.label + " ";
             data.label = data.label + " ";
             const nodes = getNodes();
             const edges = getEdges();
@@ -1179,7 +1534,6 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                 }
                 return node;
             });
-            console.log(newNodes);
 
             // Actualiza las conexiones de edges si las hay
             const newEdges = edges.map((edge) => {
@@ -1201,7 +1555,7 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
             setNodes(newNodes);
             setEdges(newEdges);
         }
-    };
+    }
 
     const deleteNode = () => {
         const nodes = getNodes();
@@ -1265,10 +1619,10 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                                 <Divider></Divider>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleId}>ID</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenIdDialog}>ID</Button>
                             </Grid>
                             <Grid item xs={6}>
-                                <Button variant="text" fullWidth onClick={handleLabel}>Label</Button>
+                                <Button variant="text" fullWidth onClick={handleOpenLabelDialog}>Label</Button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -1314,6 +1668,53 @@ export const SolutionNode: React.FC<CustomNodeProps> = ({data, id}) => {
                     <Handle type="source" position={Position.Bottom} style={{background: '#555'}}/>
                 </div>
             </div>
+            <React.Fragment>
+                <Dialog open={isLabelDialogOpen} onClose={handleCloseLabelDialog}>
+                    <DialogTitle>Modify label</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new label
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newLabel}
+                                    onChange={(e) => setNewLabel(e.target.value)} // Actualiza el nuevo label
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseLabelDialog}>Close</Button>
+                        <Button onClick={handleAcceptLabelDialog} disabled={newLabel.trim() === ''}>Accept</Button> {/* Deshabilitar si el label está vacío */}
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
+            <React.Fragment>
+                <Dialog open={isIdDialogOpen} onClose={handleCloseIdDialog}>
+                    <DialogTitle>Modify ID</DialogTitle>
+                    <DialogContent>
+                        <Grid container direction="column" style={{width: '40vh'}} spacing={1}>
+                            <Grid item>
+                                Enter the new id
+                            </Grid>
+                            <Grid item>
+                                <TextField
+                                    fullWidth
+                                    value={newId}
+                                    helperText="Example: 'Sn1'. It is case sensitive, and changes in the letter will be reflected in the type of node."
+                                    onChange={(e) => setNewId(e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseIdDialog}>Close</Button>
+                        <Button onClick={handleAcceptIdDialog} disabled={newId.trim() === ''}>Accept</Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
         </div>
     );
 };

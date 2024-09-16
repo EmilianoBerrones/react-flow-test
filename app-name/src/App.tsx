@@ -53,13 +53,12 @@ import {
 } from "@mui/material";
 import {RichTreeView} from '@mui/x-tree-view/RichTreeView';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Chip from '@mui/material/Chip';
 import {
     ArrowCircleLeftOutlined, CloseFullscreenRounded,
     ExpandMore,
     FlagCircleOutlined,
-    InfoTwoTone, Logout,
+    InfoTwoTone, Inventory, Logout,
     OpenInFullRounded,
     Search
 } from "@mui/icons-material";
@@ -464,6 +463,17 @@ function FlowComponent() {
     const handleLoginClose = () => {
         setAnchorLogin(null);
     };
+
+    const [anchorMenu, setAnchorMenu] = React.useState<null | HTMLElement>(null);
+    const openMenu = Boolean(anchorMenu);
+
+    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorMenu(event.currentTarget);
+    }
+
+    const handleMenuClose = () => {
+        setAnchorMenu(null);
+    }
 
     const showInvalidConnectingNodeAlert = (type: string) => {
         switch (type) {
@@ -1192,10 +1202,6 @@ function FlowComponent() {
 
     // const navigate = useNavigate();
 
-    const handleAccountClick = () => {
-        // code.
-    };
-
     const handleFileImport = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
@@ -1424,12 +1430,20 @@ function FlowComponent() {
                 <AppBar position="fixed" color="transparent"
                         sx={{height: '8vh', display: 'flex', justifyContent: 'center'}}>
                     <Toolbar sx={{minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px'}}>
-                        <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="menu"
+                        <IconButton onClick={handleMenuClick} size="large" edge="start" color="primary" aria-label="menu"
                                     sx={{mr: 2}}>
                             <MenuIcon/>
                         </IconButton>
+                        <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
+                            <MenuItem>Assurance case editor</MenuItem>
+                            <MenuItem>Pattern instantiation</MenuItem>
+                            <MenuItem>Pattern detection</MenuItem>
+                        </Menu>
+                        <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
+                                    sx={{mr: 2}}>
+                            <Inventory/>
+                        </IconButton>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-
                             <Divider>
                                 <Chip label="JSON Manager" size="small"/>
                             </Divider>
@@ -1473,17 +1487,18 @@ function FlowComponent() {
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
                         </Menu>
-                        <Button variant="text" color="primary" onClick={handleProjectMenuClick}>
+                        <Button variant="outlined" color="primary" onClick={handleProjectMenuClick}>
                             ProjectName
+                            <ExpandMore/>
                         </Button>
                         <Menu
                             anchorEl={projectMenuAnchorEl}
                             open={isProjectMenuOpen}
                             onClose={handleProjectMenuClose}
                         >
-                            <MenuItem onClick={handleProjectMenuClose}>Option 1</MenuItem>
-                            <MenuItem onClick={handleProjectMenuClose}>Option 2</MenuItem>
-                            <MenuItem onClick={handleProjectMenuClose}>Option 3</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Project 1</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Project 2</MenuItem>
+                            <MenuItem onClick={handleProjectMenuClose}>Project 3</MenuItem>
                         </Menu>
                         <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
                             <TextField
