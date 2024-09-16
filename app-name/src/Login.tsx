@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { TextField, Button, Typography, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,14 @@ import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 // @ts-ignore
 import { auth } from "./firebase";
+
+import {
+    BrowserRouter as Router,
+    Route,
+    Routes,
+} from 'react-router-dom';
+
+import FlowComponent from './App';
 
 const BackgroundBox = styled(Box)(({ }) => ({
     display: 'flex',
@@ -38,7 +46,7 @@ const ToolName = styled(Typography)(({ theme }) => ({
     fontWeight: 'bold',
 }));
 
-const LoginScreen: React.FC = () => {
+function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(''); // State for error message
@@ -69,7 +77,7 @@ const LoginScreen: React.FC = () => {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             console.log('User signed in:', userCredential.user);
             setErrorMessage(''); // Clear any existing error message
-            navigate('/'); // Redirect to the main page after successful login
+            navigate('/App'); // Redirect to the main page after successful login
         } catch (error) {
             // @ts-ignore
             console.error('Error signing in:', error.message);
@@ -227,4 +235,13 @@ const LoginScreen: React.FC = () => {
     );
 };
 
-export default LoginScreen;
+export default function LoginRoutes(){
+    return(
+        <Router>
+            <Routes>
+                <Route path="/" element={<LoginScreen />} />
+                <Route path="/App" element={<FlowComponent />} />
+            </Routes>
+        </Router>
+    );
+}
