@@ -11,31 +11,26 @@ const openai = new OpenAI({
 });
 
 app.use(cors());
-app.use(express.text());
+app.use(express.json()); // Parse JSON bodies
 
 app.post('/chat', async (req, res) => {
-    const userPrompt = req.body; // Expecting plain text in the request body
+    const { prompt, model, temperature, max_tokens } = req.body; // Receive max_tokens as well
 
     try {
-        // Make a request to the OpenAI API without specifying response_format or json_schema
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: model || "gpt-4o", // Default to gpt-4o if no model is selected
             messages: [
-                { role: "system", content: "You are a helpful assistant." },  // Static system prompt
-                { role: "user", content: userPrompt } // User's prompt from the request
+                { role: "system", content: "Answer as a sea pirate" },
+                { role: "user", content: prompt }
             ],
-            temperature: 1,
-            max_tokens: 4000,
+            temperature: temperature || 1, // Use provided temperature or default to 1
+            max_tokens: max_tokens || 4000, // Use provided max_tokens or default to 4000
         });
 
-        // Extract the assistant's message from the API response
         const assistantMessage = response.choices[0].message.content;
-
-        // Send the assistant's message as plain text
         res.status(200).send(assistantMessage);
     } catch (err) {
         console.error('Error in OpenAI request:', err);
-        // Send error message as plain text
         res.status(500).send('An error occurred: ' + err.message);
     }
 });
