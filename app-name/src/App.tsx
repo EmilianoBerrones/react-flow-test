@@ -465,7 +465,6 @@ function FlowComponent() {
     };
 
     const [anchorMenu, setAnchorMenu] = React.useState<null | HTMLElement>(null);
-    const openMenu = Boolean(anchorMenu);
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorMenu(event.currentTarget);
@@ -1754,18 +1753,23 @@ function FlowComponent() {
                                             </Grid>
                                         </Grid>
                                         <Grid item>
-                                            <Grid container>
-                                                <Grid item xs>
-                                                    <Button variant="outlined" fullWidth
-                                                            disabled={!isValidAssuranceText}
-                                                            onClick={handleReloadButton}>Accept changes</Button>
+                                            {view ==='textField' && (
+                                                <Grid container>
+                                                    <Grid item xs>
+                                                        <Button variant="outlined" fullWidth
+                                                                disabled={!isValidAssuranceText}
+                                                                onClick={handleReloadButton}>Accept changes</Button>
+                                                    </Grid>
+                                                    <Grid item xs={1}>
+                                                        <IconButton color="primary" onClick={handleOpenInitialDialog}>
+                                                            <OpenInFullRounded/>
+                                                        </IconButton>
+                                                    </Grid>
                                                 </Grid>
-                                                <Grid item xs={1}>
-                                                    <IconButton color="primary" onClick={handleOpenInitialDialog}>
-                                                        <OpenInFullRounded/>
-                                                    </IconButton>
-                                                </Grid>
-                                            </Grid>
+                                            )}
+                                            {view === 'richTreeView' && (
+                                                <></>
+                                            )}
                                         </Grid>
                                     </Grid>
                                 </AccordionDetails>
