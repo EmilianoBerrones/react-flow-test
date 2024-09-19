@@ -15,7 +15,7 @@ import {
 } from 'react-router-dom';
 
 import FlowComponent from './App';
-import LLMMenu from './LLMMenu';
+import GPTMenu from './LLMMenu';
 
 const BackgroundBox = styled(Box)(({ }) => ({
     display: 'flex',
@@ -242,7 +242,7 @@ export default function LoginRoutes(){
             <Routes>
                 <Route path="/" element={<LoginScreen />} />
                 <Route path="/App" element={<FlowComponent />} />
-                <Route path="/menu" element={<LLMMenu />}/>
+                <Route path="/menu" element={<GPTMenu />}/>
             </Routes>
         </Router>
     );

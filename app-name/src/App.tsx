@@ -78,6 +78,7 @@ import DialogActions from "@mui/material/DialogActions";
 //FireBase imports
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 // import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -454,6 +455,7 @@ function FlowComponent() {
 
     const [anchorLogin, setAnchorLogin] = React.useState<null | HTMLElement>(null);
     const openLogin = Boolean(anchorLogin);
+    const navigate = useNavigate(); // Initialize useNavigate
 
     const handleLoginClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorLogin(event.currentTarget);
@@ -1400,6 +1402,14 @@ function FlowComponent() {
         setFullScreenInitialTextDialog(true);
     }
 
+    const handleTravelClick = () => {
+        navigate('/menu');
+    }
+
+    const handleTravelLogout = () => {
+        navigate('/');
+    }
+
     // HTML section
     return (
         <>
@@ -1431,7 +1441,7 @@ function FlowComponent() {
                         </IconButton>
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem>Assurance case editor</MenuItem>
-                            <MenuItem>Pattern instantiation</MenuItem>
+                            <MenuItem onClick={handleTravelClick}>Pattern instantiation</MenuItem>
                             <MenuItem>Pattern detection</MenuItem>
                         </Menu>
                         <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
@@ -1578,9 +1588,9 @@ function FlowComponent() {
                                     <Avatar /> My account
                                 </MenuItem>
                                 <Divider />
-                                <MenuItem onClick={handleLoginClose}>
+                                <MenuItem onClick={handleTravelLogout}>
                                     <ListItemIcon>
-                                        <Logout fontSize="small" />
+                                        <Logout  fontSize="small" />
                                     </ListItemIcon>
                                     Logout
                                 </MenuItem>
