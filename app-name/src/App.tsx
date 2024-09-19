@@ -13,9 +13,6 @@ import {
     useViewport,
 } from "reactflow";
 
-import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
-import Login from './Login';
-import LLMMenu from "./LLMMenu.tsx";
 
 import Dagre from '@dagrejs/dagre'
 
@@ -76,26 +73,27 @@ import DialogActions from "@mui/material/DialogActions";
 // import {Simulate} from "react-dom/test-utils";
 // import input = Simulate.input;
 
-
 // import { onAuthStateChanged } from 'firebase/auth';
 // import { auth } from './firebase'; // Assuming you have a firebase.js file exporting `auth`
 //FireBase imports
-
-// import { initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 
-// const firebaseConfig = {
-//     apiKey: "AIzaSyCGK1BL0n4t_L_53iKZ40U1ozIKHf6-GaI",
-//     authDomain: "yorkuassurance.firebaseapp.com",
-//     projectId: "yorkuassurance",
-//     storageBucket: "yorkuassurance.appspot.com",
-//     messagingSenderId: "997144539474",
-//     appId: "1:997144539474:web:ba786fe11fa7e50b530a8b",
-//     measurementId: "G-2B5DVNB9HH"
-//   };
+const firebaseConfig = {
+    apiKey: "AIzaSyCGK1BL0n4t_L_53iKZ40U1ozIKHf6-GaI",
+    authDomain: "yorkuassurance.firebaseapp.com",
+    projectId: "yorkuassurance",
+    storageBucket: "yorkuassurance.appspot.com",
+    messagingSenderId: "997144539474",
+    appId: "1:997144539474:web:ba786fe11fa7e50b530a8b",
+    measurementId: "G-2B5DVNB9HH"
+};
 
-// const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export { db };
 
 // Layouting elements with the Dagre library
 const getLayoutedElements = (nodes: any[], edges: any[], options: { direction: any }) => {
@@ -1199,8 +1197,6 @@ function FlowComponent() {
         };
     }, []);
 
-    // const navigate = useNavigate();
-
     const handleFileImport = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
@@ -2124,14 +2120,8 @@ const SidePanel = ({
 export default function App() {
     // Function to encapsule the HTML into a ReactFlow provider
     return (
-        <Router>
             <ReactFlowProvider>
-                <Routes>
-                    <Route path="/" element={<FlowComponent/>}/>
-                    <Route path="/login" element={<Login/>}/>
-                    <Route path="/menu" element={<LLMMenu/>}/>
-                </Routes>
+                <FlowComponent />
             </ReactFlowProvider>
-        </Router>
     );
 }

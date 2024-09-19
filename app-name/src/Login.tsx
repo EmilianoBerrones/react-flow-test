@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { TextField, Button, Typography, Box } from '@mui/material';
+import { useState } from 'react';
+import { TextField, Button, Typography, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 // Firebase Resources
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 // @ts-ignore
 import { auth } from "./firebase";
+
+import {
+    BrowserRouter as Router,
+    Route,
+    Routes,
+} from 'react-router-dom';
+
+import FlowComponent from './App';
+import LLMMenu from './LLMMenu';
 
 const BackgroundBox = styled(Box)(({ }) => ({
     display: 'flex',
@@ -38,21 +47,29 @@ const ToolName = styled(Typography)(({ theme }) => ({
     fontWeight: 'bold',
 }));
 
-const LoginScreen: React.FC = () => {
+function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(''); // State for error message
+    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false); // State for Forgot Password dialog
+    const [signUpOpen, setSignUpOpen] = useState(false); // State for Sign Up dialog
+    const [signUpEmail, setSignUpEmail] = useState(''); // State for sign up email
+    const [signUpPassword, setSignUpPassword] = useState(''); // State for sign up password
+    const [signUpMessage, setSignUpMessage] = useState(''); // State for sign up response message
+    const [resetEmail, setResetEmail] = useState(''); // State for reset email
+    const [resetMessage, setResetMessage] = useState(''); // State for reset email response message
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleSignUp = async () => {
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword);
             console.log('User signed up:', userCredential.user);
+            setSignUpMessage('Account created successfully!');
             setErrorMessage(''); // Clear any existing error message
         } catch (error) {
             // @ts-ignore
             console.error('Error signing up:', error.message);
-            setErrorMessage('Error signing up. Please try again.');
+            setSignUpMessage('Error signing up. Please try again.');
         }
     };
 
@@ -61,7 +78,7 @@ const LoginScreen: React.FC = () => {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             console.log('User signed in:', userCredential.user);
             setErrorMessage(''); // Clear any existing error message
-            navigate('/'); // Redirect to the main page after successful login
+            navigate('/App'); // Redirect to the main page after successful login
         } catch (error) {
             // @ts-ignore
             console.error('Error signing in:', error.message);
@@ -69,6 +86,16 @@ const LoginScreen: React.FC = () => {
         }
     };
 
+    const handleForgotPassword = async () => {
+        try {
+            await sendPasswordResetEmail(auth, resetEmail);
+            setResetMessage('Password reset email sent! Please check your inbox.');
+        } catch (error) {
+            // @ts-ignore
+            console.error('Error sending password reset email:', error.message);
+            setResetMessage('Error sending reset email. Please try again.');
+        }
+    };
 
     return (
         <BackgroundBox>
@@ -117,7 +144,7 @@ const LoginScreen: React.FC = () => {
                     color="secondary"
                     fullWidth
                     sx={{ mt: 2 }}
-                    onClick={handleSignUp}
+                    onClick={() => setSignUpOpen(true)}
                 >
                     Sign Up
                 </Button>
@@ -125,12 +152,98 @@ const LoginScreen: React.FC = () => {
                     color="secondary"
                     variant="text"
                     size="small"
+                    onClick={() => setForgotPasswordOpen(true)}
                 >
                     Forgot Password?
                 </Button>
             </LoginBox>
+
+            {/* Forgot Password Dialog */}
+            <Dialog open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)}>
+                <DialogTitle>Reset Password</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter your email address to receive a link to reset your password.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Email Address"
+                        type="email"
+                        fullWidth
+                        variant="outlined"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                    />
+                    {resetMessage && (
+                        <Typography variant="body2" color={resetMessage.includes('sent') ? 'primary' : 'error'} gutterBottom>
+                            {resetMessage}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleForgotPassword} color="primary">
+                        Send Reset Link
+                    </Button>
+                    <Button onClick={() => setForgotPasswordOpen(false)} color="secondary">
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Sign Up Dialog */}
+            <Dialog open={signUpOpen} onClose={() => setSignUpOpen(false)}>
+                <DialogTitle>Create an Account</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please enter your email address and password to create a new account.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Email Address"
+                        type="email"
+                        fullWidth
+                        variant="outlined"
+                        value={signUpEmail}
+                        onChange={(e) => setSignUpEmail(e.target.value)}
+                    />
+                    <TextField
+                        margin="dense"
+                        label="Password"
+                        type="password"
+                        fullWidth
+                        variant="outlined"
+                        value={signUpPassword}
+                        onChange={(e) => setSignUpPassword(e.target.value)}
+                    />
+                    {signUpMessage && (
+                        <Typography variant="body2" color={signUpMessage.includes('successfully') ? 'primary' : 'error'} gutterBottom>
+                            {signUpMessage}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleSignUp} color="primary">
+                        Sign Up
+                    </Button>
+                    <Button onClick={() => setSignUpOpen(false)} color="secondary">
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </BackgroundBox>
     );
 };
 
-export default LoginScreen;
+export default function LoginRoutes(){
+    return(
+        <Router>
+            <Routes>
+                <Route path="/" element={<LoginScreen />} />
+                <Route path="/App" element={<FlowComponent />} />
+                <Route path="/menu" element={<LLMMenu />}/>
+            </Routes>
+        </Router>
+    );
+}
