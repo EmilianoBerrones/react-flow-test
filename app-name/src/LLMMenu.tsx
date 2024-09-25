@@ -8,9 +8,16 @@ import {
     Typography, 
     Button, 
     Slider,
-    Modal } from '@mui/material';
+    Modal, 
+    Accordion,
+    AccordionDetails,
+    AccordionSummary
+    } from '@mui/material';
 
 import { useNavigate } from 'react-router-dom';
+
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import {
     Background,
@@ -250,6 +257,7 @@ function LLMMenu() {
     const [userPrompt, setUserPrompt] = useState('');
     const [assistantResponse, setAssistantResponse] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [selectedModel, setSelectedModel] = useState('gpt-4o'); // Default to gpt-4o
     const [temperature, setTemperature] = useState(1); // Default temperature to 1
     const [maxTokens, setMaxTokens] = useState(4000); // Default max tokens to 4000
@@ -280,9 +288,14 @@ function LLMMenu() {
     const navigate = useNavigate(); // Initialize useNavigate
     const [isValidAssuranceText, setIsValidAssuranceText] = useState(true); // Estado para validar el texto
     const [openModal, setOpenModal] = useState(false);
+    const [domainInfo, setDomainInfo] = useState('');
 
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
+
+    const handleDomainInfoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setDomainInfo(event.target.value);  // Update domainInfo when user types in the TextField
+    };
 
     const handleReloadButton = () => {
         if (!isValidAssuranceText) return;
@@ -655,23 +668,14 @@ function LLMMenu() {
         return true;
     }
 
-    const handleTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Tab') {
-            event.preventDefault();
-            const textarea = event.target as HTMLTextAreaElement;
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-
-            textarea.value = textarea.value.substring(0, start) + "\t" + textarea.value.substring(end);
-
-            textarea.selectionStart = textarea.selectionEnd = start + 1;
-        }
-    }
-
     const handleAssistantResponseChange = (event: any) => {
         const newText = event.target.value;
         setAssistantResponse(newText);
         validateInitialAssuranceText(newText); // Validate text upon modification
+    };
+
+    const toggleExpand = () => {
+        setIsExpanded(prev => !prev);
     };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -927,72 +931,6 @@ C3: Context: setting - retinal diagnosis pathway; time- alongside diagnosis pred
 @End_Assurance_case
  `;
 
-const domainInfo = `Now, I would provide you with domain information about ACAS Xu (Airborne Collision Avoidance System Xu) for 
-which you would create a security case from a given security case pattern. The domain information begins with the delimiter 
-“@Domain_Information” and ends with the delimiter "@End_Domain_Information”
-
-@Domain_Information
-ACAS Xu (Airborne Collision Avoidance System Xu) is a collision avoidance system designed for use in unmanned aerial vehicles 
-(UAVs), commonly known as drones. The primary objective of ACAS Xu is to enhance the safety of drone operations by preventing 
-collisions between drones or between a drone and other objects in its environment.
-
-The scenario involves two drones. One called the “intruder” which is any other drone or object that poses a collision threat 
-to the ownship. and the other called the “ownship.” which is the perspective we adopt. The ownship is equipped with ACAS Xu and 
-has a functional space in which it must operate. This space is conceptually partitioned into two operational areas: collision 
-avoidance threshold and collision volume with an elevated risk of collision for the ownship with intruders. When no risk of collision 
-is detected, the ownship follows the current heading to the destination area. Otherwise, if another drone is detected in the collision 
-volume, the ownship will turn right or left to avoid the collision and prevent the intruder from reaching the collision avoidance 
-threshold. 
-
-The architecture of ACAS Xu contains the following components.
-
-•	Sensors: The ownship's sensors gather data on potential intruders, including their velocity, angle, and distance relative to 
-    the ownship.
-
-•	Processor: The collected data is processed to compute a suitable avoidance strategy (e.g., turn left, turn right, or do nothing).
-
-•	Planner: Based on the processor's decision, a trajectory is planned to navigate the ownship safely while avoiding collisions.
-
-•	Actuator: The planned trajectory is executed by the actuator, ensuring the ownship follows the new path.
-
-ACAS Xu's security can be compromised if an attacker alters the messages sent to the processor, leading to incorrect decisions 
-that may result in collisions. Therefore, ensuring the security of ACAS Xu involves:
-security requirements decomposition that aims to identify security threats, and formalization of the system and the security 
-threats to later verify the absence of threats when developing a secure system. If it can be shown that all the relevant threats 
-have been identified and mitigated, then the system is acceptably secure.
-
-The following security requirements (SRs) below are imposed to design a secure ACAS Xu.
-•	SR1: The GPS messages are genuine and have not been intentionally altered.
-•	SR2: The processor must receive data only from valid sensors.
-•	SR3: The system should employ mechanisms to mitigate unauthorized disclosure of the planning information.
-•	SR4: ACAS Xu development shall be done considering security risk assessment procedures.
-
-The four SR are decomposed into requirements about the satisfaction of asset protection (SR1 –SR3)
-and secure development process requirements (SR4). The former concerns requirements to protect resources that are worth 
-protecting. The latter concerns the requirements about the development activities that must conform to a relevant secure 
-development methodology and/or security standard.
-
-In addition, ACAS Xu has low level elements that capture functional architecture in terms of components and connectors, 
-and the behavioural aspects of the architectural elements. These elements include the following.
-•	Component: a modeling artifact which represents a piece of software architecture.
-•	MsgPassing: the representation of a message exchanged between two components (sender, receiver).
-•	Port: the interaction point through which a Component can communicate with its environment.
-•	ConnectorMPS: a link that enables communication between Ports.
-•	Payload: the useful data contained in a Message.
-
-Based on the Microsoft STRIDE threat analysis technique, the following security threats (STs) against the components 
-and the communication links are identified from the security requirements (SRs).
-
-•	ST1: Tampering – This threat is identified from SR1 and involves GPS sensors and processor.
-•	ST2: Spoofing - SR2 Sensors and processor
-•	ST3: Elevation of privileges - SR3 Planning system
-
-Finally, to ensure that ACAS Xu is acceptably secure, during the creation of its security case, an instance of the goal 
-(G0.X) is created for each security threat against which the system must be protected, where 𝑋 denotes the order of the threat.
-
-@End_Domain_Information
- `;
-
 const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates + predicateAC + predicateACP + predicateStructure + preliminaryPattern + pattern + assuranceCase + domainInfo;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1001,7 +939,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
         <div>
             <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column' }}>
                 {/* AppBar */}
-                <AppBar position="fixed" color="transparent" sx={{ height: '8vh', display: 'flex', justifyContent: 'center' }}>
+                <AppBar position="fixed" color="default" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, height: '8vh', display: 'flex', justifyContent: 'center' }}>
                     <Toolbar sx={{ minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
                         <IconButton onClick={handleMenuClick} size="large" edge="start" color="primary" aria-label="menu" sx={{ mr: 2 }}>
                             <MenuIcon />
@@ -1055,7 +993,6 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                         </div>
                     </Toolbar>
                 </AppBar>
-
                 <Modal
                     open={openModal}
                     onClose={handleCloseModal}
@@ -1098,30 +1035,57 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                     {/* Left Panel */}
                     <Box sx={{ width: '30%', display: 'flex', flexDirection: 'column', gap: 2, padding: 2, borderRight: '1px solid #ddd' }}>
                         <Typography variant="h6">Project Name</Typography>
-                        <TextField label="User Prompt" multiline rows={4} variant="outlined" value={userPrompt} onChange={handleUserPromptChange} fullWidth />
-                        <Typography>System Prompt</Typography>
-                        <TextField
-                            multiline
-                            rows={3}
-                            variant="outlined"
-                            value={fullSystemPrompt}
-                            fullWidth
-                            InputProps={{
-                                readOnly: true,
-                            }}
-                            onClick={handleOpenModal} // Open modal on click
-                        />
-                        <FormControl fullWidth variant="outlined">
-                            <InputLabel>Choose LLM</InputLabel>
-                            <Select label="Choose LLM" value={selectedModel} onChange={handleModelChange}>
-                                <MenuItem value="gpt-4-turbo">GPT-4 Turbo</MenuItem>
-                                <MenuItem value="gpt-4o">GPT-4 Omni</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <Typography>Temperature: {temperature}</Typography>
-                        <Slider value={temperature} min={0} max={2} step={0.1} onChange={handleTemperatureChange} />
-                        <Typography>Max Tokens: {maxTokens}</Typography>
-                        <Slider value={maxTokens} min={1} max={4000} step={1} onChange={handleMaxTokensChange} />
+                        <Accordion style={{backgroundColor: '#f0f3f4'}}>
+                            <AccordionSummary expandIcon={<ExpandMore/>}>
+                                User Prompt
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TextField multiline rows={4} variant="outlined" value={userPrompt} onChange={handleUserPromptChange} fullWidth />
+                            </AccordionDetails>
+                        </Accordion>
+                        <Accordion style={{backgroundColor: '#f0f3f4'}}>
+                            <AccordionSummary expandIcon={<ExpandMore/>}>
+                                System Prompt
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TextField
+                                    label="Enter Domain Info"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={domainInfo}  // Bind value to domainInfo
+                                    onChange={handleDomainInfoChange}  // Handle text input change
+                                />
+                                <TextField
+                                    multiline
+                                    rows={3}
+                                    variant="outlined"
+                                    value={fullSystemPrompt}
+                                    fullWidth
+                                    InputProps={{
+                                        readOnly: true,
+                                    }}
+                                    onClick={handleOpenModal} // Open modal on click
+                                />
+                            </AccordionDetails>
+                        </Accordion>
+                        <Accordion style={{backgroundColor: '#f0f3f4'}}>
+                            <AccordionSummary expandIcon={<ExpandMore/>}>
+                                LLM Customization
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <FormControl fullWidth variant="outlined">
+                                <InputLabel>Choose LLM</InputLabel>
+                                <Select label="Choose LLM" value={selectedModel} onChange={handleModelChange}>
+                                    <MenuItem value="gpt-4-turbo">GPT-4 Turbo</MenuItem>
+                                    <MenuItem value="gpt-4o">GPT-4 Omni</MenuItem>
+                                </Select>
+                                </FormControl>
+                                <Typography paddingTop={2}>Temperature: {temperature}</Typography>
+                                <Slider value={temperature} min={0} max={2} step={0.1} onChange={handleTemperatureChange} />
+                                <Typography>Max Tokens: {maxTokens}</Typography>
+                                <Slider value={maxTokens} min={1} max={4000} step={1} onChange={handleMaxTokensChange} />
+                            </AccordionDetails>
+                        </Accordion>
                         <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
                             {loading ? "Generating..." : "Send"}
                         </Button>
@@ -1134,22 +1098,28 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                     {/* Right Panel */}
                     <Box sx={{ flexGrow: 1, padding: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {assistantResponse && (
-                        <TextField
-                            id="AssuranceText"
-                            multiline
-                            fullWidth
-                            variant="outlined"
-                            value={assistantResponse}
-                            onChange={handleAssistantResponseChange}
-                            error={!isValidAssuranceText}
-                            helperText={!isValidAssuranceText ? 'Follow the GSN rules' : ''}
-                            onKeyDown={handleTab}
-                            // Scrollable content
-                            sx={{
-                                maxHeight: '200px', // Set a maximum height for the text box
-                                overflow: 'auto', // Enable scrolling when the content exceeds the height
-                            }}
-                        />
+                        <Box sx={{ position: 'relative' }}>
+                            <TextField
+                                id="AssuranceText"
+                                multiline
+                                fullWidth
+                                variant="outlined"
+                                value={assistantResponse}
+                                onChange={handleAssistantResponseChange}
+                                error={!isValidAssuranceText}
+                                helperText={!isValidAssuranceText ? 'Each line must have the required format: ["- "][Node ID][": "][Node text]["undeveloped and uninstantiated"]. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: "G0_1"' : ''}
+                                sx={{
+                                    maxHeight: isExpanded ? '600px' : '200px', // Adjust height based on expansion state
+                                    overflow: 'auto',
+                                }}
+                            />
+                            <IconButton
+                                sx={{ position: 'absolute', top: 5, right: 20}}
+                                onClick={toggleExpand}
+                            >
+                                {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            </IconButton>
+                        </Box>
                     )}
                         <Box sx={{ flexGrow: 1, border: '1px solid #ddd', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <ReactFlow
