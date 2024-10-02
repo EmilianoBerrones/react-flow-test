@@ -11,13 +11,18 @@ import {
     Modal, 
     Accordion,
     AccordionDetails,
-    AccordionSummary
+    AccordionSummary,
     } from '@mui/material';
+
+import * as htmlToImage from 'html-to-image';
+import download from 'downloadjs';
 
 import { useNavigate } from 'react-router-dom';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import Inventory from '@mui/icons-material/Inventory';
+import Chip from '@mui/material/Chip';
 
 import {
     Background,
@@ -28,8 +33,8 @@ import {
     useEdgesState,
     addEdge,
     BackgroundVariant,
-    MiniMap,
-    Controls
+    Controls,
+    useReactFlow
 } from "reactflow";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -39,9 +44,9 @@ import "./updatenode.css";
 import Dagre from '@dagrejs/dagre'
 
 import {
-    AppBar, Avatar, IconButton, Menu, Toolbar, Tooltip, ToggleButton, ToggleButtonGroup, Divider, ListItemIcon
+    AppBar, Avatar, IconButton, Menu, Toolbar, Tooltip, Divider, ListItemIcon
 } from "@mui/material";
-import { Logout, Search, ExpandMore, Menu as MenuIcon } from "@mui/icons-material";
+import { Logout, ExpandMore, Menu as MenuIcon } from "@mui/icons-material";
 
 import {initialNodes, nodeTypes} from "./nodes";
 import {initialEdges, edgeTypes} from "./edges";
@@ -264,8 +269,6 @@ function LLMMenu() {
     const [anchorMenu, setAnchorMenu] = useState<null | HTMLElement>(null);
     const [projectMenuAnchorEl, setProjectMenuAnchorEl] = useState<null | HTMLElement>(null);
     const isProjectMenuOpen = Boolean(projectMenuAnchorEl);
-    const [searchMode, setSearchMode] = useState('id');
-    const [searchValue, setSearchValue] = useState('');
     const [anchorLogin, setAnchorLogin] = useState<null | HTMLElement>(null);
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -284,14 +287,18 @@ function LLMMenu() {
     const [shapeColor] = useState('#777777');
     const [shapeGap] = useState(28);
     const [backgroundPaneColor] = useState('#ffffff');
-    const [showMiniMap] = useState(true);
     const navigate = useNavigate(); // Initialize useNavigate
     const [isValidAssuranceText, setIsValidAssuranceText] = useState(true); // Estado para validar el texto
     const [openModal, setOpenModal] = useState(false);
     const [domainInfo, setDomainInfo] = useState('');
+    const [anchorEl, setAnchorEl] = useState(null);
 
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
+
+    const [exporting, setExporting] = useState('');
+
+    const {fitView, getViewport, setViewport} = useReactFlow();
 
     const handleDomainInfoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setDomainInfo(event.target.value);  // Update domainInfo when user types in the TextField
@@ -583,23 +590,6 @@ function LLMMenu() {
         setProjectMenuAnchorEl(null);
     };
 
-    const handleSearchChange = (event: any) => {
-        setSearchValue(event.target.value);
-    };
-
-    const handleSearchSubmit = () => {
-        if (searchMode === 'id') {
-            // Implement search by ID
-        } else if (searchMode === 'text') {
-            // Implement search by text
-        }
-        setSearchValue('');
-    };
-
-    const handleSearchModeChange = (_event: any, newSearchMode: any) => {
-        if (newSearchMode !== null) setSearchMode(newSearchMode);
-    };
-
     const handleLoginClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorLogin(event.currentTarget);
     };
@@ -677,6 +667,81 @@ function LLMMenu() {
     const toggleExpand = () => {
         setIsExpanded(prev => !prev);
     };
+
+    const exportToJSON = () => {
+        // A function to recursively build the tree structure
+        const buildTree = (nodeId:any, nodes:any, edges:any) => {
+            // @ts-ignore
+            const node = nodes.find(n => n.id === nodeId);
+            const children = edges
+            // @ts-ignore
+                .filter(edge => edge.source === nodeId)
+                // @ts-ignore
+                .map(edge => buildTree(edge.target, nodes, edges));
+    
+            return {
+                id: node.id,
+                label: node.data.label, // Assuming node label is in node.data.label
+                ...(children.length > 0 ? { children } : {})
+            };
+        };
+    
+        // Find root nodes (nodes that are not the target of any edge)
+        const rootNodes = nodes.filter(node => 
+            !edges.some(edge => edge.target === node.id)
+        );
+    
+        // Build the tree for each root node
+        const jsonStructure = rootNodes.map(rootNode => buildTree(rootNode.id, nodes, edges));
+    
+        // Create and download the JSON
+        const blob = new Blob([JSON.stringify(jsonStructure, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nodes.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    
+
+    const handleClick = (event: any) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleExport = (format: any) => {
+        setExporting(format);
+    };
+
+    useEffect(() => {
+        if (exporting) {
+            const originalViewport = getViewport();
+            fitView();
+
+            setTimeout(async () => {
+                const element = document.querySelector('.react-flow') as HTMLElement;
+                let dataUrl;
+
+                if (exporting === 'png') {
+                    dataUrl = await htmlToImage.toPng(element);
+                } else if (exporting === 'jpeg') {
+                    dataUrl = await htmlToImage.toJpeg(element);
+                } else if (exporting === 'svg') {
+                    dataUrl = await htmlToImage.toSvg(element);
+                }
+
+                if (dataUrl) {
+                    download(dataUrl, `graph.${exporting}`);
+                }
+
+                setViewport(originalViewport);
+                setExporting('');
+            }, 100); // Delay to ensure state update
+        }
+    }, [exporting]);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const preliminaryAC = `You are an assistant who assist in developing an assurance case in a 
@@ -949,6 +1014,22 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                             <MenuItem>Pattern instantiation</MenuItem>
                             <MenuItem>Pattern detection</MenuItem>
                         </Menu>
+                        <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
+                                    sx={{mr: 2}}>
+                            <Inventory/>
+                        </IconButton>
+                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                            <Divider>
+                                <Chip label="JSON Manager" size="small"/>
+                            </Divider>
+                            <MenuItem onClick={exportToJSON}>Export graphic to JSON</MenuItem>
+                            <Divider>
+                                <Chip label="Image Export" size="small"/>
+                            </Divider>
+                            <MenuItem onClick={() => handleExport('png')}>Export to PNG</MenuItem>
+                            <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
+                            <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
+                        </Menu>
                         <Button variant="outlined" color="primary" onClick={handleProjectMenuClick}>
                             ProjectName <ExpandMore />
                         </Button>
@@ -958,21 +1039,6 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                             <MenuItem onClick={handleProjectMenuClose}>Project 3</MenuItem>
                         </Menu>
                         <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                            <TextField
-                                label={`Search node by ${searchMode}`}
-                                variant="outlined"
-                                sx={{ height: '36px', flexGrow: 1, maxWidth: '300px', marginRight: '8px' }}
-                                size="small"
-                                value={searchValue}
-                                onChange={handleSearchChange}
-                            />
-                            <IconButton color="primary" size="large" onClick={handleSearchSubmit}>
-                                <Search />
-                            </IconButton>
-                            <ToggleButtonGroup value={searchMode} exclusive color="primary" onChange={handleSearchModeChange}>
-                                <ToggleButton value="id">ID</ToggleButton>
-                                <ToggleButton value="text">Text</ToggleButton>
-                            </ToggleButtonGroup>
                             <Tooltip title="Account settings">
                                 <IconButton onClick={handleLoginClick} size="small" sx={{ ml: 2 }} aria-haspopup="true">
                                     <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
@@ -1141,7 +1207,6 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                     color={shapeColor}
                                     gap={shapeGap}
                                     style={{backgroundColor: backgroundPaneColor}}/>
-                                {showMiniMap && <MiniMap/>}
                                 <Controls style={{marginLeft: 25}}/>
                             </ReactFlow>
                         </Box>

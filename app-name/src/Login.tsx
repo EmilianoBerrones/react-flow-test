@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { TextField, Button, Typography, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-
 // Firebase Resources
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 // @ts-ignore
@@ -22,7 +21,7 @@ const BackgroundBox = styled(Box)(({ }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '100vh',
-    backgroundImage: 'url(https://media.ed.edmunds-media.com/tesla/model-s/2024/oem/2024_tesla_model-s_sedan_plaid_fq_oem_1_1600.jpg)', // Replace with your image URL
+    backgroundImage: 'url(https://images.unsplash.com/photo-1718241905462-56e7b9f722f3?q=80&w=1856&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)', // Replace with your image URL
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
@@ -100,7 +99,7 @@ function LoginScreen() {
     return (
         <BackgroundBox>
             <ToolName variant="h4">
-                ToolName
+                SmartGSN!
             </ToolName>
             <LoginBox>
                 <Typography variant="h4" gutterBottom>

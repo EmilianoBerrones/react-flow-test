@@ -406,6 +406,7 @@ function FlowComponent() {
     const [showMiniMap, setShowMiniMap] = useState(true);
     const [exporting, setExporting] = useState('');
     const inputFileRef = useRef<HTMLInputElement>(null);
+    const inputFileReftxt = useRef<HTMLInputElement>(null);
 
     // Values for searching nodes
     const [searchMode, setSearchMode] = useState('id');
@@ -1231,8 +1232,8 @@ function FlowComponent() {
 
     // Function to trigger file input
     const handleTxtImportButtonClick = () => {
-        if (inputFileRef.current) {
-            inputFileRef.current.click();
+        if (inputFileReftxt.current) {
+            inputFileReftxt.current.click();
         }
     };
 
@@ -1456,10 +1457,10 @@ function FlowComponent() {
                             <MenuItem onClick={handleImportButtonClick}>
                                 Import graphic from JSON
                                 <input
-                                    accept="application/json"
-                                    style={{display: 'none'}}
-                                    type="file"
-                                    onChange={importFromJSON}
+                                    accept=".json"
+                                    style={{ display: 'none' }}
+                                    type="file"  // Use file as the input type
+                                    onChange={importFromJSON}  // This function will handle the imported file
                                     ref={inputFileRef}
                                 />
                             </MenuItem>
@@ -1480,7 +1481,7 @@ function FlowComponent() {
                                 <input
                                     type="file"
                                     accept=".txt,.docx"
-                                    ref={inputFileRef}
+                                    ref={inputFileReftxt}
                                     style={{display: 'none'}}
                                     onChange={handleFileImport}
                                 />
