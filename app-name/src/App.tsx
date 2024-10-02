@@ -1604,7 +1604,7 @@ function FlowComponent() {
                         <Grid container direction="column" spacing={2} style={{minHeight: 'inherit'}}
                               justifyContent="center">
                             <Grid item>
-                                <Typography variant='h4' gutterBottom>DARE! GSN</Typography>
+                                <Typography variant='h4' gutterBottom>SmartGSN</Typography>
                             </Grid>
                             <Accordion style={{backgroundColor: '#f0f3f4'}}>
                                 <AccordionSummary expandIcon={<ExpandMore/>}>
