@@ -538,12 +538,12 @@ function LLMMenu() {
     };
 
     // @ts-ignore
-    const handleTemperatureChange = (event: any, value: number | number[]) => {
+    const handleTemperatureChange = (_event: any, value: number | number[]) => {
         setTemperature(value as number);
     };
 
     // @ts-ignore
-    const handleMaxTokensChange = (event: any, value: number | number[]) => {
+    const handleMaxTokensChange = (_event: any, value: number | number[]) => {
         setMaxTokens(value as number);
     };
 
@@ -1073,7 +1073,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                             transform: 'translate(-50%, -50%)',
                             width: 400,
                             height: 400, // Set a fixed height for the modal
-                            bgcolor: 'background.paper',
+                            //bgcolor: 'background.paper',
                             border: '2px solid #000',
                             boxShadow: 24,
                             p: 4,
