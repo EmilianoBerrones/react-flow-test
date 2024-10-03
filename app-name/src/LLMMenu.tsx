@@ -299,6 +299,15 @@ function LLMMenu() {
     const [exporting, setExporting] = useState('');
 
     const {fitView, getViewport, setViewport} = useReactFlow();
+    const [projectName, setProjectName] = useState('Project Name'); // State to hold the project name
+
+    const handleProjectNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setProjectName(event.target.value);  // Update the project name state
+    };
+
+    const sanitizeFileName = (name: string) => {
+        return name.replace(/[^a-z0-9]/gi, '_').toLowerCase(); // Replace non-alphanumeric characters with underscores
+    };
 
     const handleDomainInfoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setDomainInfo(event.target.value);  // Update domainInfo when user types in the TextField
@@ -669,37 +678,36 @@ function LLMMenu() {
     };
 
     const exportToJSON = () => {
+        const sanitizedProjectName = sanitizeFileName(projectName);
+
         // A function to recursively build the tree structure
         const buildTree = (nodeId:any, nodes:any, edges:any) => {
-            // @ts-ignore
-            const node = nodes.find(n => n.id === nodeId);
+            const node = nodes.find((n: any) => n.id === nodeId);
             const children = edges
-            // @ts-ignore
-                .filter(edge => edge.source === nodeId)
-                // @ts-ignore
-                .map(edge => buildTree(edge.target, nodes, edges));
-    
+                .filter((edge: any) => edge.source === nodeId)
+                .map((edge: any) => buildTree(edge.target, nodes, edges));
+
             return {
                 id: node.id,
                 label: node.data.label, // Assuming node label is in node.data.label
                 ...(children.length > 0 ? { children } : {})
             };
         };
-    
+
         // Find root nodes (nodes that are not the target of any edge)
-        const rootNodes = nodes.filter(node => 
-            !edges.some(edge => edge.target === node.id)
+        const rootNodes = nodes.filter((node: any) =>
+            !edges.some((edge: any) => edge.target === node.id)
         );
-    
+
         // Build the tree for each root node
-        const jsonStructure = rootNodes.map(rootNode => buildTree(rootNode.id, nodes, edges));
-    
+        const jsonStructure = rootNodes.map((rootNode: any) => buildTree(rootNode.id, nodes, edges));
+
         // Create and download the JSON
         const blob = new Blob([JSON.stringify(jsonStructure, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'nodes.json';
+        a.download = `${sanitizedProjectName}.json`;  // Use the sanitized project name
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -713,35 +721,32 @@ function LLMMenu() {
     };
 
     const handleExport = (format: any) => {
+        const sanitizedProjectName = sanitizeFileName(projectName);
         setExporting(format);
-    };
 
-    useEffect(() => {
-        if (exporting) {
+        setTimeout(async () => {
             const originalViewport = getViewport();
             fitView();
 
-            setTimeout(async () => {
-                const element = document.querySelector('.react-flow') as HTMLElement;
-                let dataUrl;
+            const element = document.querySelector('.react-flow') as HTMLElement;
+            let dataUrl;
 
-                if (exporting === 'png') {
-                    dataUrl = await htmlToImage.toPng(element);
-                } else if (exporting === 'jpeg') {
-                    dataUrl = await htmlToImage.toJpeg(element);
-                } else if (exporting === 'svg') {
-                    dataUrl = await htmlToImage.toSvg(element);
-                }
+            if (format === 'png') {
+                dataUrl = await htmlToImage.toPng(element);
+            } else if (format === 'jpeg') {
+                dataUrl = await htmlToImage.toJpeg(element);
+            } else if (format === 'svg') {
+                dataUrl = await htmlToImage.toSvg(element);
+            }
 
-                if (dataUrl) {
-                    download(dataUrl, `graph.${exporting}`);
-                }
+            if (dataUrl) {
+                download(dataUrl, `${sanitizedProjectName}.${format}`);  // Use the sanitized project name
+            }
 
-                setViewport(originalViewport);
-                setExporting('');
-            }, 100); // Delay to ensure state update
-        }
-    }, [exporting]);
+            setViewport(originalViewport);
+            setExporting('');
+        }, 100); // Delay to ensure state update
+    };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const preliminaryAC = `You are an assistant who assist in developing an assurance case in a 
@@ -1030,14 +1035,14 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
                         </Menu>
-                        <Button variant="outlined" color="primary" onClick={handleProjectMenuClick}>
-                            ProjectName <ExpandMore />
-                        </Button>
-                        <Menu anchorEl={projectMenuAnchorEl} open={isProjectMenuOpen} onClose={handleProjectMenuClose}>
-                            <MenuItem onClick={handleProjectMenuClose}>Project 1</MenuItem>
-                            <MenuItem onClick={handleProjectMenuClose}>Project 2</MenuItem>
-                            <MenuItem onClick={handleProjectMenuClose}>Project 3</MenuItem>
-                        </Menu>
+                        <TextField 
+                            value={projectName} 
+                            onChange={handleProjectNameChange} 
+                            label="Project Name" 
+                            variant="outlined" 
+                            size="small"
+                            sx={{ width: '200px', marginRight: 2 }}
+                        />
                         <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
                             <Tooltip title="Account settings">
                                 <IconButton onClick={handleLoginClick} size="small" sx={{ ml: 2 }} aria-haspopup="true">
@@ -1073,7 +1078,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                             transform: 'translate(-50%, -50%)',
                             width: 400,
                             height: 400, // Set a fixed height for the modal
-                            //bgcolor: 'background.paper',
+                            bgcolor: 'background.paper',
                             border: '2px solid #000',
                             boxShadow: 24,
                             p: 4,
@@ -1099,9 +1104,36 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                 {/* Content below AppBar */}
                 <Box sx={{ display: 'flex', flexGrow: 1, marginTop: '8vh' }}>
                     {/* Left Panel */}
-                    <Box sx={{ width: '30%', display: 'flex', flexDirection: 'column', gap: 2, padding: 2, borderRight: '1px solid #ddd' }}>
-                        <Typography variant="h6">Project Name</Typography>
-                        <Accordion style={{backgroundColor: '#f0f3f4'}}>
+                    <Box sx={{ 
+                        width: '30%', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        padding: 2, 
+                        borderRight: '1px solid #ddd', 
+                        overflowY: 'auto', 
+                        maxHeight: 'calc(100vh - 8vh)' 
+                    }}>
+                        {/* Flex container for Project Name and Buttons */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                            <Typography variant="h6">{projectName}</Typography>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
+                                    {loading ? "Generating..." : "Send"}
+                                </Button>
+                                {assistantResponse && (
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        onClick={handleReloadButton}
+                                        disabled={!isValidAssuranceText}
+                                    >
+                                        Accept Assistant Prompt
+                                    </Button>
+                                )}
+                            </Box>
+                        </Box>
+
+                        <Accordion style={{ backgroundColor: '#f0f3f4', marginBottom: '8px' }}>
                             <AccordionSummary expandIcon={<ExpandMore/>}>
                                 User Prompt
                             </AccordionSummary>
@@ -1109,7 +1141,8 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                 <TextField multiline rows={4} variant="outlined" value={userPrompt} onChange={handleUserPromptChange} fullWidth />
                             </AccordionDetails>
                         </Accordion>
-                        <Accordion style={{backgroundColor: '#f0f3f4'}}>
+                        
+                        <Accordion style={{ backgroundColor: '#f0f3f4', marginBottom: '8px' }}>
                             <AccordionSummary expandIcon={<ExpandMore/>}>
                                 System Prompt
                             </AccordionSummary>
@@ -1118,8 +1151,8 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                     label="Enter Domain Info"
                                     variant="outlined"
                                     fullWidth
-                                    value={domainInfo}  // Bind value to domainInfo
-                                    onChange={handleDomainInfoChange}  // Handle text input change
+                                    value={domainInfo}
+                                    onChange={handleDomainInfoChange}
                                 />
                                 <TextField
                                     multiline
@@ -1130,21 +1163,22 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                     InputProps={{
                                         readOnly: true,
                                     }}
-                                    onClick={handleOpenModal} // Open modal on click
+                                    onClick={handleOpenModal}
                                 />
                             </AccordionDetails>
                         </Accordion>
-                        <Accordion style={{backgroundColor: '#f0f3f4'}}>
+                        
+                        <Accordion style={{ backgroundColor: '#f0f3f4', marginBottom: '8px' }}>
                             <AccordionSummary expandIcon={<ExpandMore/>}>
                                 LLM Customization
                             </AccordionSummary>
                             <AccordionDetails>
                                 <FormControl fullWidth variant="outlined">
-                                <InputLabel>Choose LLM</InputLabel>
-                                <Select label="Choose LLM" value={selectedModel} onChange={handleModelChange}>
-                                    <MenuItem value="gpt-4-turbo">GPT-4 Turbo</MenuItem>
-                                    <MenuItem value="gpt-4o">GPT-4 Omni</MenuItem>
-                                </Select>
+                                    <InputLabel>Choose LLM</InputLabel>
+                                    <Select label="Choose LLM" value={selectedModel} onChange={handleModelChange}>
+                                        <MenuItem value="gpt-4-turbo">GPT-4 Turbo</MenuItem>
+                                        <MenuItem value="gpt-4o">GPT-4 Omni</MenuItem>
+                                    </Select>
                                 </FormControl>
                                 <Typography paddingTop={2}>Temperature: {temperature}</Typography>
                                 <Slider value={temperature} min={0} max={2} step={0.1} onChange={handleTemperatureChange} />
@@ -1152,65 +1186,61 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                 <Slider value={maxTokens} min={1} max={4000} step={1} onChange={handleMaxTokensChange} />
                             </AccordionDetails>
                         </Accordion>
-                        <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
-                            {loading ? "Generating..." : "Send"}
-                        </Button>
-                        <Button
-                        variant="outlined" fullWidth
-                        disabled={!isValidAssuranceText}
-                        onClick={handleReloadButton}>Accept Assistant Prompt</Button>
                     </Box>
 
                     {/* Right Panel */}
                     <Box sx={{ flexGrow: 1, padding: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {assistantResponse && (
-                        <Box sx={{ position: 'relative' }}>
-                            <TextField
-                                id="AssuranceText"
-                                multiline
-                                fullWidth
-                                variant="outlined"
-                                value={assistantResponse}
-                                onChange={handleAssistantResponseChange}
-                                error={!isValidAssuranceText}
-                                helperText={!isValidAssuranceText ? 'Each line must have the required format: ["- "][Node ID][": "][Node text]["undeveloped and uninstantiated"]. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: "G0_1"' : ''}
-                                sx={{
-                                    maxHeight: isExpanded ? '600px' : '200px', // Adjust height based on expansion state
-                                    overflow: 'auto',
-                                }}
-                            />
-                            <IconButton
-                                sx={{ position: 'absolute', top: 5, right: 20}}
-                                onClick={toggleExpand}
-                            >
-                                {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                            </IconButton>
-                        </Box>
-                    )}
+                        {assistantResponse && (
+                            <Box sx={{ position: 'relative' }}>
+                                <TextField
+                                    id="AssuranceText"
+                                    multiline
+                                    fullWidth
+                                    variant="outlined"
+                                    value={assistantResponse}
+                                    onChange={handleAssistantResponseChange}
+                                    error={!isValidAssuranceText}
+                                    helperText={!isValidAssuranceText ? 'Each line must have the required format: ["- "][Node ID][": "][Node text]["undeveloped and uninstantiated"]. Eliminate whitespaces in between the lines. Subindixes must be represented with underscores: "G0_1"' : ''}
+                                    sx={{
+                                        maxHeight: isExpanded ? '600px' : '200px', // Adjust height based on expansion state
+                                        overflow: 'auto',
+                                    }}
+                                />
+                                <IconButton
+                                    sx={{ position: 'absolute', top: 5, right: 20 }}
+                                    onClick={toggleExpand}
+                                >
+                                    {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                </IconButton>
+                            </Box>
+                        )}
+                        
                         <Box sx={{ flexGrow: 1, border: '1px solid #ddd', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <ReactFlow
-                            nodes={nodes}
-                            nodeTypes={nodeTypes}
-                            onNodesChange={onNodesChange}
-                            edges={edges}
-                            edgeTypes={edgeTypes}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            fitView
-                            style={{minHeight: "inherit"}}
-                            onConnectStart={onConnectStart}
-                            onConnectEnd={onConnectEnd}
-                            minZoom={0.1}
+                            <ReactFlow
+                                nodes={nodes}
+                                nodeTypes={nodeTypes}
+                                onNodesChange={onNodesChange}
+                                edges={edges}
+                                edgeTypes={edgeTypes}
+                                onEdgesChange={onEdgesChange}
+                                onConnect={onConnect}
+                                fitView
+                                style={{minHeight: "inherit"}}
+                                onConnectStart={onConnectStart}
+                                onConnectEnd={onConnectEnd}
+                                minZoom={0.1}
                             >
                                 <Background
                                     variant={backgroundShapes}
                                     color={shapeColor}
                                     gap={shapeGap}
-                                    style={{backgroundColor: backgroundPaneColor}}/>
-                                <Controls style={{marginLeft: 25}}/>
+                                    style={{backgroundColor: backgroundPaneColor}}
+                                />
+                                <Controls style={{marginLeft: 25}} />
                             </ReactFlow>
                         </Box>
                     </Box>
+
                 </Box>
             </Box>
         </div>
