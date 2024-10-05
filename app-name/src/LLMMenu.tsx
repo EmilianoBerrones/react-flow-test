@@ -559,7 +559,7 @@ function LLMMenu() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/chat', {
+            const response = await fetch('https://smartgsn-93950fe5e9a3.herokuapp.com/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
