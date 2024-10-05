@@ -20,6 +20,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "api/openapi.cjs"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
