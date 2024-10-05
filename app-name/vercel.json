@@ -2,7 +2,7 @@
     "version": 2,
     "builds": [
       {
-        "src": "api/openapi.cjs",
+        "src": "api/index.js",
         "use": "@vercel/node"
       },
       {
@@ -16,7 +16,7 @@
     "routes": [
       {
         "src": "/api/(.*)",
-        "dest": "/api/openapi.cjs"
+        "dest": "/api/index.js"
       },
       {
         "src": "/(.*)",
