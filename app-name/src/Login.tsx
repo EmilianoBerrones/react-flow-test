@@ -15,6 +15,7 @@ import {
 
 import FlowComponent from './App';
 import GPTMenu from './LLMMenu';
+import PatternDetection from './DetectionMenu';
 
 const BackgroundBox = styled(Box)(({ }) => ({
     display: 'flex',
@@ -242,6 +243,7 @@ export default function LoginRoutes(){
                 <Route path="/" element={<LoginScreen />} />
                 <Route path="/App" element={<FlowComponent />} />
                 <Route path="/menu" element={<GPTMenu />}/>
+                <Route path="/detection" element={<PatternDetection />}/>
             </Routes>
         </Router>
     );

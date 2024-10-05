@@ -748,6 +748,10 @@ function LLMMenu() {
         }, 100); // Delay to ensure state update
     };
 
+    const handleTravelDetection = () => {
+        navigate('/detection');
+    };
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const preliminaryAC = `You are an assistant who assist in developing an assurance case in a 
 tree structure using Goal Structuring Notation (GSN) based on an existing assurance case pattern. 
@@ -1017,7 +1021,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem onClick={handleTravelClick}>Assurance case editor</MenuItem>
                             <MenuItem>Pattern instantiation</MenuItem>
-                            <MenuItem>Pattern detection</MenuItem>
+                            <MenuItem onClick={handleTravelDetection}>Pattern detection</MenuItem>
                         </Menu>
                         <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
                                     sx={{mr: 2}}>

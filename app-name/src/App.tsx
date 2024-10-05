@@ -456,6 +456,7 @@ function FlowComponent() {
 
     const [anchorLogin, setAnchorLogin] = React.useState<null | HTMLElement>(null);
     const openLogin = Boolean(anchorLogin);
+    const [projectName, setProjectName] = useState('Project Name');
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleLoginClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -867,6 +868,7 @@ function FlowComponent() {
     // Function to detect when the nodes are going to be exported to an image format, and then export them
     useEffect(() => {
         if (exporting) {
+            const sanitizedProjectName = sanitizeFileName(projectName);
             const originalViewport = getViewport();
             fitView();
 
@@ -883,7 +885,7 @@ function FlowComponent() {
                 }
 
                 if (dataUrl) {
-                    download(dataUrl, `graph.${exporting}`);
+                    download(dataUrl, `${sanitizedProjectName}.${exporting}`);
                 }
 
                 setViewport(originalViewport);
@@ -1077,16 +1079,45 @@ function FlowComponent() {
         return input.replace(/\t/g, spaces);
     }
 
+    const sanitizeFileName = (name: string) => {
+        return name.replace(/[^a-z0-9]/gi, '_').toLowerCase(); // Replace non-alphanumeric characters with underscores
+    };
+
     // Function to export to JSON
     const exportToJSON = () => {
-        const blob = new Blob([JSON.stringify(richTree, null, 2)], {type: 'application/json'});
+        const sanitizedProjectName = sanitizeFileName(projectName);
+
+        // A function to recursively build the tree structure
+        const buildTree = (nodeId:any, nodes:any, edges:any) => {
+            const node = nodes.find((n: any) => n.id === nodeId);
+            const children = edges
+                .filter((edge: any) => edge.source === nodeId)
+                .map((edge: any) => buildTree(edge.target, nodes, edges));
+
+            return {
+                id: node.id,
+                label: node.data.label, // Assuming node label is in node.data.label
+                ...(children.length > 0 ? { children } : {})
+            };
+        };
+
+        // Find root nodes (nodes that are not the target of any edge)
+        const rootNodes = nodes.filter((node: any) =>
+            !edges.some((edge: any) => edge.target === node.id)
+        );
+
+        // Build the tree for each root node
+        const jsonStructure = rootNodes.map((rootNode: any) => buildTree(rootNode.id, nodes, edges));
+
+        // Create and download the JSON
+        const blob = new Blob([JSON.stringify(jsonStructure, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'nodes.json';
+        a.download = `${sanitizedProjectName}.json`;  // Use the sanitized project name
         a.click();
         URL.revokeObjectURL(url);
-    }
+    };
 
     // Function to import from JSON file.
     const importFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1411,6 +1442,14 @@ function FlowComponent() {
         navigate('/');
     }
 
+    const handleTravelDetection = () => {
+        navigate('/detection');
+    }
+
+    const handleProjectNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setProjectName(event.target.value);  // Update the project name state
+    };
+
     // HTML section
     return (
         <>
@@ -1443,7 +1482,7 @@ function FlowComponent() {
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem>Assurance case editor</MenuItem>
                             <MenuItem onClick={handleTravelClick}>Pattern instantiation</MenuItem>
-                            <MenuItem>Pattern detection</MenuItem>
+                            <MenuItem onClick={handleTravelDetection}>Pattern detection</MenuItem>
                         </Menu>
                         <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
                                     sx={{mr: 2}}>
@@ -1493,19 +1532,14 @@ function FlowComponent() {
                             <MenuItem onClick={() => handleExport('jpeg')}>Export to JPEG</MenuItem>
                             <MenuItem onClick={() => handleExport('svg')}>Export to SVG</MenuItem>
                         </Menu>
-                        <Button variant="outlined" color="primary" onClick={handleProjectMenuClick}>
-                            ProjectName
-                            <ExpandMore/>
-                        </Button>
-                        <Menu
-                            anchorEl={projectMenuAnchorEl}
-                            open={isProjectMenuOpen}
-                            onClose={handleProjectMenuClose}
-                        >
-                            <MenuItem onClick={handleProjectMenuClose}>Project 1</MenuItem>
-                            <MenuItem onClick={handleProjectMenuClose}>Project 2</MenuItem>
-                            <MenuItem onClick={handleProjectMenuClose}>Project 3</MenuItem>
-                        </Menu>
+                        <TextField 
+                            value={projectName} 
+                            onChange={handleProjectNameChange} 
+                            label="Project Name" 
+                            variant="outlined" 
+                            size="small"
+                            sx={{ width: '200px', marginRight: 2 }}
+                        />
                         <div style={{display: 'flex', alignItems: 'center', marginLeft: 'auto'}}>
                             <TextField
                                 label={`Search node by ${searchMode}`}
