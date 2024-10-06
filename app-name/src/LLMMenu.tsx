@@ -559,7 +559,7 @@ function LLMMenu() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const response = await fetch('https://git.heroku.com/smartgsnopenai.git', {
+            const response = await fetch('https://smartgsnopenai-cb66a3d6a0f4.herokuapp.com', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
