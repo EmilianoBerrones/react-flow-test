@@ -591,14 +591,6 @@ function LLMMenu() {
         setAnchorMenu(null);
     };
 
-    const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-        setProjectMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleProjectMenuClose = () => {
-        setProjectMenuAnchorEl(null);
-    };
-
     const handleLoginClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorLogin(event.currentTarget);
     };
