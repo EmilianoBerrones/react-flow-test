@@ -1,1 +1,1 @@
-web: node app-name/api/chat.cjs
+web: node chat.cjs
