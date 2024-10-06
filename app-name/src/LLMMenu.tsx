@@ -418,7 +418,7 @@ function LLMMenu() {
         // Update the graph with the new layout
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
-    }
+    };
 
 
     const hasParentNode = (nodeId: any, tree: TreeNode[]) => {
