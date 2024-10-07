@@ -58,16 +58,19 @@ function LoginScreen() {
     const [signUpMessage, setSignUpMessage] = useState(''); // State for sign up response message
     const [resetEmail, setResetEmail] = useState(''); // State for reset email
     const [resetMessage, setResetMessage] = useState(''); // State for reset email response message
+    const [accountCreatedMessage, setAccountCreatedMessage] = useState(''); // New state for account created message
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleSignUp = async () => {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword);
             console.log('User signed up:', userCredential.user);
-            setSignUpMessage('Account created successfully!');
+            setSignUpMessage(''); // Clear any sign-up message in the dialog
             setErrorMessage(''); // Clear any existing error message
+            setSignUpOpen(false); // Close sign-up dialog
+            setAccountCreatedMessage('Account created successfully! You can now log in.');
         } catch (error) {
-            // @ts-ignore
+            //@ts-ignore
             console.error('Error signing up:', error.message);
             setSignUpMessage('Error signing up. Please try again.');
         }
@@ -80,7 +83,7 @@ function LoginScreen() {
             setErrorMessage(''); // Clear any existing error message
             navigate('/App'); // Redirect to the main page after successful login
         } catch (error) {
-            // @ts-ignore
+            //@ts-ignore
             console.error('Error signing in:', error.message);
             setErrorMessage('Incorrect email or password. Please try again or sign up.');
         }
@@ -91,7 +94,7 @@ function LoginScreen() {
             await sendPasswordResetEmail(auth, resetEmail);
             setResetMessage('Password reset email sent! Please check your inbox.');
         } catch (error) {
-            // @ts-ignore
+            //@ts-ignore
             console.error('Error sending password reset email:', error.message);
             setResetMessage('Error sending reset email. Please try again.');
         }
@@ -109,6 +112,11 @@ function LoginScreen() {
                 <Typography variant="body1" gutterBottom>
                     Please login to your account
                 </Typography>
+                {accountCreatedMessage && (
+                    <Typography variant="body2" color="primary" gutterBottom>
+                        {accountCreatedMessage} {/* Display the account creation success message */}
+                    </Typography>
+                )}
                 {errorMessage && (
                     <Typography variant="body2" color="error" gutterBottom>
                         {errorMessage}
@@ -234,7 +242,8 @@ function LoginScreen() {
             </Dialog>
         </BackgroundBox>
     );
-};
+}
+
 
 export default function LoginRoutes(){
     return(
