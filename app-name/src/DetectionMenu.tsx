@@ -428,11 +428,11 @@ const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toStr
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Typography paddingTop={2}>Exact Match Score: {exactMtch}</Typography>
-                                <Slider value={exactMtch} min={0} max={1} step={0.1} onChange={handleExactMtchChange} />
+                                <Slider value={exactMtch} min={0} max={1} step={0.05} onChange={handleExactMtchChange} />
                                 <Typography>BLEU Score{BleuScore}</Typography>
-                                <Slider value={BleuScore} min={0} max={1} step={0.1} onChange={handleBleuScoreChange} />
+                                <Slider value={BleuScore} min={0} max={1} step={0.05} onChange={handleBleuScoreChange} />
                                 <Typography>Semantic Similarity{SemSim}</Typography>
-                                <Slider value={SemSim} min={0} max={1} step={0.1} onChange={handleSemSimChange} />
+                                <Slider value={SemSim} min={0} max={1} step={0.05} onChange={handleSemSimChange} />
                             </AccordionDetails>
                         </Accordion>
                     </Box>
