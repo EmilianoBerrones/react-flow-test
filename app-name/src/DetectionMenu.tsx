@@ -41,6 +41,10 @@ function DetectionMenu() {
     const [projectName, setProjectName] = useState('Project Name');
     const [anchorLogin, setAnchorLogin] = useState<null | HTMLElement>(null);
 
+    const [exactMtch, setExactMtch] = useState(1);
+    const [BleuScore, setBleuScore] = useState(1);
+    const [SemSim, setSemSim] = useState(1);
+
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
 
@@ -68,6 +72,18 @@ function DetectionMenu() {
         setMaxTokens(value as number);
     };
 
+    const handleExactMtchChange = (_event:any , value:number | number[]) => {
+        setExactMtch(value as number);
+    };
+
+    const handleBleuScoreChange = (_event:any, value:number | number[]) => {
+        setBleuScore(value as number);
+    };
+
+    const handleSemSimChange = (_event:any, value:number | number[]) => {
+        setSemSim(value as number);
+    }
+
     const handleSubmit = async () => {
         setLoading(true);
         try {
@@ -75,7 +91,7 @@ function DetectionMenu() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: userPrompt,
+                    prompt: userPrompt+similarityMetrics,
                     model: selectedModel,
                     temperature: temperature,
                     max_tokens: maxTokens,
@@ -241,6 +257,9 @@ const StructuralPredicate=`@Structural_Predicate
 
 const fullSystemPrompt=preliminaryAC+contextAC+contextACP+acPredicate+acPatternPredicate+StructuralPredicate+domainInfo;
 
+const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toString() + `OR the exact match score is higher than`+ exactMtch.toString() +`OR the semantic similarity score is higher than`+ SemSim.toString() +`, conclude that the pattern has been detected in the assurance case.
+- Otherwise, conclude that the pattern has not been detected in the assurance case.`;
+
     return (
         <div>
             <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column' }}>
@@ -400,6 +419,20 @@ const fullSystemPrompt=preliminaryAC+contextAC+contextACP+acPredicate+acPatternP
                                 <Slider value={temperature} min={0} max={2} step={0.1} onChange={handleTemperatureChange} />
                                 <Typography>Max Tokens: {maxTokens}</Typography>
                                 <Slider value={maxTokens} min={1} max={4000} step={1} onChange={handleMaxTokensChange} />
+                            </AccordionDetails>
+                        </Accordion>
+
+                        <Accordion>
+                            <AccordionSummary>
+                                Similarity Metrics
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Typography paddingTop={2}>Exact Match Score: {exactMtch}</Typography>
+                                <Slider value={exactMtch} min={0} max={1} step={0.1} onChange={handleExactMtchChange} />
+                                <Typography>BLEU Score{BleuScore}</Typography>
+                                <Slider value={BleuScore} min={0} max={1} step={0.1} onChange={handleBleuScoreChange} />
+                                <Typography>Semantic Similarity{SemSim}</Typography>
+                                <Slider value={SemSim} min={0} max={1} step={0.1} onChange={handleSemSimChange} />
                             </AccordionDetails>
                         </Accordion>
                     </Box>
