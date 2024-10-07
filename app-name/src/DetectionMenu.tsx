@@ -422,8 +422,8 @@ const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toStr
                             </AccordionDetails>
                         </Accordion>
 
-                        <Accordion>
-                            <AccordionSummary>
+                        <Accordion style={{ backgroundColor: '#f0f3f4', marginBottom: '8px' }}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                 Similarity Metrics
                             </AccordionSummary>
                             <AccordionDetails>
