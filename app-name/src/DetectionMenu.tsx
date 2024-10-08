@@ -120,46 +120,38 @@ function DetectionMenu() {
     }
 
     const handleSubmit = async () => {
-        setLoading(true);
-    
-        // Extract Assurance Case Pattern and Assurance Case from userPrompt using your logic
+        if (!pyodide) {
+            console.error("Pyodide is not loaded yet.");
+            return;
+        }
+
+        // Extract Assurance Case Pattern and Assurance Case from userPrompt
+        const userPrompt = "@Assurance_Case_Pattern Example @End_Assurance_Case_Pattern @Assurance_Case ExampleCase @End_Assurance_Case";
         const extractText = (text: any, startLabel: any, endLabel: any) => {
             const startIndex = text.indexOf(startLabel);
             const endIndex = text.indexOf(endLabel);
-    
             if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-                const extracted = text.substring(startIndex + startLabel.length, endIndex).trim();
-                console.log(`Extracted Text between ${startLabel} and ${endLabel}:`, extracted);
-                return extracted;
-            } else {
-                console.log(`Could not find labels ${startLabel} or ${endLabel}`);
-                return null; // Return null if labels are not found
+                return text.substring(startIndex + startLabel.length, endIndex).trim();
             }
+            return null;
         };
-    
-        // Step 1: Extract Assurance Case Pattern first
+
         const assuranceCasePattern = extractText(userPrompt, '@Assurance_Case_Pattern', '@End_Assurance_Case_Pattern');
-    
-        // Step 2: Extract Assurance Case after the Pattern ends
         const assuranceCaseStartIndex = userPrompt.indexOf('@End_Assurance_Case_Pattern');
         const remainingText = userPrompt.substring(assuranceCaseStartIndex + '@End_Assurance_Case_Pattern'.length);
         const assuranceCase = extractText(remainingText, '@Assurance_Case', '@End_Assurance_Case');
-    
-        // Log extracted texts to the console for debugging
-        console.log("Extracted Assurance Case Pattern:", assuranceCasePattern);
-        console.log("Extracted Assurance Case:", assuranceCase);
-    
-        // Check if both parts are extracted successfully
+
         if (!assuranceCasePattern || !assuranceCase) {
-            setAssistantResponse("Error: Could not extract the assurance case pattern or assurance case.");
-            setLoading(false);
+            console.error("Error: Could not extract the assurance case pattern or assurance case.");
             return;
         }
-    
+
         try {
+            // Escape assuranceCasePattern and assuranceCase for multi-line string safety
             const safeAssuranceCasePattern = assuranceCasePattern.replace(/`/g, "\\`").replace(/"/g, '\\"');
             const safeAssuranceCase = assuranceCase.replace(/`/g, "\\`").replace(/"/g, '\\"');
-            // Dynamically inject assuranceCasePattern and assuranceCase into Python code
+
+            // Python code with difflib for fuzzy matching and custom BLEU implementation
             const pythonCode = `
 from difflib import SequenceMatcher
 from collections import Counter
@@ -213,40 +205,20 @@ text1 = """${safeAssuranceCasePattern}"""
 text2 = """${safeAssuranceCase}"""
 result = compare_texts(text1, text2)
             `;
-    
+
             // Run the Python code in Pyodide
             await pyodide.runPythonAsync(pythonCode);
-    
+
             // Fetch the result from Python and set it to React state
             const result = pyodide.globals.get('result').toJs();
-            setExactMatchFromPython(result[0]);
-            setBleuScoreFromPython(result[1]);
-            setSemanticSimilarityFromPython(result[2]);
-    
-            // If you still want to send data to your server:
-            const response = await fetch('https://smartgsnopenai-cb66a3d6a0f4.herokuapp.com/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt: userPrompt + similarityMetrics,
-                    model: selectedModel,
-                    temperature: temperature,
-                    max_tokens: maxTokens,
-                    fullSystemPrompt: fullSystemPrompt
-                }),
-            });
-    
-            if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
-    
-            const data = await response.text();
-            setAssistantResponse(data);
-        } catch (error: any) {
-            console.error("Error in fetching data:", error);
-            setAssistantResponse("An error occurred: " + error.message);
-        } finally {
-            setLoading(false);
+            console.log("Exact Match (difflib):", result[0]);
+            console.log("BLEU Score (custom):", result[1]);
+            console.log("Semantic Similarity (cosine):", result[2]);
+
+        } catch (error) {
+            console.error("Error in running Python code:", error);
         }
-    };    
+    };
 
     const toggleExpand = () => {
         setIsExpanded(prev => !prev);
