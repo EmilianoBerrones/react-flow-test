@@ -29,6 +29,7 @@
     "mammoth": "^1.8.0",
     "mui-color-input": "^3.0.0",
     "openai": "^4.61.1",
+    "pyodide": "^0.26.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.26.2",

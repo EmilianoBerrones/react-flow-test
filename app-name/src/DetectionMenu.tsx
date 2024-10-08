@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     TextField,
@@ -45,8 +45,43 @@ function DetectionMenu() {
     const [BleuScore, setBleuScore] = useState(1);
     const [SemSim, setSemSim] = useState(1);
 
+    const [exactMatch, setExactMatchFromPython] = useState(0.5);
+    const [bleuScore, setBleuScoreFromPython] = useState(0.5);
+    const [semanticSimilarity, setSemanticSimilarityFromPython] = useState(0.5);
+
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
+
+    const [pyodide, setPyodide] = useState<any>(null);  // Add Pyodide state
+
+    useEffect(() => {
+        const initializePyodide = async () => {
+            try {
+                const pyodideInstance = await window.loadPyodide();
+                await pyodideInstance.loadPackage(['pandas', 'scikit-learn']);
+                setPyodide(pyodideInstance);
+            } catch (error) {
+                console.error("Error loading Pyodide:", error);
+            }
+        };
+
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js";
+        script.async = true;
+        script.onload = () => {
+            initializePyodide();
+        };
+        script.onerror = () => {
+            console.error("Failed to load Pyodide script.");
+        };
+
+        document.head.appendChild(script);
+
+        return () => {
+            document.head.removeChild(script);
+        };
+    }, []);
+    
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorMenu(event.currentTarget);
@@ -86,21 +121,123 @@ function DetectionMenu() {
 
     const handleSubmit = async () => {
         setLoading(true);
+    
+        // Extract Assurance Case Pattern and Assurance Case from userPrompt using your logic
+        const extractText = (text: any, startLabel: any, endLabel: any) => {
+            const startIndex = text.indexOf(startLabel);
+            const endIndex = text.indexOf(endLabel);
+    
+            if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+                const extracted = text.substring(startIndex + startLabel.length, endIndex).trim();
+                console.log(`Extracted Text between ${startLabel} and ${endLabel}:`, extracted);
+                return extracted;
+            } else {
+                console.log(`Could not find labels ${startLabel} or ${endLabel}`);
+                return null; // Return null if labels are not found
+            }
+        };
+    
+        // Step 1: Extract Assurance Case Pattern first
+        const assuranceCasePattern = extractText(userPrompt, '@Assurance_Case_Pattern', '@End_Assurance_Case_Pattern');
+    
+        // Step 2: Extract Assurance Case after the Pattern ends
+        const assuranceCaseStartIndex = userPrompt.indexOf('@End_Assurance_Case_Pattern');
+        const remainingText = userPrompt.substring(assuranceCaseStartIndex + '@End_Assurance_Case_Pattern'.length);
+        const assuranceCase = extractText(remainingText, '@Assurance_Case', '@End_Assurance_Case');
+    
+        // Log extracted texts to the console for debugging
+        console.log("Extracted Assurance Case Pattern:", assuranceCasePattern);
+        console.log("Extracted Assurance Case:", assuranceCase);
+    
+        // Check if both parts are extracted successfully
+        if (!assuranceCasePattern || !assuranceCase) {
+            setAssistantResponse("Error: Could not extract the assurance case pattern or assurance case.");
+            setLoading(false);
+            return;
+        }
+    
         try {
+            const safeAssuranceCasePattern = assuranceCasePattern.replace(/`/g, "\\`").replace(/"/g, '\\"');
+            const safeAssuranceCase = assuranceCase.replace(/`/g, "\\`").replace(/"/g, '\\"');
+            // Dynamically inject assuranceCasePattern and assuranceCase into Python code
+            const pythonCode = `
+from difflib import SequenceMatcher
+from collections import Counter
+import math
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def ngram_precision(reference, candidate, n):
+    ref_ngrams = Counter([tuple(reference[i:i+n]) for i in range(len(reference)-n+1)])
+    cand_ngrams = Counter([tuple(candidate[i:i+n]) for i in range(len(candidate)-n+1)])
+    overlap = sum(min(cand_ngrams[ng], ref_ngrams[ng]) for ng in cand_ngrams)
+    return overlap / max(1, len(candidate) - n + 1)
+
+def brevity_penalty(reference, candidate):
+    ref_len = len(reference)
+    cand_len = len(candidate)
+    if cand_len > ref_len:
+        return 1
+    elif cand_len == 0:
+        return 0
+    else:
+        return math.exp(1 - ref_len / cand_len)
+
+def calculate_bleu(reference, candidate):
+    p1 = ngram_precision(reference, candidate, 1)
+    p2 = ngram_precision(reference, candidate, 2)
+    p3 = ngram_precision(reference, candidate, 3)
+    p4 = ngram_precision(reference, candidate, 4)
+
+    precision = (p1 * p2 * p3 * p4) ** 0.25
+    bp = brevity_penalty(reference, candidate)
+
+    return round(bp * precision, 4)
+
+def compare_texts(text1, text2):
+    # Fuzzy similarity score (Exact Match) using difflib
+    similarity_score = SequenceMatcher(None, text1, text2).ratio()
+    
+    # Custom BLEU score calculation
+    bleu_score = calculate_bleu(text1.split(), text2.split())
+    
+    # TF-IDF Cosine similarity (Semantic Similarity)
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform([text1, text2])
+    cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
+    cosine_sim_score = round(cosine_sim, 2)
+    
+    return similarity_score, bleu_score, cosine_sim_score
+
+text1 = """${safeAssuranceCasePattern}"""
+text2 = """${safeAssuranceCase}"""
+result = compare_texts(text1, text2)
+            `;
+    
+            // Run the Python code in Pyodide
+            await pyodide.runPythonAsync(pythonCode);
+    
+            // Fetch the result from Python and set it to React state
+            const result = pyodide.globals.get('result').toJs();
+            setExactMatchFromPython(result[0]);
+            setBleuScoreFromPython(result[1]);
+            setSemanticSimilarityFromPython(result[2]);
+    
+            // If you still want to send data to your server:
             const response = await fetch('https://smartgsnopenai-cb66a3d6a0f4.herokuapp.com/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: userPrompt+similarityMetrics,
+                    prompt: userPrompt + similarityMetrics,
                     model: selectedModel,
                     temperature: temperature,
                     max_tokens: maxTokens,
                     fullSystemPrompt: fullSystemPrompt
                 }),
             });
-
+    
             if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
-
+    
             const data = await response.text();
             setAssistantResponse(data);
         } catch (error: any) {
@@ -109,7 +246,7 @@ function DetectionMenu() {
         } finally {
             setLoading(false);
         }
-    };
+    };    
 
     const toggleExpand = () => {
         setIsExpanded(prev => !prev);
@@ -475,6 +612,15 @@ const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toStr
                                 </IconButton>
                             </Box>
                         )}
+                        <Typography>
+                            Exact Match Score: {exactMatch}
+                        </Typography>
+                        <Typography>
+                            BLEU Score: {bleuScore}
+                        </Typography>
+                        <Typography>
+                            Semantic Similarity Score: {semanticSimilarity}
+                        </Typography>
                     </Box>
                 </Box>
             </Box>
