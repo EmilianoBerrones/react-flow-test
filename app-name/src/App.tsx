@@ -1480,9 +1480,8 @@ function FlowComponent() {
                             <MenuIcon/>
                         </IconButton>
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
-                            <MenuItem>Assurance case editor</MenuItem>
                             <MenuItem onClick={handleTravelClick}>Pattern instantiation</MenuItem>
-                            <MenuItem onClick={handleTravelDetection}>Pattern detection</MenuItem>
+                            <MenuItem onClick={handleTravelDetection}>Detection Pattern</MenuItem>
                         </Menu>
                         <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
                                     sx={{mr: 2}}>

@@ -351,7 +351,6 @@ const MetricsThreshold = `- If the BLEU score is higher than` + BleuScore.toStri
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem onClick={handleTravelClick}>Assurance case editor</MenuItem>
                             <MenuItem onClick={handleTravelMenuClick}>Pattern instantiation</MenuItem>
-                            <MenuItem>Pattern detection</MenuItem>
                         </Menu>
                         <TextField 
                             value={projectName} 

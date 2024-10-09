@@ -1012,8 +1012,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                         </IconButton>
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem onClick={handleTravelClick}>Assurance case editor</MenuItem>
-                            <MenuItem>Pattern instantiation</MenuItem>
-                            <MenuItem onClick={handleTravelDetection}>Pattern detection</MenuItem>
+                            <MenuItem onClick={handleTravelDetection}>Detection Pattern</MenuItem>
                         </Menu>
                         <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
                                     sx={{mr: 2}}>
