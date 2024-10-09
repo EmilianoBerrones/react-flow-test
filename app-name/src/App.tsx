@@ -1475,18 +1475,22 @@ function FlowComponent() {
                 <AppBar position="fixed" color="transparent"
                         sx={{height: '8vh', display: 'flex', justifyContent: 'center'}}>
                     <Toolbar sx={{minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px'}}>
-                        <IconButton onClick={handleMenuClick} size="large" edge="start" color="primary" aria-label="menu"
-                                    sx={{mr: 2}}>
-                            <MenuIcon/>
-                        </IconButton>
+                        <Tooltip title="Tools Menu">
+                            <IconButton onClick={handleMenuClick} size="large" edge="start" color="primary" aria-label="menu"
+                                        sx={{mr: 2}}>
+                                <MenuIcon/>
+                            </IconButton>
+                        </Tooltip>
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem onClick={handleTravelClick}>Pattern instantiation</MenuItem>
                             <MenuItem onClick={handleTravelDetection}>Detection Pattern</MenuItem>
                         </Menu>
-                        <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
-                                    sx={{mr: 2}}>
-                            <Inventory/>
-                        </IconButton>
+                        <Tooltip title="Export and Import">
+                            <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
+                                        sx={{mr: 2}}>
+                                <Inventory/>
+                            </IconButton>
+                        </Tooltip>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
                             <Divider>
                                 <Chip label="JSON Manager" size="small"/>

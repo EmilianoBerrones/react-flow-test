@@ -1007,17 +1007,21 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                 {/* AppBar */}
                 <AppBar position="fixed" color="default" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, height: '8vh', display: 'flex', justifyContent: 'center' }}>
                     <Toolbar sx={{ minHeight: '8vh', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
-                        <IconButton onClick={handleMenuClick} size="large" edge="start" color="primary" aria-label="menu" sx={{ mr: 2 }}>
-                            <MenuIcon />
-                        </IconButton>
+                        <Tooltip title="Tools Menu">
+                            <IconButton onClick={handleMenuClick} size="large" edge="start" color="primary" aria-label="menu" sx={{ mr: 2 }}>
+                                <MenuIcon />
+                            </IconButton>
+                        </Tooltip>
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem onClick={handleTravelClick}>Assurance case editor</MenuItem>
                             <MenuItem onClick={handleTravelDetection}>Detection Pattern</MenuItem>
                         </Menu>
-                        <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
-                                    sx={{mr: 2}}>
-                            <Inventory/>
-                        </IconButton>
+                        <Tooltip title="Export">
+                            <IconButton onClick={handleClick} size="large" edge="start" color="primary" aria-label="options"
+                                        sx={{mr: 2}}>
+                                <Inventory/>
+                            </IconButton>
+                        </Tooltip>
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
                             <Divider>
                                 <Chip label="JSON Manager" size="small"/>
@@ -1175,7 +1179,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                 <Typography paddingTop={2}>Temperature: {temperature}</Typography>
                                 <Slider value={temperature} min={0} max={2} step={0.1} onChange={handleTemperatureChange} />
                                 <Typography>Max Tokens: {maxTokens}</Typography>
-                                <Slider value={maxTokens} min={1} max={4000} step={1} onChange={handleMaxTokensChange} />
+                                <Slider value={maxTokens} min={1} max={4096} step={1} onChange={handleMaxTokensChange} />
                             </AccordionDetails>
                         </Accordion>
                         <Box sx={{ display: 'flex', gap: 1 }}>
