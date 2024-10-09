@@ -170,7 +170,7 @@ function DetectionMenu() {
     
     // Add this function to call your FastAPI server
     const compareTexts = async (text1:any, text2:any) => {
-        const response = await fetch('http://localhost:8000/compare_texts/', {
+        const response = await fetch('https://pythonmetrics-e7c8fe7b3e52.herokuapp.com/compare_texts/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
