@@ -45,42 +45,11 @@ function DetectionMenu() {
     const [BleuScore, setBleuScore] = useState(1);
     const [SemSim, setSemSim] = useState(1);
 
-    const [exactMatch, setExactMatchFromPython] = useState(0.5);
-    const [bleuScore, setBleuScoreFromPython] = useState(0.5);
-    const [semanticSimilarity, setSemanticSimilarityFromPython] = useState(0.5);
+    const [bleuCalculated, setBleuCalculated] = useState(1);
+    const [SemSimFinal, setSemSimFinal] = useState(1);
 
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
-
-    const [pyodide, setPyodide] = useState<any>(null);  // Add Pyodide state
-
-    useEffect(() => {
-        const initializePyodide = async () => {
-            try {
-                const pyodideInstance = await window.loadPyodide();
-                await pyodideInstance.loadPackage(['pandas', 'scikit-learn']);
-                setPyodide(pyodideInstance);
-            } catch (error) {
-                console.error("Error loading Pyodide:", error);
-            }
-        };
-
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js";
-        script.async = true;
-        script.onload = () => {
-            initializePyodide();
-        };
-        script.onerror = () => {
-            console.error("Failed to load Pyodide script.");
-        };
-
-        document.head.appendChild(script);
-
-        return () => {
-            document.head.removeChild(script);
-        };
-    }, []);
     
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -122,8 +91,8 @@ function DetectionMenu() {
     const handleSubmit = async () => {
         setLoading(true);
     
-        // Extract Assurance Case Pattern and Assurance Case from userPrompt using your logic
-        const extractText = (text: any, startLabel: any, endLabel: any) => {
+        // Function to extract text between labels
+        const extractText = (text:any, startLabel:any, endLabel:any) => {
             const startIndex = text.indexOf(startLabel);
             const endIndex = text.indexOf(endLabel);
     
@@ -133,23 +102,21 @@ function DetectionMenu() {
                 return extracted;
             } else {
                 console.log(`Could not find labels ${startLabel} or ${endLabel}`);
-                return null; // Return null if labels are not found
+                return null;
             }
         };
     
-        // Step 1: Extract Assurance Case Pattern first
+        // Extract Assurance Case Pattern and Assurance Case
         const assuranceCasePattern = extractText(userPrompt, '@Assurance_Case_Pattern', '@End_Assurance_Case_Pattern');
-    
-        // Step 2: Extract Assurance Case after the Pattern ends
         const assuranceCaseStartIndex = userPrompt.indexOf('@End_Assurance_Case_Pattern');
         const remainingText = userPrompt.substring(assuranceCaseStartIndex + '@End_Assurance_Case_Pattern'.length);
         const assuranceCase = extractText(remainingText, '@Assurance_Case', '@End_Assurance_Case');
     
-        // Log extracted texts to the console for debugging
+        // Log extracted texts
         console.log("Extracted Assurance Case Pattern:", assuranceCasePattern);
         console.log("Extracted Assurance Case:", assuranceCase);
     
-        // Check if both parts are extracted successfully
+        // Check if extraction was successful
         if (!assuranceCasePattern || !assuranceCase) {
             setAssistantResponse("Error: Could not extract the assurance case pattern or assurance case.");
             setLoading(false);
@@ -157,97 +124,64 @@ function DetectionMenu() {
         }
     
         try {
-            const safeAssuranceCasePattern = assuranceCasePattern.replace(/`/g, "\\`").replace(/"/g, '\\"');
-            const safeAssuranceCase = assuranceCase.replace(/`/g, "\\`").replace(/"/g, '\\"');
-            // Dynamically inject assuranceCasePattern and assuranceCase into Python code
-            const pythonCode = `
-from difflib import SequenceMatcher
-from collections import Counter
-import math
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
-def ngram_precision(reference, candidate, n):
-    ref_ngrams = Counter([tuple(reference[i:i+n]) for i in range(len(reference)-n+1)])
-    cand_ngrams = Counter([tuple(candidate[i:i+n]) for i in range(len(candidate)-n+1)])
-    overlap = sum(min(cand_ngrams[ng], ref_ngrams[ng]) for ng in cand_ngrams)
-    return overlap / max(1, len(candidate) - n + 1)
-
-def brevity_penalty(reference, candidate):
-    ref_len = len(reference)
-    cand_len = len(candidate)
-    if cand_len > ref_len:
-        return 1
-    elif cand_len == 0:
-        return 0
-    else:
-        return math.exp(1 - ref_len / cand_len)
-
-def calculate_bleu(reference, candidate):
-    p1 = ngram_precision(reference, candidate, 1)
-    p2 = ngram_precision(reference, candidate, 2)
-    p3 = ngram_precision(reference, candidate, 3)
-    p4 = ngram_precision(reference, candidate, 4)
-
-    precision = (p1 * p2 * p3 * p4) ** 0.25
-    bp = brevity_penalty(reference, candidate)
-
-    return round(bp * precision, 4)
-
-def compare_texts(text1, text2):
-    # Fuzzy similarity score (Exact Match) using difflib
-    similarity_score = SequenceMatcher(None, text1, text2).ratio()
+            // Step 1: Call compareTexts to get the similarity metrics
+            const responseFromComparison = await compareTexts(assuranceCasePattern, assuranceCase);
     
-    # Custom BLEU score calculation
-    bleu_score = calculate_bleu(text1.split(), text2.split())
-    
-    # TF-IDF Cosine similarity (Semantic Similarity)
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform([text1, text2])
-    cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-    cosine_sim_score = round(cosine_sim, 2)
-    
-    return similarity_score, bleu_score, cosine_sim_score
+            const exactMTCH = responseFromComparison.exact_match_score;
+            const bleuScore = setBleuCalculated(responseFromComparison.bleu_score);
+            const SemSim = setSemSimFinal(responseFromComparison.semantic_similarity_score);
 
-text1 = """${safeAssuranceCasePattern}"""
-text2 = """${safeAssuranceCase}"""
-result = compare_texts(text1, text2)
-            `;
+            // Log the results
+            console.log('Exact Match Score:', responseFromComparison.exact_match_score);
+            console.log('BLEU Score:', responseFromComparison.bleu_score);
+            console.log('Semantic Similarity Score:', responseFromComparison.semantic_similarity_score);
     
-            // Run the Python code in Pyodide
-            await pyodide.runPythonAsync(pythonCode);
+            // Step 2: Construct the similarity metrics string
+            const similarityMetrics = `BLEU: ${responseFromComparison.bleu_score}, Semantic Similarity: ${responseFromComparison.semantic_similarity_score}`;
     
-            // Fetch the result from Python and set it to React state
-            const result = pyodide.globals.get('result').toJs();
-            setExactMatchFromPython(result[0]);
-            setBleuScoreFromPython(result[1]);
-            setSemanticSimilarityFromPython(result[2]);
-    
-            // If you still want to send data to your server:
+            // Step 3: Send the similarity metrics along with the user prompt to the Heroku API
             const response = await fetch('https://smartgsnopenai-cb66a3d6a0f4.herokuapp.com/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: userPrompt + similarityMetrics,
+                    prompt: userPrompt + similarityMetrics + MetricsThreshold,
                     model: selectedModel,
                     temperature: temperature,
                     max_tokens: maxTokens,
-                    fullSystemPrompt: fullSystemPrompt
+                    assuranceCasePattern,   // Send extracted Assurance Case Pattern
+                    assuranceCase,          // Send extracted Assurance Case
+                    fullSystemPrompt
                 }),
             });
-
     
             if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
-
     
             const data = await response.text();
             setAssistantResponse(data);
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error in fetching data:", error);
+            //@ts-ignore
             setAssistantResponse("An error occurred: " + error.message);
         } finally {
             setLoading(false);
         }
+        return 
+    };
+    
+    // Add this function to call your FastAPI server
+    const compareTexts = async (text1:any, text2:any) => {
+        const response = await fetch('http://localhost:8000/compare_texts/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text1: text1,
+                text2: text2,
+            }),
+        });
+        const data = await response.json();
+        return data;  // Return the similarity results
     };
 
     const toggleExpand = () => {
@@ -396,7 +330,7 @@ const StructuralPredicate=`@Structural_Predicate
 
 const fullSystemPrompt=preliminaryAC+contextAC+contextACP+acPredicate+acPatternPredicate+StructuralPredicate+domainInfo;
 
-const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toString() + `OR the exact match score is higher than`+ exactMtch.toString() +`OR the semantic similarity score is higher than`+ SemSim.toString() +`, conclude that the pattern has been detected in the assurance case.
+const MetricsThreshold = `- If the BLEU score is higher than` + BleuScore.toString() + `OR the semantic similarity score is higher than`+ SemSim.toString() +`, conclude that the pattern has been detected in the assurance case.
 - Otherwise, conclude that the pattern has not been detected in the assurance case.`;
 
     return (
@@ -566,8 +500,6 @@ const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toStr
                                 Similarity Metrics
                             </AccordionSummary>
                             <AccordionDetails>
-                                <Typography paddingTop={2}>Exact Match Score: {exactMtch}</Typography>
-                                <Slider value={exactMtch} min={0} max={1} step={0.05} onChange={handleExactMtchChange} />
                                 <Typography>BLEU Score{BleuScore}</Typography>
                                 <Slider value={BleuScore} min={0} max={1} step={0.05} onChange={handleBleuScoreChange} />
                                 <Typography>Semantic Similarity{SemSim}</Typography>
@@ -614,15 +546,6 @@ const similarityMetrics = `- If the BLEU score is higher than` + BleuScore.toStr
                                 </IconButton>
                             </Box>
                         )}
-                        <Typography>
-                            Exact Match Score: {exactMatch}
-                        </Typography>
-                        <Typography>
-                            BLEU Score: {bleuScore}
-                        </Typography>
-                        <Typography>
-                            Semantic Similarity Score: {semanticSimilarity}
-                        </Typography>
                     </Box>
                 </Box>
             </Box>
