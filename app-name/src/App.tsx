@@ -395,7 +395,7 @@ const Ruler = ({showRuler}: { showRuler: boolean }) => {
 
 // Creation of initial Tree and initial Rich Tree to display them.
 // @ts-ignore
-let initialTree = buildTree(initialNodes, initialEdges);
+const initialTree = buildTree(initialNodes, initialEdges);
 let richTree = initialTree.map(convertTreeNodeToDesiredNode);
 let copyOfText = treeToText(initialTree);
 let oneTime = 0; // Function to handle layouting one time
@@ -820,9 +820,9 @@ function FlowComponent() {
                 position: {x: 0, y: 0},
                 data: {label: newNodeLabel, id: newNodeId},
             }
-            let edgeId = `edge-${connectingNodeId.current}-${newNode.id}`;
-            let edgeSource = connectingNodeId.current;
-            let edgeTarget = newNode.id;
+            const edgeId = `edge-${connectingNodeId.current}-${newNode.id}`;
+            const edgeSource = connectingNodeId.current;
+            const edgeTarget = newNode.id;
             const newEdge = {
                 id: edgeId,
                 source: edgeSource,

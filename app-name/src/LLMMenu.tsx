@@ -254,9 +254,9 @@ function convertTreeNodeToDesiredNode(treeNode: TreeNode): DesiredNode {
     return desiredNode;
 }
 
-let initialTree = buildTree(initialNodes, initialEdges);
+const initialTree = buildTree(initialNodes, initialEdges);
 // @ts-ignore
-let richTree = initialTree.map(convertTreeNodeToDesiredNode);
+const richTree = initialTree.map(convertTreeNodeToDesiredNode);
 
 function LLMMenu() {
     const [userPrompt, setUserPrompt] = useState('');
@@ -418,7 +418,7 @@ function LLMMenu() {
         // Update the graph with the new layout
         setNodes([...layoutedElements.nodes]);
         setEdges([...layoutedElements.edges]);
-    };
+    }
 
 
     const hasParentNode = (nodeId: any, tree: TreeNode[]) => {
@@ -1113,9 +1113,6 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                             <Typography variant="h6">{projectName}</Typography>
                             <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
-                                    {loading ? "Generating..." : "Send"}
-                                </Button>
                                 {assistantResponse && (
                                     <Button
                                         variant="outlined"
@@ -1182,6 +1179,16 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
                                 <Slider value={maxTokens} min={1} max={4000} step={1} onChange={handleMaxTokensChange} />
                             </AccordionDetails>
                         </Accordion>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleSubmit}
+                                disabled={!userPrompt || loading} // Disable if userPrompt is empty
+                            >
+                                {loading ? "Generating..." : "Send"}
+                            </Button>
+                        </Box>
                     </Box>
 
                     {/* Right Panel */}
@@ -1241,7 +1248,7 @@ const fullSystemPrompt = preliminaryAC + contextAC + contextACP + defPredicates 
             </Box>
         </div>
     );
-};
+}
 
 export default function GPTMenu() {
     return (

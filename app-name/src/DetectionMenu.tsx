@@ -193,6 +193,9 @@ function DetectionMenu() {
     };
     const handleTravelLogout = () => {
         navigate('/');
+    };
+    const handleTravelMenuClick = () => {
+        navigate('/menu');
     }
 
     const handleProjectNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -347,7 +350,7 @@ const MetricsThreshold = `- If the BLEU score is higher than` + BleuScore.toStri
                         </IconButton>
                         <Menu anchorEl={anchorMenu} open={Boolean(anchorMenu)} onClose={handleMenuClose}>
                             <MenuItem onClick={handleTravelClick}>Assurance case editor</MenuItem>
-                            <MenuItem>Pattern instantiation</MenuItem>
+                            <MenuItem onClick={handleTravelMenuClick}>Pattern instantiation</MenuItem>
                             <MenuItem>Pattern detection</MenuItem>
                         </Menu>
                         <TextField 
@@ -434,11 +437,6 @@ const MetricsThreshold = `- If the BLEU score is higher than` + BleuScore.toStri
                         {/* Flex container for Project Name and Buttons */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                             <Typography variant="h6">{projectName}</Typography>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
-                                    {loading ? "Generating..." : "Send"}
-                                </Button>
-                            </Box>
                         </Box>
 
                         <Accordion style={{ backgroundColor: '#f0f3f4', marginBottom: '8px' }}>
@@ -506,6 +504,16 @@ const MetricsThreshold = `- If the BLEU score is higher than` + BleuScore.toStri
                                 <Slider value={SemSim} min={0} max={1} step={0.05} onChange={handleSemSimChange} />
                             </AccordionDetails>
                         </Accordion>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleSubmit}
+                                disabled={!userPrompt || loading} // Disable if userPrompt is empty
+                            >
+                                {loading ? "Generating..." : "Send"}
+                            </Button>
+                        </Box>
                     </Box>
 
                     {/* Assistant Response Box */}
