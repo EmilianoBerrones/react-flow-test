@@ -1,5 +1,9 @@
-# react-flow-test
+# Assurance case editor web tool
 ## Tools used
-- React Flow 
+- React
+- React Flow
 - Node.js
-- PowerShell
+- Material UI
+- Dagre JS
+
+Webpage link: https://smartgsn.vercel.app/
