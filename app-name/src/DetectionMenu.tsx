@@ -496,12 +496,12 @@ const MetricsThreshold = `- If the BLEU score is higher than` + BleuScore.toStri
 
                         <Accordion style={{ backgroundColor: '#f0f3f4', marginBottom: '8px' }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                Similarity Metrics
+                                Similarity Metrics Thresholds
                             </AccordionSummary>
                             <AccordionDetails>
-                                <Typography>BLEU Score: {BleuScore}</Typography>
+                                <Typography>BLEU Score Threshold: {BleuScore}</Typography>
                                 <Slider value={BleuScore} min={0} max={1} step={0.05} onChange={handleBleuScoreChange} />
-                                <Typography>Semantic Similarity: {SemSim}</Typography>
+                                <Typography>Semantic Similarity Threshold: {SemSim}</Typography>
                                 <Slider value={SemSim} min={0} max={1} step={0.05} onChange={handleSemSimChange} />
                             </AccordionDetails>
                         </Accordion>
